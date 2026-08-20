@@ -805,11 +805,6 @@ public class FileValidationService {
 
 	private void validateAgainstTemplate(String moduleCode, List<String> uploadedHeaders, FileValidationResult result) {
 
-		System.out.println("======================================");
-		System.out.println("TEMPLATE HEADER VALIDATION");
-		System.out.println("Module : " + moduleCode);
-		System.out.println("======================================");
-
 		/*
 		 * ===================================================== 1. LOAD OFFICIAL
 		 * TEMPLATE =====================================================
@@ -820,9 +815,7 @@ public class FileValidationService {
 		try (InputStream templateInputStream = getClass().getResourceAsStream(templatePath)) {
 
 			if (templateInputStream == null) {
-
 				result.getWarnings().add("Template not found for module: " + moduleCode);
-				System.out.println("Template not found: " + templatePath);
 				return;
 			}
 
@@ -869,30 +862,6 @@ public class FileValidationService {
 
 				List<String> templateHeaders = buildLogicalHeaders(templateSheet, templateHeaderInfo.headerStartRow,
 						templateHeaderInfo.headerEndRow, templateColumnCount);
-
-				/*
-				 * ================================================= 6. PRINT TEMPLATE HEADERS
-				 * =================================================
-				 */
-
-				System.out.println("Template Headers:");
-
-				for (int i = 0; i < templateHeaders.size(); i++) {
-
-					System.out.println("Template Column " + (i + 1) + " : " + templateHeaders.get(i));
-				}
-
-				/*
-				 * ================================================= 7. PRINT UPLOADED HEADERS
-				 * =================================================
-				 */
-
-				System.out.println("Uploaded Headers:");
-
-				for (int i = 0; i < uploadedHeaders.size(); i++) {
-
-					System.out.println("Uploaded Column " + (i + 1) + " : " + uploadedHeaders.get(i));
-				}
 
 				/*
 				 * ================================================= 8. COMPARE
@@ -1008,26 +977,6 @@ public class FileValidationService {
 			}
 		}
 
-		/*
-		 * ===================================================== RESULT LOG
-		 * =====================================================
-		 */
-
-		if (result.getErrors().isEmpty()) {
-
-			System.out.println("✓ TEMPLATE VALIDATION SUCCESSFUL");
-			System.out.println("✓ Column count matches");
-			System.out.println("✓ All columns are present");
-			System.out.println("✓ Column order matches");
-			System.out.println("✓ No duplicate columns");
-
-		} else {
-
-			System.out.println("✗ TEMPLATE VALIDATION FAILED");
-			for (String error : result.getErrors()) {
-				System.out.println("  ERROR: " + error);
-			}
-		}
 	}
 
 	private Map<String, Integer> buildHeaderMap(List<String> headers) {
