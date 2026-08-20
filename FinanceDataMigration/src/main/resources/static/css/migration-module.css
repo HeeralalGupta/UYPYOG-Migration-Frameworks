@@ -1,0 +1,40 @@
+@charset "UTF-8";
+.page-header{
+
+    margin-bottom:30px;
+
+}
+
+.page-header h2{
+
+    font-size:34px;
+
+    font-weight:700;
+
+    color:#1e293b;
+
+}
+
+.page-header p{
+
+    color:#64748b;
+
+    font-size:17px;
+
+}
+
+#moduleSearch{
+
+    height:50px;
+
+    border-radius:12px;
+
+}
+
+#categoryFilter{
+
+    height:50px;
+
+    border-radius:12px;
+
+}

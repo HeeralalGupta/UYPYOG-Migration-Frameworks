@@ -1,0 +1,667 @@
+/* =========================================================
+   ENTERPRISE HEADER
+   ========================================================= */
+
+.app-header {
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    min-height: 92px;
+
+    padding: 16px 30px;
+
+    margin: 0 0 18px 0;
+
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #172554 0%,
+            #1e40af 45%,
+            #2563eb 75%,
+            #3b82f6 100%
+        );
+
+    border-radius: 0 0 22px 22px;
+
+    box-shadow:
+        0 10px 30px rgba(30, 64, 175, 0.28);
+
+    overflow: hidden;
+
+    z-index: 100;
+}
+
+
+/* =========================================================
+   DECORATIVE LIGHT EFFECTS
+   ========================================================= */
+
+.app-header::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 420px;
+
+    height: 420px;
+
+    top: -280px;
+
+    right: 80px;
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,0.08);
+
+    pointer-events: none;
+
+}
+
+
+.app-header::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 260px;
+
+    height: 260px;
+
+    bottom: -210px;
+
+    left: 30%;
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,0.05);
+
+    pointer-events: none;
+
+}
+
+
+/* =========================================================
+   LEFT / BRAND
+   ========================================================= */
+
+.header-left {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+    position: relative;
+
+    z-index: 2;
+
+}
+
+
+/* =========================================================
+   LOGO
+   ========================================================= */
+
+.logo-circle {
+
+    width: 62px;
+
+    height: 62px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 18px;
+
+    color: #ffffff;
+
+    font-size: 27px;
+
+    background: rgba(255,255,255,0.15);
+
+    border: 1px solid rgba(255,255,255,0.25);
+
+    backdrop-filter: blur(12px);
+
+    box-shadow:
+        inset 0 1px 1px rgba(255,255,255,.2),
+        0 8px 20px rgba(0,0,0,.12);
+
+    transition: .3s ease;
+
+}
+
+
+.logo-circle:hover {
+
+    transform: translateY(-2px) rotate(-3deg);
+
+    background: rgba(255,255,255,0.22);
+
+}
+
+
+/* =========================================================
+   BRAND TEXT
+   ========================================================= */
+
+.brand-info {
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+}
+
+
+.app-title {
+
+    margin: 0;
+
+    font-size: 23px;
+
+    font-weight: 700;
+
+    letter-spacing: -.3px;
+
+    line-height: 1.2;
+
+    color: #ffffff;
+
+}
+
+
+.app-subtitle {
+
+    margin-top: 5px;
+
+    font-size: 12px;
+
+    font-weight: 500;
+
+    letter-spacing: .8px;
+
+    color: rgba(255,255,255,.72);
+
+}
+
+
+/* =========================================================
+   RIGHT SECTION
+   ========================================================= */
+
+.header-right {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    position: relative;
+
+    z-index: 2;
+
+}
+
+
+/* =========================================================
+   VERSION BOX
+   ========================================================= */
+
+.version-box {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 9px 14px;
+
+    border-radius: 14px;
+
+    background: rgba(255,255,255,.12);
+
+    border: 1px solid rgba(255,255,255,.18);
+
+    backdrop-filter: blur(12px);
+
+    transition: .3s ease;
+
+}
+
+
+.version-box:hover {
+
+    background: rgba(255,255,255,.18);
+
+    transform: translateY(-2px);
+
+}
+
+
+.version-icon {
+
+    width: 30px;
+
+    height: 30px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: rgba(255,255,255,.16);
+
+    font-size: 13px;
+
+}
+
+
+.version-content {
+
+    display: flex;
+
+    flex-direction: column;
+
+    line-height: 1.1;
+
+}
+
+
+.version-label {
+
+    font-size: 9px;
+
+    color: rgba(255,255,255,.65);
+
+    text-transform: uppercase;
+
+    letter-spacing: .7px;
+
+}
+
+
+.version-value {
+
+    margin-top: 3px;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+}
+
+
+/* =========================================================
+   DATE TIME
+   ========================================================= */
+
+.datetime-box {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 9px 15px;
+
+    min-width: 175px;
+
+    border-radius: 14px;
+
+    background: rgba(255,255,255,.12);
+
+    border: 1px solid rgba(255,255,255,.18);
+
+    backdrop-filter: blur(12px);
+
+    transition: .3s ease;
+
+}
+
+
+.datetime-box:hover {
+
+    background: rgba(255,255,255,.18);
+
+}
+
+
+.datetime-icon {
+
+    width: 32px;
+
+    height: 32px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: rgba(255,255,255,.16);
+
+}
+
+
+.datetime-content {
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+
+.datetime-label {
+
+    font-size: 9px;
+
+    color: rgba(255,255,255,.65);
+
+    text-transform: uppercase;
+
+    letter-spacing: .6px;
+
+}
+
+
+.datetime-value {
+
+    margin-top: 3px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================================
+   THEME BUTTON
+   ========================================================= */
+
+.theme-btn {
+
+    width: 45px;
+
+    height: 45px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: 1px solid rgba(255,255,255,.22);
+
+    border-radius: 50%;
+
+    color: #ffffff;
+
+    background: rgba(255,255,255,.14);
+
+    backdrop-filter: blur(12px);
+
+    cursor: pointer;
+
+    font-size: 16px;
+
+    transition: .3s ease;
+
+}
+
+
+.theme-btn:hover {
+
+    transform: rotate(20deg) scale(1.06);
+
+    background: rgba(255,255,255,.25);
+
+}
+
+
+/* =========================================================
+   USER
+   ========================================================= */
+
+.user-box {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 6px 12px 6px 6px;
+
+    min-width: 175px;
+
+    border-radius: 16px;
+
+    background: rgba(255,255,255,.12);
+
+    border: 1px solid rgba(255,255,255,.18);
+
+    backdrop-filter: blur(12px);
+
+    cursor: pointer;
+
+    transition: .3s ease;
+
+}
+
+
+.user-box:hover {
+
+    background: rgba(255,255,255,.19);
+
+    transform: translateY(-2px);
+
+}
+
+
+.user-avatar {
+
+    width: 42px;
+
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    color: #2563eb;
+
+    background: #ffffff;
+
+    font-size: 17px;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,.12);
+
+}
+
+
+.user-info {
+
+    display: flex;
+
+    flex-direction: column;
+
+    flex: 1;
+
+}
+
+
+.user-name {
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    color: #ffffff;
+
+}
+
+
+.user-role {
+
+    margin-top: 3px;
+
+    font-size: 10px;
+
+    color: rgba(255,255,255,.65);
+
+}
+
+
+.user-arrow {
+
+    font-size: 10px;
+
+    color: rgba(255,255,255,.7);
+
+    transition: .3s;
+
+}
+
+
+.user-box:hover .user-arrow {
+
+    transform: translateY(2px);
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .datetime-box {
+
+        display: none;
+
+    }
+
+}
+
+
+@media (max-width: 850px) {
+
+    .app-header {
+
+        padding: 14px 18px;
+
+    }
+
+    .app-title {
+
+        font-size: 19px;
+
+    }
+
+    .app-subtitle {
+
+        font-size: 10px;
+
+    }
+
+    .version-box {
+
+        display: none;
+
+    }
+
+    .user-box {
+
+        min-width: auto;
+
+    }
+
+    .user-info {
+
+        display: none;
+
+    }
+
+    .user-arrow {
+
+        display: none;
+
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .app-header {
+
+        min-height: 75px;
+
+        border-radius: 0 0 16px 16px;
+
+    }
+
+    .logo-circle {
+
+        width: 48px;
+
+        height: 48px;
+
+        font-size: 21px;
+
+        border-radius: 14px;
+
+    }
+
+    .app-title {
+
+        font-size: 16px;
+
+    }
+
+    .app-subtitle {
+
+        display: none;
+
+    }
+
+}

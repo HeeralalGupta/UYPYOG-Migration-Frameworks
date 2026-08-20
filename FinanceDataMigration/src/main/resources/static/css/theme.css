@@ -1,0 +1,39 @@
+@charset "UTF-8";
+
+.dark-mode .app-footer{
+
+    background:#1e293b;
+
+}
+
+.dark-mode .footer-title{
+
+    color:#ffffff;
+
+}
+
+.dark-mode .footer-version{
+
+    color:#cbd5e1;
+
+}
+
+.dark-mode .footer-bottom{
+
+    color:#cbd5e1;
+
+}
+
+.dark-mode .tech-badge{
+
+    background:#334155;
+
+    color:#ffffff;
+
+}
+
+.dark-mode .footer-links a{
+
+    color:#93c5fd;
+
+}

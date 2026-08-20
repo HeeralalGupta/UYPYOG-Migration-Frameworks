@@ -1,0 +1,207 @@
+@charset "UTF-8";
+
+/*======================================
+        Enterprise Navigation Bar
+======================================*/
+
+.migration-navbar{
+
+    margin:18px 25px;
+
+    padding:12px 20px;
+
+    background:rgba(255,255,255,.82);
+
+    backdrop-filter:blur(18px);
+
+    border-radius:18px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    box-shadow:0 8px 30px rgba(37,99,235,.08);
+
+    border:1px solid rgba(255,255,255,.4);
+
+}
+
+/* LEFT */
+
+.nav-left{
+
+    display:flex;
+
+    gap:12px;
+
+}
+
+/* MENU */
+
+.nav-item{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    padding:12px 18px;
+
+    border-radius:14px;
+
+    color:#5b6475;
+
+    text-decoration:none;
+
+    font-weight:600;
+
+    transition:.35s;
+
+    position:relative;
+
+}
+
+.nav-item i{
+
+    font-size:16px;
+
+}
+
+/* Hover */
+
+.nav-item:hover{
+
+    background:#edf4ff;
+
+    color:#2563eb;
+
+    transform:translateY(-2px);
+
+}
+
+/* Active */
+
+.nav-item.active{
+
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+
+    color:#fff;
+
+    box-shadow:0 8px 20px rgba(37,99,235,.35);
+
+}
+
+.nav-item.active::after{
+
+    content:"";
+
+    position:absolute;
+
+    left:20px;
+
+    right:20px;
+
+    bottom:-10px;
+
+    height:4px;
+
+    border-radius:10px;
+
+    background:#2563eb;
+
+}
+
+/* RIGHT */
+
+.nav-right{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+/* Notification */
+
+.notification-btn{
+
+    width:46px;
+
+    height:46px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:#f5f8ff;
+
+    position:relative;
+
+    transition:.3s;
+
+    cursor:pointer;
+
+}
+
+.notification-btn:hover{
+
+    background:#2563eb;
+
+    color:#fff;
+
+}
+
+.notification-dot{
+
+    width:10px;
+
+    height:10px;
+
+    background:#ff3b30;
+
+    border-radius:50%;
+
+    position:absolute;
+
+    top:10px;
+
+    right:10px;
+
+}
+
+/* Help */
+
+.help-btn{
+
+    border:none;
+
+    padding:11px 20px;
+
+    border-radius:30px;
+
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+
+    color:#fff;
+
+    font-weight:600;
+
+    transition:.3s;
+
+    cursor:pointer;
+
+}
+
+.help-btn:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:0 10px 20px rgba(37,99,235,.3);
+
+}
+
+

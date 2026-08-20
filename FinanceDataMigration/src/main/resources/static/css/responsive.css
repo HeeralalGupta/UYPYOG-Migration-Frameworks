@@ -1,0 +1,21 @@
+@charset "UTF-8";
+
+@media(max-width:768px){
+
+    .footer-top{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+    }
+
+    .footer-bottom{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+    }
+
+}
