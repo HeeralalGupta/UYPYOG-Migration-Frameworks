@@ -37,8 +37,6 @@ public class AuthenticationService {
 	@Value("${finance.auth.scope}")
 	private String scope;
 
-	@Value("${finance.tenant}")
-	private String tenantId;
 
 	private String accessToken;
 
@@ -49,7 +47,7 @@ public class AuthenticationService {
 		this.restTemplate = restTemplate;
 	}
 
-	public synchronized String getToken() {
+	public synchronized String getToken(String tenantId) {
 
 		/*
 		 * Reuse existing token if it is still valid.

@@ -49,8 +49,8 @@ public class JournalVoucherRequestBuilder {
 		/*
 		 * RequestInfo
 		 */
-		RequestInfo requestInfo = requestInfoBuilder.build();
-		request.setRequestInfo(requestInfoBuilder.build());
+		RequestInfo requestInfo = requestInfoBuilder.build(tenantId);
+		request.setRequestInfo(requestInfoBuilder.build(tenantId));
 
 		/*
 		 * Build one Finance Voucher

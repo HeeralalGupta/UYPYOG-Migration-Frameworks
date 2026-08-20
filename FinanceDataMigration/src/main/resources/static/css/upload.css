@@ -3292,5 +3292,302 @@
 
 
 
+/* =====================================================
+   ULB SELECTOR
+===================================================== */
 
+.tenant-selection {
+    margin: 18px 0px;
+}
+
+.tenant-label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #344054;
+    margin-top: 20px;
+        margin-left: 2px;
+}
+
+.tenant-label i {
+    margin-right: 6px;
+    color: #2563eb;
+}
+
+.required-star {
+    color: #dc3545;
+    margin-left: 2px;
+}
+
+.tenant-help-text {
+    display: block;
+    margin-top: 5px;
+
+    font-size: 9px;
+    color: #98a2b3;
+}
+
+
+/* =====================================================
+   SELECT2 MAIN BOX
+===================================================== */
+
+.tenant-select + .select2-container {
+    width: 100% !important;
+}
+
+.tenant-select + .select2-container
+.select2-selection--single {
+
+    height: 42px !important;
+
+    border: 1px solid #d9e2ef !important;
+
+    border-radius: 9px !important;
+
+    background: #ffffff !important;
+
+    box-shadow: none !important;
+
+    transition: all 0.2s ease;
+}
+
+
+.tenant-select + .select2-container
+.select2-selection--single:hover {
+
+    border-color: #9dbcf7 !important;
+
+}
+
+
+.tenant-select + .select2-container
+.select2-container--open
+.select2-selection--single {
+
+    border-color: #2563eb !important;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.08) !important;
+}
+
+
+/* =====================================================
+   SELECTED TEXT
+===================================================== */
+
+.tenant-select + .select2-container
+.select2-selection__rendered {
+
+    line-height: 42px !important;
+
+    padding-left: 13px !important;
+
+    font-size: 12px !important;
+
+    color: #344054 !important;
+}
+
+
+/* =====================================================
+   ARROW
+===================================================== */
+
+.tenant-select + .select2-container
+.select2-selection__arrow {
+
+    height: 40px !important;
+
+    right: 8px !important;
+}
+
+
+/* =====================================================
+   DROPDOWN
+===================================================== */
+
+.select2-container--open
+.select2-dropdown {
+
+    border: 1px solid #dce5f1 !important;
+
+    border-radius: 10px !important;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 10px 30px rgba(15, 23, 42, 0.12) !important;
+
+}
+
+
+/* =====================================================
+   SEARCH BOX
+===================================================== */
+
+.select2-search--dropdown {
+
+    padding: 10px !important;
+
+    background: #ffffff;
+}
+
+
+.select2-search--dropdown
+.select2-search__field {
+
+    height: 36px;
+
+    border: 1px solid #d9e2ef !important;
+
+    border-radius: 7px;
+
+    padding: 0 10px;
+
+    font-size: 12px;
+
+    outline: none;
+}
+
+
+.select2-search--dropdown
+.select2-search__field:focus {
+
+    border-color: #2563eb !important;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+
+/* =====================================================
+   OPTIONS
+===================================================== */
+
+.select2-results__option {
+
+    padding: 9px 12px !important;
+
+    font-size: 12px !important;
+
+    color: #344054;
+
+    transition: all 0.15s ease;
+}
+
+
+.select2-results__option--highlighted {
+
+    background: #eff6ff !important;
+
+    color: #2563eb !important;
+}
+
+
+.select2-results__option[aria-selected="true"] {
+
+    background: #eaf2ff !important;
+
+    color: #2563eb !important;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   ULB SELECT2 - MIGRATION PAGE
+========================================================= */
+
+#tenantId + .select2-container {
+    width: 100% !important;
+    margin-top: 5px;
+}
+
+#tenantId + .select2-container .select2-selection--single {
+    height: 40px !important;
+    border: 1px solid #d9e1ec !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 10px !important;
+}
+
+#tenantId + .select2-container
+.select2-selection--single
+.select2-selection__rendered {
+    color: #667085 !important;
+    font-size: 12px !important;
+    line-height: 40px !important;
+    padding-left: 2px !important;
+}
+
+#tenantId + .select2-container
+.select2-selection--single
+.select2-selection__arrow {
+    height: 38px !important;
+    right: 8px !important;
+}
+
+
+/* Open dropdown */
+
+.select2-container--open .select2-dropdown {
+    border: 1px solid #d9e1ec !important;
+    border-radius: 8px !important;
+    margin-top: 4px !important;
+    overflow: hidden !important;
+    box-shadow: 0 8px 25px rgba(16, 24, 40, 0.12) !important;
+}
+
+
+/* Search box */
+
+.select2-search--dropdown {
+    padding: 8px !important;
+    background: #ffffff !important;
+}
+
+.select2-search--dropdown .select2-search__field {
+    width: 100% !important;
+    height: 34px !important;
+    border: 1px solid #b8c7dc !important;
+    border-radius: 6px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    outline: none !important;
+}
+
+.select2-search--dropdown .select2-search__field:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.10) !important;
+}
+
+
+/* Result list */
+
+.select2-results__options {
+    max-height: 240px !important;
+}
+
+.select2-results__option {
+    padding: 9px 11px !important;
+    font-size: 12px !important;
+    color: #344054 !important;
+}
+
+.select2-results__option--highlighted {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+}
+
+
+/* Selected option */
+
+.select2-results__option[aria-selected="true"] {
+    background: #f0f7ff !important;
+    color: #2563eb !important;
+    font-weight: 600 !important;
+}
 

@@ -29,7 +29,7 @@ public class JournalVoucherApiClient {
 
 	public VoucherResponse createVoucher(VoucherRequest request) {
 
-		String token = authenticationService.getToken();
+		String token = authenticationService.getToken(request.getTenantId());
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);

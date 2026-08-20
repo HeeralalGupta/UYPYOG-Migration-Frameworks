@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="jakarta.tags.core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <!DOCTYPE html>
 <html>
@@ -7,23 +9,19 @@
 <meta charset="UTF-8">
 <title>Migration Upload</title>
 <%@ include file="../layout/head.jsp"%>
+<link
+	href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+	rel="stylesheet" />
 </head>
 
 <body>
-
 	<!-- HEADER -->
-
 	<%@ include file="../layout/header.jsp"%>
 
-
 	<!-- NAVBAR -->
-
 	<%@ include file="../layout/navbar.jsp"%>
 
-
 	<main class="migration-upload-page">
-
-
 		<!-- =================================================
              PAGE HEADER
         ================================================== -->
@@ -248,6 +246,29 @@
 				</div>
 
 
+				<!-- =====================================================
+					         TENANT / ULB SELECTION
+					 ====================================================== -->
+
+				<div class="tenant-selection">
+
+					<label for="tenantId" class="tenant-label"> <i
+						class="fa-solid fa-building"></i> Select ULB <span
+						class="required-star">*</span>
+					</label> <select id="tenantId" name="tenantId"
+						class="form-select tenant-select" required>
+
+
+						<option value=""></option>
+						<c:forEach var="tenant" items="${tenants}">
+							<option value="${tenant}">
+								${tenant.substring(3,4).toUpperCase()}${tenant.substring(4)}</option>
+						</c:forEach>
+
+					</select> <small class="tenant-help-text"> Select the ULB where the
+						migration will be performed. </small>
+
+				</div>
 
 				<!-- DROP ZONE -->
 
@@ -1041,7 +1062,9 @@
 
 	</main>
 
-
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 	<!-- FOOTER -->
 	<%@ include file="../layout/foot.jsp"%>
 </body>

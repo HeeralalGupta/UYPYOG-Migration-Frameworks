@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const statusBadge =
         document.getElementById("statusBadge");
 
+
     const migrationResultPages = {
 
         failed: {
@@ -734,7 +735,7 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log("VALIDATE BUTTON CLICKED");
             console.log("=================================");
 
-
+			
             /* ---------------------------------------------
                Check file
             --------------------------------------------- */
@@ -787,6 +788,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 return;
             }
+			
+			const tenantSelect =
+			        document.getElementById("tenantId");
+			
+			if(!tenantSelect){
+				console.error("Please select ulb name.");
+			}
 
 
             const module =
@@ -965,6 +973,8 @@ document.addEventListener("DOMContentLoaded", function() {
                         console.log("====================================");
                         console.log("PROCESS MIGRATION CLICKED");
                         console.log("====================================");
+                        const tenantId =
+                            document.getElementById("tenantId").value;
 
                         if (!fileInput.files.length) {
 
@@ -981,9 +991,14 @@ document.addEventListener("DOMContentLoaded", function() {
                             file
                         );
 
+                        if (!tenantId) {
+                            alert("Please select a ULB before uploading the file.");
+                            return;
+                        }
+
                         formData.append(
                             "tenantId",
-                            "hr.gurugram"
+                            tenantId
                         );
 
                         formData.append(
@@ -3533,6 +3548,30 @@ document.addEventListener("DOMContentLoaded", function() {
             .replace(/'/g, "&#039;");
 
     }
+
+    console.log("jQuery:", typeof jQuery);
+    console.log("Select2:", typeof $.fn.select2);
+
+    $("#tenantId").select2({
+
+        placeholder: "Search & Select ULB",
+
+        allowClear: true,
+
+        width: "100%",
+
+        minimumResultsForSearch: 0
+
+    });
+
+
+
+
+
+
+
+
+
 
 
 });

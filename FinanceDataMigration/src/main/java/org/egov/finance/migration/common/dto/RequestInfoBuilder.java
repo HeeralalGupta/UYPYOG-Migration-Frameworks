@@ -7,22 +7,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class RequestInfoBuilder {
 
-	@Value("${finance.tenant}")
-	private String tenantId;
-
 	private final AuthenticationService authenticationService;
 
 	public RequestInfoBuilder(AuthenticationService authenticationService) {
 		this.authenticationService = authenticationService;
 	}
 
-	public RequestInfo build() {
+	public RequestInfo build(String tenantId) {
 
 		RequestInfo requestInfo = new RequestInfo();
 
 		requestInfo.setApiId("Finance Data Migration");
 		requestInfo.setAction("CREATE");
-		requestInfo.setAuthToken(authenticationService.getToken());
+		requestInfo.setAuthToken(authenticationService.getToken(tenantId));
 		UserInfo userInfo = new UserInfo();
 		userInfo.setTenantId(tenantId);
 		requestInfo.setUserInfo(userInfo);

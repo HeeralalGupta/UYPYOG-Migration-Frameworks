@@ -43,7 +43,6 @@ public class MigrationController {
 	@ResponseBody
 	public MigrationStartResponse process(@ModelAttribute MigrationRequest request) {
 		// Generate Job ID
-
 		String jobId = UUID.randomUUID().toString();
 		request.setJobId(jobId);
 

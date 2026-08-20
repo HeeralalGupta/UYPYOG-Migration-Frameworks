@@ -1,5 +1,6 @@
 package org.egov.finance.migration.controller;
 
+import org.egov.finance.migration.config.TenantConfig;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +10,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/migration")
 public class MigrationPageController {
+	
+	private final TenantConfig tenantConfig;
+
+	public MigrationPageController(TenantConfig tenantConfig) {
+	    this.tenantConfig = tenantConfig;
+	}
 
 	@GetMapping({ "", "/" })
 	public String home() {
@@ -22,7 +29,8 @@ public class MigrationPageController {
 
 	@GetMapping("/upload/{module}")
 	public String upload(@PathVariable String module, Model model) {
-
+		
+		model.addAttribute("tenants", tenantConfig.getTenants());
 		model.addAttribute("moduleCode", module);
 
 		return "migration/upload";
