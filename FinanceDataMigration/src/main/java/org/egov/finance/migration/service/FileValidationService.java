@@ -254,8 +254,6 @@ public class FileValidationService {
 
 				int excelRowNumber = rowIndex + 1;
 
-				System.out.println("VALIDATING DATA ROW : " + excelRowNumber);
-
 				/*
 				 * ================================================= ROW LEVEL VALIDATION
 				 * =================================================
@@ -266,13 +264,8 @@ public class FileValidationService {
 					RowValidationError rowError = journalVoucherRowValidator.validate(row, excelRowNumber, headerMap);
 
 					if (!rowError.getErrors().isEmpty()) {
-
 						result.getRowErrors().add(rowError);
-
-						System.out.println("ROW " + excelRowNumber + " FAILED");
-
 						for (String error : rowError.getErrors()) {
-
 							System.out.println("   - " + error);
 						}
 					}
@@ -280,9 +273,6 @@ public class FileValidationService {
 			}
 
 			result.setTotalRows(totalRows);
-
-			System.out.println("Total Data Rows : " + totalRows);
-			System.out.println("Rows With Errors : " + result.getRowErrors().size());
 
 			/*
 			 * ================================================= 12. EMPTY DATA CHECK
