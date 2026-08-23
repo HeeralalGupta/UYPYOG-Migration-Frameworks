@@ -38,8 +38,8 @@ RUN chown -R appuser:appgroup /app
 # Run as non-root
 USER appuser
 
-# Render uses PORT environment variable
-EXPOSE 10000
+#POR
+EXPOSE 8000
 
 # Optional JVM options
 ENV JAVA_OPTS=""

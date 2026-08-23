@@ -1,0 +1,55 @@
+services:
+
+  postgres:
+    image: postgres:17
+    container_name: finance-migration-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: upyog_migration
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d upyog_migration"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: finance-migration-app
+    restart: unless-stopped
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      # Spring profile
+      PROFILE: local
+
+      # PostgreSQL connection
+      DB_URL: jdbc:postgresql://postgres:5432/upyog_migration
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+      # Optional JVM options
+      JAVA_OPTS: "-Xms128m -Xmx512m"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+volumes:
+  postgres_data:
