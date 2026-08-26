@@ -17,6 +17,7 @@ import org.egov.finance.migration.modules.expensebill.dto.ExpenseDebitRecord;
 import org.egov.finance.migration.modules.expensebill.dto.ExpenseDeductionRecord;
 import org.egov.finance.migration.modules.expensebill.dto.ExpenseNetPayableRecord;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 @Component
 public class ExpenseBillExcelReader {
@@ -75,11 +76,11 @@ public class ExpenseBillExcelReader {
 	 *
 	 * Multiple rows with blank SN belong to the previous ExpenseRecord.
 	 */
-	public List<ExpenseBillRecord> read(InputStream inputStream) throws Exception {
+	public List<ExpenseBillRecord> read(MultipartFile file) throws Exception {
 
 		List<ExpenseBillRecord> expenseRecords = new ArrayList<ExpenseBillRecord>();
 
-		try (Workbook workbook = WorkbookFactory.create(inputStream)) {
+		try (InputStream inputStream = file.getInputStream();Workbook workbook = WorkbookFactory.create(inputStream)) {
 			Sheet sheet = workbook.getSheetAt(0);
 			ExpenseBillRecord currentRecord = null;
 
