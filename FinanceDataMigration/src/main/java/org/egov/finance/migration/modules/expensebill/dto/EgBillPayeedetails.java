@@ -4,18 +4,18 @@ import java.math.BigDecimal;
 
 public class EgBillPayeedetails {
 
-	private IdDTO egBilldetailsId;
+	private Long egBilldetailsId;
 	private BigDecimal debitAmount;
 	private BigDecimal creditAmount;
 	private Boolean isDebit;
 	private Long accountDetailTypeId;
 	private Long accountDetailKeyId;
 
-	public IdDTO getEgBilldetailsId() {
+	public Long getEgBilldetailsId() {
 		return egBilldetailsId;
 	}
 
-	public void setEgBilldetailsId(IdDTO egBilldetailsId) {
+	public void setEgBilldetailsId(Long egBilldetailsId) {
 		this.egBilldetailsId = egBilldetailsId;
 	}
 

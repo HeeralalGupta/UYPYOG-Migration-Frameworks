@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.egov.finance.migration.common.dto.ChartOfAccountsResponse;
 import org.egov.finance.migration.common.dto.Fund;
 import org.egov.finance.migration.common.dto.MigrationRequest;
 import org.egov.finance.migration.common.dto.RequestInfo;
@@ -15,6 +16,7 @@ import org.egov.finance.migration.common.util.AccountDetailKeyServiceClient;
 import org.egov.finance.migration.common.util.AccountDetailTypeServiceClient;
 import org.egov.finance.migration.common.util.Accountdetailkey;
 import org.egov.finance.migration.common.util.Accountdetailtype;
+import org.egov.finance.migration.common.util.ChartOfAccountsServiceClient;
 import org.egov.finance.migration.common.util.DepartmentMapping;
 import org.egov.finance.migration.common.util.FundServiceClient;
 import org.egov.finance.migration.modules.expensebill.dto.AppConfigValue;
@@ -39,15 +41,18 @@ public class ExpenseBillRequestBuilder {
 	private final FundServiceClient fundServiceClient;
 	private final AccountDetailTypeServiceClient accountDetailTypeServiceClient;
 	private final AccountDetailKeyServiceClient accountDetailKeyServiceClient;
+	private final ChartOfAccountsServiceClient chartOfAccountsServiceClient;
 
 	public ExpenseBillRequestBuilder(RequestInfoBuilder requestInfoBuilder, FundServiceClient fundServiceClient,
 			AccountDetailTypeServiceClient accountDetailTypeServiceClient,
-			AccountDetailKeyServiceClient accountDetailKeyServiceClient) {
+			AccountDetailKeyServiceClient accountDetailKeyServiceClient,
+			ChartOfAccountsServiceClient chartOfAccountsServiceClient) {
 
 		this.requestInfoBuilder = requestInfoBuilder;
 		this.fundServiceClient = fundServiceClient;
 		this.accountDetailTypeServiceClient = accountDetailTypeServiceClient;
 		this.accountDetailKeyServiceClient = accountDetailKeyServiceClient;
+		this.chartOfAccountsServiceClient = chartOfAccountsServiceClient;
 	}
 
 	/**
@@ -56,22 +61,12 @@ public class ExpenseBillRequestBuilder {
 	public ExpenseBillCreateRequest build(ExpenseBillRecord record, MigrationRequest migrationRequest) {
 
 		ExpenseBillCreateRequest request = new ExpenseBillCreateRequest();
-
-		/*
-		 * Tenant ID
-		 */
 		String tenantId = migrationRequest.getTenantId();
 		request.setTenantId(tenantId);
 
-		/*
-		 * RequestInfo
-		 */
 		RequestInfo requestInfo = requestInfoBuilder.build(tenantId);
 		request.setRequestInfo(requestInfo);
 
-		/*
-		 * Expense Bill Request
-		 */
 		request.setExpenseBillRequest(buildExpenseBillRequest(record, requestInfo, tenantId));
 		return request;
 	}
@@ -114,14 +109,12 @@ public class ExpenseBillRequestBuilder {
 		 */
 		BigDecimal billAmount = calculateBillAmount(record);
 		billRegister.setBillamount(billAmount);
-
 		billRegister.setBillnumber(generateBillNumber(record));
-
 		String convertToApiDate = convertToApiDate(record.getBillDate());
 		billRegister.setBilldate(convertToApiDate);
 		billRegister.setExpendituretype("Expense");
 		billRegister.setEgBillregistermis(buildMisDetails(record, requestInfo, tenantId));
-		billRegister.setBillDetails(buildBillDetails(record));
+		billRegister.setBillDetails(buildBillDetails(record, requestInfo, tenantId));
 		billRegister.setBillPayeedetails(buildPayeeDetails(record, requestInfo, tenantId));
 		billRegister.setCheckLists(buildCheckLists());
 		return billRegister;
@@ -154,10 +147,6 @@ public class ExpenseBillRequestBuilder {
 			}
 			mis.setFund(createIdReference(fundResponse.getId()));
 		}
-
-		/*
-		 * Scheme
-		 */
 
 		/***
 		 * call Scheme fetch api client then set id
@@ -206,7 +195,6 @@ public class ExpenseBillRequestBuilder {
 				if (billSubTypeId == null) {
 					throw new IllegalArgumentException("Invalid Bill Sub Type: " + record.getBillSubType());
 				}
-
 				mis.setEgBillSubType(billSubTypeId);
 			}
 		}
@@ -220,7 +208,7 @@ public class ExpenseBillRequestBuilder {
 	 * "billDetails": [ { "glcodeid": 786, "debitamount": 30000.00 }, { "glcodeid":
 	 * 1015, "creditamount": 1500.00 } ]
 	 */
-	private List<EgBilldetails> buildBillDetails(ExpenseBillRecord record) {
+	private List<EgBilldetails> buildBillDetails(ExpenseBillRecord record, RequestInfo requestInfo, String tenantId) {
 
 		List<EgBilldetails> billDetails = new ArrayList<EgBilldetails>();
 
@@ -231,9 +219,13 @@ public class ExpenseBillRequestBuilder {
 		for (ExpenseDebitRecord sourceDetail : record.getDebitDetails()) {
 			EgBilldetails billDetail = new EgBilldetails();
 			/***
-			 * call glcode fecth client then set glcode id
+			 * call glcode fetch client then set glcode id
 			 */
-//			billDetail.setGlcodeid(sourceDetail.getGlcodeid());
+
+			ChartOfAccountsResponse chartOfAccounts = chartOfAccountsServiceClient.getByGlCode(sourceDetail.getGlCode(),
+					requestInfo, tenantId);
+
+			billDetail.setGlcodeid(chartOfAccounts.getId());
 			billDetail.setDebitamount(sourceDetail.getDebitAmount());
 			billDetails.add(billDetail);
 		}
@@ -243,7 +235,9 @@ public class ExpenseBillRequestBuilder {
 			/***
 			 * call glcode fetch client then set glcode id
 			 */
-//			billDetail.setGlcodeid(sourceDetail.getGlcodeid());
+			ChartOfAccountsResponse chartOfAccounts = chartOfAccountsServiceClient.getByGlCode(sourceDetail.getGlCode(),
+					requestInfo, tenantId);
+			billDetail.setGlcodeid(chartOfAccounts.getId());
 			billDetail.setCreditamount(sourceDetail.getCreditAmount());
 			billDetails.add(billDetail);
 		}
@@ -271,12 +265,13 @@ public class ExpenseBillRequestBuilder {
 		/***
 		 * call glocde api client to fetch data and set the id
 		 */
-//		reference.setGlcodeid(sourcePayee.ge);
+		ChartOfAccountsResponse chartOfAccounts = chartOfAccountsServiceClient.getByGlCode(sourcePayee.getGlCode(),
+				requestInfo, tenantId);
 		Accountdetailtype accountdetailtype = accountDetailTypeServiceClient.getByName(record.getSubLedgerType(),
 				requestInfo, tenantId);
 
 		EgBillPayeedetails billPayeedetails = new EgBillPayeedetails();
-
+		billPayeedetails.setEgBilldetailsId(chartOfAccounts.getId());
 		billPayeedetails.setIsDebit(false);
 		billPayeedetails.setCreditAmount(sourcePayee.getCreditAmount());
 		billPayeedetails.setAccountDetailTypeId(accountdetailtype.getId().longValue());
