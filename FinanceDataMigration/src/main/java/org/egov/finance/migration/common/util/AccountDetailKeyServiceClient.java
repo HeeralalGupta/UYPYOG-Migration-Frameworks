@@ -16,7 +16,7 @@ public class AccountDetailKeyServiceClient {
 
 	private final RestTemplate restTemplate;
 
-	@Value("${finance.service.url}")
+	@Value("${finance.local.baseurl}")
 	private String financeServiceUrl;
 
 	public AccountDetailKeyServiceClient(RestTemplate restTemplate) {
