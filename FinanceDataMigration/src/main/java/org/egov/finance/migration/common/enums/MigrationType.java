@@ -10,6 +10,7 @@ public enum MigrationType {
     SCHEME,
     CONTRACTOR_BILL,
     EXPENSE_BILL,
-    SUPPLIER_BILL
+    SUPPLIER_BILL,
+    WORK
     
 }
