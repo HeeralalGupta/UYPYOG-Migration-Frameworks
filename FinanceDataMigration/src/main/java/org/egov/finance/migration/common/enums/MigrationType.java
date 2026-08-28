@@ -11,6 +11,6 @@ public enum MigrationType {
     CONTRACTOR_BILL,
     EXPENSE_BILL,
     SUPPLIER_BILL,
-    WORK
-    
+    WORK,
+    WORK_ORDER
 }
