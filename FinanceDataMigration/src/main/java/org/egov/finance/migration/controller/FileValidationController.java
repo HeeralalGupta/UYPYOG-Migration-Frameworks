@@ -2,6 +2,8 @@ package org.egov.finance.migration.controller;
 
 import org.egov.finance.migration.common.dto.FileValidationResult;
 import org.egov.finance.migration.service.FileValidationService;
+import org.egov.finance.migration.service.WorkFileValidationService;
+import org.egov.finance.migration.service.WorkOrderFileValidationService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,15 +13,30 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileValidationController {
 
 	private final FileValidationService validationService;
+	private final WorkFileValidationService workFileValidationService;
+	private final WorkOrderFileValidationService workOrderFileValidationService;
 
-	public FileValidationController(FileValidationService validationService) {
+	public FileValidationController(FileValidationService validationService, WorkFileValidationService workFileValidationService, WorkOrderFileValidationService workOrderFileValidationService) {
 
 		this.validationService = validationService;
+		this.workFileValidationService = workFileValidationService;
+		this.workOrderFileValidationService = workOrderFileValidationService;
+		
 	}
 
 	@PostMapping(value = "/validate/{module}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public FileValidationResult validateFile(@PathVariable String module, @RequestParam("file") MultipartFile file) {
 		System.out.println("Module Name is : "+module);
 		return validationService.validate(file, module);
+	}
+	
+	@PostMapping(value = "/validate/WORK", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public FileValidationResult validateWorkFile(@RequestParam("file") MultipartFile file) {
+		return workFileValidationService.validate(file);
+	}
+	
+	@PostMapping(value = "/validate/WORK_ORDER", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public FileValidationResult validateWorkOrderFile(@RequestParam("file") MultipartFile file) {
+		return workOrderFileValidationService.validate(file);
 	}
 }
