@@ -13,6 +13,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.egov.finance.migration.common.constants.ExcelConstants;
 import org.egov.finance.migration.modules.work.dto.WorkRecord;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,7 +32,12 @@ public class WorkExcelReader {
         try (InputStream inputStream = file.getInputStream();
              Workbook workbook = WorkbookFactory.create(inputStream)) {
 
-            Sheet sheet = workbook.getSheetAt(0);
+            Sheet sheet = workbook.getSheet(ExcelConstants.WORK_SHEET);
+
+            if (sheet == null) {
+                throw new IllegalArgumentException(
+                        "Excel sheet '" + ExcelConstants.WORK_SHEET + "' not found.");
+            }
 
             for (int rowIndex = DATA_START_ROW;
                  rowIndex <= sheet.getLastRowNum();

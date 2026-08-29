@@ -2,6 +2,7 @@ package org.egov.finance.migration.controller;
 
 import org.egov.finance.migration.common.dto.FileValidationResult;
 import org.egov.finance.migration.service.FileValidationService;
+import org.egov.finance.migration.service.PurchaseOrderFileValidationService;
 import org.egov.finance.migration.service.WorkFileValidationService;
 import org.egov.finance.migration.service.WorkOrderFileValidationService;
 import org.springframework.http.MediaType;
@@ -15,12 +16,14 @@ public class FileValidationController {
 	private final FileValidationService validationService;
 	private final WorkFileValidationService workFileValidationService;
 	private final WorkOrderFileValidationService workOrderFileValidationService;
+	private final PurchaseOrderFileValidationService purchaseOrderFileValidationService;
 
-	public FileValidationController(FileValidationService validationService, WorkFileValidationService workFileValidationService, WorkOrderFileValidationService workOrderFileValidationService) {
+	public FileValidationController(FileValidationService validationService, WorkFileValidationService workFileValidationService, WorkOrderFileValidationService workOrderFileValidationService, PurchaseOrderFileValidationService purchaseOrderFileValidationService) {
 
 		this.validationService = validationService;
 		this.workFileValidationService = workFileValidationService;
 		this.workOrderFileValidationService = workOrderFileValidationService;
+		this.purchaseOrderFileValidationService = purchaseOrderFileValidationService;
 		
 	}
 
@@ -38,5 +41,9 @@ public class FileValidationController {
 	@PostMapping(value = "/validate/WORK_ORDER", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public FileValidationResult validateWorkOrderFile(@RequestParam("file") MultipartFile file) {
 		return workOrderFileValidationService.validate(file);
+	}
+	@PostMapping(value = "/validate/PURCHASE_ORDER", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public FileValidationResult validatePurchaseOrderFile(@RequestParam("file") MultipartFile file) {
+		return purchaseOrderFileValidationService.validate(file);
 	}
 }

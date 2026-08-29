@@ -19,24 +19,23 @@ import org.egov.finance.migration.common.constants.ExcelConstants;
 import org.egov.finance.migration.common.dto.FileValidationResult;
 import org.egov.finance.migration.common.dto.RowValidationError;
 import org.egov.finance.migration.common.enums.MigrationType;
-import org.egov.finance.migration.service.validator.WorkOrderRowValidator;
+import org.egov.finance.migration.service.validator.PurchaseOrderRowValidator;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
-public class WorkOrderFileValidationService
+public class PurchaseOrderFileValidationService
         extends AbstractFileValidationService {
 
-    private final WorkOrderRowValidator workOrderRowValidator;
+    private final PurchaseOrderRowValidator purchaseOrderRowValidator;
 
-    public WorkOrderFileValidationService(
-            WorkOrderRowValidator workOrderRowValidator) {
+    public PurchaseOrderFileValidationService(
+            PurchaseOrderRowValidator purchaseOrderRowValidator) {
 
-        super(workOrderRowValidator);
-
-        this.workOrderRowValidator =
-                workOrderRowValidator;
+        super(purchaseOrderRowValidator);
+        this.purchaseOrderRowValidator =
+                purchaseOrderRowValidator;
     }
 
     /**
@@ -46,18 +45,18 @@ public class WorkOrderFileValidationService
      */
     @Override
     protected MigrationType getModuleCode() {
-
-        return MigrationType.WORK_ORDER;
+        return MigrationType.PURCHASE_ORDER;
     }
 
     /**
      * =====================================================
      * MAIN VALIDATION
      *
-     * Work Order contains two sheets:
+     * Purchase Order contains two sheets:
      *
-     * 1. Work Order Master
-     * 2. Work Order Items
+     * 1. Purchase Order Master
+     * 2. Purchase Order Items
+     *
      * =====================================================
      */
     @Override
@@ -81,10 +80,7 @@ public class WorkOrderFileValidationService
 
             /*
              * =================================================
-             * NEW:
-             * Formula evaluator
-             *
-             * This allows validation of Excel formula cells too.
+             * FORMULA EVALUATOR
              * =================================================
              */
             FormulaEvaluator formulaEvaluator =
@@ -93,13 +89,13 @@ public class WorkOrderFileValidationService
 
             /*
              * =================================================
-             * 1. GET WORK ORDER MASTER SHEET
+             * 1. GET PURCHASE ORDER MASTER SHEET
              * =================================================
              */
             Sheet masterSheet =
                     workbook.getSheet(
                             ExcelConstants
-                                    .WORK_ORDER_MASTER_SHEET);
+                                    .PURCHASE_ORDER_MASTER_SHEET);
 
             if (masterSheet == null) {
 
@@ -108,20 +104,20 @@ public class WorkOrderFileValidationService
                 result.getErrors().add(
                         "Required sheet not found: "
                                 + ExcelConstants
-                                .WORK_ORDER_MASTER_SHEET);
+                                .PURCHASE_ORDER_MASTER_SHEET);
 
                 return result;
             }
 
             /*
              * =================================================
-             * 2. GET WORK ORDER ITEMS SHEET
+             * 2. GET PURCHASE ORDER ITEMS SHEET
              * =================================================
              */
             Sheet itemsSheet =
                     workbook.getSheet(
                             ExcelConstants
-                                    .WORK_ORDER_ITEMS_SHEET);
+                                    .PURCHASE_ORDER_ITEMS_SHEET);
 
             if (itemsSheet == null) {
 
@@ -130,7 +126,7 @@ public class WorkOrderFileValidationService
                 result.getErrors().add(
                         "Required sheet not found: "
                                 + ExcelConstants
-                                .WORK_ORDER_ITEMS_SHEET);
+                                .PURCHASE_ORDER_ITEMS_SHEET);
 
                 return result;
             }
@@ -143,7 +139,7 @@ public class WorkOrderFileValidationService
             validateSheet(
                     masterSheet,
                     ExcelConstants
-                            .WORK_ORDER_MASTER_SHEET,
+                            .PURCHASE_ORDER_MASTER_SHEET,
                     result);
 
             /*
@@ -154,33 +150,26 @@ public class WorkOrderFileValidationService
             validateSheet(
                     itemsSheet,
                     ExcelConstants
-                            .WORK_ORDER_ITEMS_SHEET,
+                            .PURCHASE_ORDER_ITEMS_SHEET,
                     result);
 
             /*
              * =================================================
-             * NEW - 5. CROSS SHEET + MATHEMATICAL VALIDATION
+             * 5. VALIDATE ITEMS AGAINST MASTER
              *
-             * Validates:
+             * Mathematical validation:
              *
-             * Unit Rate + GST
-             *          =
-             * Unit Value With GST
+             * Rate + GST = Unit Value With GST
              *
-             * Unit Value With GST * Quantity
-             *          =
-             * Amount
+             * Unit Value With GST * Qty = Net Amount
              *
-             * SUM(Amount)
-             *          =
-             * Total Order Amt
+             * SUM(Item Net Amount)
+             *      =
+             * Master Total Order Value
              *
-             * WorkOrderNo in Items
-             *          =
-             * WorkOrderNo in Master
              * =================================================
              */
-            validateWorkOrderItemsAgainstMaster(
+            validatePurchaseOrderItemsAgainstMaster(
                     masterSheet,
                     itemsSheet,
                     result,
@@ -268,13 +257,12 @@ public class WorkOrderFileValidationService
         int totalRows = 0;
 
         /*
-         * Work Order Number must be unique
-         * only in Master.
+         * Purchase Order Number must be unique
+         * only in Purchase Order Master.
          *
-         * Items can contain multiple rows
-         * with same Work Order Number.
+         * Items can have duplicate Order Numbers.
          */
-        Set<String> workOrderNumbers =
+        Set<String> orderNumbers =
                 new HashSet<>();
 
         for (int rowIndex =
@@ -298,28 +286,27 @@ public class WorkOrderFileValidationService
 
             /*
              * =================================================
-             * WORK ORDER NUMBER UNIQUE CHECK
+             * PURCHASE ORDER NUMBER UNIQUE CHECK
              *
-             * Only Master.
+             * Only for Purchase Order Master
              * =================================================
              */
             if (ExcelConstants
-                    .WORK_ORDER_MASTER_SHEET
+                    .PURCHASE_ORDER_MASTER_SHEET
                     .equals(sheetName)) {
 
-                Integer workOrderNoColumn =
-                        headerMap.get("workorderno");
+                Integer orderNoColumn =
+                        headerMap.get("orderno");
 
-                if (workOrderNoColumn != null) {
+                if (orderNoColumn != null) {
 
-                    String workOrderNo =
+                    String orderNo =
                             getCellValue(
                                     row,
-                                    workOrderNoColumn);
+                                    orderNoColumn);
 
-                    if (!workOrderNo.isEmpty()
-                            && !workOrderNumbers.add(
-                                    workOrderNo)) {
+                    if (!orderNo.isEmpty()
+                            && !orderNumbers.add(orderNo)) {
 
                         RowValidationError duplicateError =
                                 new RowValidationError(
@@ -327,8 +314,8 @@ public class WorkOrderFileValidationService
 
                         duplicateError.getErrors().add(
                                 "[" + sheetName + "] "
-                                        + "Duplicate Work Order Number: "
-                                        + workOrderNo);
+                                        + "Duplicate Purchase Order Number: "
+                                        + orderNo);
 
                         result.getRowErrors().add(
                                 duplicateError);
@@ -342,7 +329,7 @@ public class WorkOrderFileValidationService
              * =================================================
              */
             RowValidationError rowError =
-                    workOrderRowValidator.validate(
+                    purchaseOrderRowValidator.validate(
                             row,
                             excelRowNumber,
                             headerMap);
@@ -396,31 +383,31 @@ public class WorkOrderFileValidationService
 
     /**
      * =====================================================
-     * NEW
+     * PURCHASE ORDER ITEMS VS MASTER VALIDATION
      *
-     * WORK ORDER ITEMS VS MASTER VALIDATION
+     * Validations:
      *
-     * =====================================================
+     * 1. OrderNo must exist in Master
      *
-     * Rules:
+     * 2. Unit Value With GST:
      *
-     * 1. Work Order No in Items must exist in Master.
+     *    Rate + (Rate * GST / 100)
      *
-     * 2. Unit Value With GST must be:
+     * 3. Net Amount:
      *
-     *    Unit Rate + (Unit Rate * GST / 100)
+     *    Unit Value With GST * Qty
      *
-     * 3. Amount must be:
+     * 4. Grand Total:
      *
-     *    Unit Value With GST * Quantity
+     *    SUM(Net Amount for same OrderNo)
      *
-     * 4. Sum of Amount for each Work Order No must equal:
+     * 5. Grand Total must match:
      *
-     *    Master Total Order Amt
+     *    Master Total Order Value
      *
      * =====================================================
      */
-    private void validateWorkOrderItemsAgainstMaster(
+    private void validatePurchaseOrderItemsAgainstMaster(
             Sheet masterSheet,
             Sheet itemsSheet,
             FileValidationResult result,
@@ -438,7 +425,7 @@ public class WorkOrderFileValidationService
                 findHeaderRow(
                         masterSheet,
                         ExcelConstants
-                                .WORK_ORDER_MASTER_SHEET);
+                                .PURCHASE_ORDER_MASTER_SHEET);
 
         /*
          * =================================================
@@ -449,7 +436,7 @@ public class WorkOrderFileValidationService
                 findHeaderRow(
                         itemsSheet,
                         ExcelConstants
-                                .WORK_ORDER_ITEMS_SHEET);
+                                .PURCHASE_ORDER_ITEMS_SHEET);
 
         if (masterHeaderRowIndex == -1
                 || itemsHeaderRowIndex == -1) {
@@ -476,14 +463,14 @@ public class WorkOrderFileValidationService
          * =================================================
          * MASTER ORDER TOTALS
          *
-         * WorkOrderNo -> Total Order Amt
+         * orderNo -> Total Order Value
          * =================================================
          */
         Map<String, BigDecimal> masterOrderTotals =
                 new HashMap<>();
 
         /*
-         * WorkOrderNo -> Excel row number
+         * orderNo -> Excel row number
          */
         Map<String, Integer> masterOrderRows =
                 new HashMap<>();
@@ -493,36 +480,24 @@ public class WorkOrderFileValidationService
          * MASTER COLUMNS
          * =================================================
          */
-        Integer masterWorkOrderNoColumn =
-                masterHeaderMap.get("workorderno");
+        Integer masterOrderNoColumn =
+                masterHeaderMap.get("orderno");
 
-        /*
-         * Excel:
-         *
-         * Total Order Amt *
-         *
-         * should normalize to:
-         *
-         * totalorderamt
-         * =================================================
-         */
-        Integer totalOrderAmtColumn =
-                masterHeaderMap.get("totalorderamt");
+        Integer totalOrderValueColumn =
+                masterHeaderMap.get("totalordervalue");
 
-        if (masterWorkOrderNoColumn == null) {
+        if (masterOrderNoColumn == null) {
 
             result.getErrors().add(
-                    "Required column missing in Work Order Master: "
-                            + "workorderno");
+                    "Required column missing in Purchase Order Master: orderno");
 
             return;
         }
 
-        if (totalOrderAmtColumn == null) {
+        if (totalOrderValueColumn == null) {
 
             result.getErrors().add(
-                    "Required column missing in Work Order Master: "
-                            + "totalorderamt");
+                    "Required column missing in Purchase Order Master: totalordervalue");
 
             return;
         }
@@ -546,116 +521,75 @@ public class WorkOrderFileValidationService
                 continue;
             }
 
-            String workOrderNo =
+            String orderNo =
                     getCellValue(
                             row,
-                            masterWorkOrderNoColumn,
+                            masterOrderNoColumn,
                             formatter,
                             formulaEvaluator);
 
-            if (workOrderNo.isEmpty()) {
+            if (orderNo.isEmpty()) {
                 continue;
             }
 
-            BigDecimal totalOrderAmt =
+            BigDecimal totalOrderValue =
                     getBigDecimalCellValue(
                             row,
-                            totalOrderAmtColumn,
+                            totalOrderValueColumn,
                             formatter,
                             formulaEvaluator);
 
             masterOrderTotals.put(
-                    workOrderNo,
-                    totalOrderAmt);
+                    orderNo,
+                    totalOrderValue);
 
             masterOrderRows.put(
-                    workOrderNo,
+                    orderNo,
                     rowIndex + 1);
         }
 
         /*
          * =================================================
-         * ITEMS COLUMNS
+         * ITEM COLUMNS
          * =================================================
          */
-        Integer itemWorkOrderNoColumn =
-                itemsHeaderMap.get("workorderno");
+        Integer itemOrderNoColumn =
+                itemsHeaderMap.get("orderno");
 
-        Integer unitRateColumn =
-                itemsHeaderMap.get("unitrate");
+        Integer rateColumn =
+                itemsHeaderMap.get("rate");
 
         Integer gstColumn =
                 itemsHeaderMap.get("gst");
 
         Integer unitValueWithGstColumn =
-                itemsHeaderMap.get(
-                        "unitvaluewithgst");
+                itemsHeaderMap.get("unitvaluewithgst");
 
-        Integer quantityColumn =
-                itemsHeaderMap.get("quantity");
+        Integer qtyColumn =
+                itemsHeaderMap.get("qty");
 
-        Integer amountColumn =
-                itemsHeaderMap.get("amount");
+        Integer netAmountColumn =
+                itemsHeaderMap.get("netamount");
 
-        if (itemWorkOrderNoColumn == null) {
-
-            result.getErrors().add(
-                    "Required column missing in Work Order Items: "
-                            + "workorderno");
-
-            return;
-        }
-
-        if (unitRateColumn == null) {
+        if (itemOrderNoColumn == null
+                || rateColumn == null
+                || gstColumn == null
+                || unitValueWithGstColumn == null
+                || qtyColumn == null
+                || netAmountColumn == null) {
 
             result.getErrors().add(
-                    "Required column missing in Work Order Items: "
-                            + "unitrate");
-
-            return;
-        }
-
-        if (gstColumn == null) {
-
-            result.getErrors().add(
-                    "Required column missing in Work Order Items: "
-                            + "gst");
-
-            return;
-        }
-
-        if (unitValueWithGstColumn == null) {
-
-            result.getErrors().add(
-                    "Required column missing in Work Order Items: "
-                            + "unitvaluewithgst");
-
-            return;
-        }
-
-        if (quantityColumn == null) {
-
-            result.getErrors().add(
-                    "Required column missing in Work Order Items: "
-                            + "quantity");
-
-            return;
-        }
-
-        if (amountColumn == null) {
-
-            result.getErrors().add(
-                    "Required column missing in Work Order Items: "
-                            + "amount");
+                    "Required columns missing in Purchase Order Items "
+                            + "for mathematical validation");
 
             return;
         }
 
         /*
          * =================================================
-         * GRAND TOTAL PER WORK ORDER
+         * GRAND TOTAL PER ORDER
          *
-         * WorkOrderNo -> SUM(Amount)
+         * orderNo -> SUM(Net Amount)
          * =================================================
          */
         Map<String, BigDecimal> itemGrandTotals =
@@ -685,39 +619,35 @@ public class WorkOrderFileValidationService
 
             /*
              * =================================================
-             * GET WORK ORDER NUMBER
+             * READ ORDER NUMBER
              * =================================================
              */
-            String workOrderNo =
+            String orderNo =
                     getCellValue(
                             row,
-                            itemWorkOrderNoColumn,
+                            itemOrderNoColumn,
                             formatter,
                             formulaEvaluator);
 
-            if (workOrderNo.isEmpty()) {
+            if (orderNo.isEmpty()) {
                 continue;
             }
 
             /*
              * =================================================
-             * NEW:
-             *
-             * CHECK WORK ORDER NUMBER EXISTS IN MASTER
+             * 1. CHECK ORDER NUMBER EXISTS IN MASTER
              * =================================================
              */
-            if (!masterOrderTotals.containsKey(
-                    workOrderNo)) {
+            if (!masterOrderTotals.containsKey(orderNo)) {
 
                 addRowError(
                         result,
                         excelRowNumber,
                         "[" + ExcelConstants
-                                .WORK_ORDER_ITEMS_SHEET
-                                + "] "
-                                + "Work Order Number not found "
-                                + "in Work Order Master: "
-                                + workOrderNo);
+                                .PURCHASE_ORDER_ITEMS_SHEET + "] "
+                                + "Purchase Order Number not found "
+                                + "in Purchase Order Master: "
+                                + orderNo);
 
                 continue;
             }
@@ -727,10 +657,10 @@ public class WorkOrderFileValidationService
              * READ ITEM VALUES
              * =================================================
              */
-            BigDecimal unitRate =
+            BigDecimal rate =
                     getBigDecimalCellValue(
                             row,
-                            unitRateColumn,
+                            rateColumn,
                             formatter,
                             formulaEvaluator);
 
@@ -748,32 +678,30 @@ public class WorkOrderFileValidationService
                             formatter,
                             formulaEvaluator);
 
-            BigDecimal quantity =
+            BigDecimal qty =
                     getBigDecimalCellValue(
                             row,
-                            quantityColumn,
+                            qtyColumn,
                             formatter,
                             formulaEvaluator);
 
-            BigDecimal enteredAmount =
+            BigDecimal enteredNetAmount =
                     getBigDecimalCellValue(
                             row,
-                            amountColumn,
+                            netAmountColumn,
                             formatter,
                             formulaEvaluator);
 
             /*
              * =================================================
-             * NEW:
+             * 2. CALCULATE GST AMOUNT
              *
-             * CALCULATE GST AMOUNT
-             *
-             * Unit Rate * GST / 100
+             * GST Amount =
+             * Rate * GST / 100
              * =================================================
              */
             BigDecimal gstAmount =
-                    unitRate
-                            .multiply(gst)
+                    rate.multiply(gst)
                             .divide(
                                     BigDecimal.valueOf(100),
                                     2,
@@ -781,25 +709,20 @@ public class WorkOrderFileValidationService
 
             /*
              * =================================================
-             * NEW:
+             * 3. CALCULATE UNIT VALUE WITH GST
              *
-             * CALCULATE UNIT VALUE WITH GST
-             *
-             * Unit Rate + GST Amount
+             * Rate + GST Amount
              * =================================================
              */
             BigDecimal calculatedUnitValueWithGst =
-                    unitRate
-                            .add(gstAmount)
+                    rate.add(gstAmount)
                             .setScale(
                                     2,
                                     RoundingMode.HALF_UP);
 
             /*
              * =================================================
-             * NEW:
-             *
-             * VALIDATE UNIT VALUE WITH GST
+             * 4. VALIDATE UNIT VALUE WITH GST
              * =================================================
              */
             if (enteredUnitValueWithGst.compareTo(
@@ -809,11 +732,10 @@ public class WorkOrderFileValidationService
                         result,
                         excelRowNumber,
                         "[" + ExcelConstants
-                                .WORK_ORDER_ITEMS_SHEET
-                                + "] "
+                                .PURCHASE_ORDER_ITEMS_SHEET + "] "
                                 + "Invalid Unit Value With GST "
-                                + "for Work Order No: "
-                                + workOrderNo
+                                + "for OrderNo: "
+                                + orderNo
                                 + ". Expected: "
                                 + calculatedUnitValueWithGst
                                 + ", Actual: "
@@ -822,72 +744,62 @@ public class WorkOrderFileValidationService
 
             /*
              * =================================================
-             * NEW:
+             * 5. CALCULATE NET AMOUNT
              *
-             * CALCULATE AMOUNT
-             *
-             * Unit Value With GST * Quantity
+             * Unit Value With GST * Qty
              * =================================================
              */
-            BigDecimal calculatedAmount =
+            BigDecimal calculatedNetAmount =
                     calculatedUnitValueWithGst
-                            .multiply(quantity)
+                            .multiply(qty)
                             .setScale(
                                     2,
                                     RoundingMode.HALF_UP);
 
             /*
              * =================================================
-             * NEW:
-             *
-             * VALIDATE AMOUNT
+             * 6. VALIDATE NET AMOUNT
              * =================================================
              */
-            if (enteredAmount.compareTo(
-                    calculatedAmount) != 0) {
+            if (enteredNetAmount.compareTo(
+                    calculatedNetAmount) != 0) {
 
                 addRowError(
                         result,
                         excelRowNumber,
                         "[" + ExcelConstants
-                                .WORK_ORDER_ITEMS_SHEET
-                                + "] "
-                                + "Invalid Amount "
-                                + "for Work Order No: "
-                                + workOrderNo
+                                .PURCHASE_ORDER_ITEMS_SHEET + "] "
+                                + "Invalid Net Amount "
+                                + "for OrderNo: "
+                                + orderNo
                                 + ". Expected: "
-                                + calculatedAmount
+                                + calculatedNetAmount
                                 + ", Actual: "
-                                + enteredAmount);
+                                + enteredNetAmount);
             }
 
             /*
              * =================================================
-             * NEW:
+             * 7. ADD NET AMOUNT TO GRAND TOTAL
              *
-             * ADD AMOUNT TO GRAND TOTAL
-             *
-             * Multiple item rows can have the same
-             * Work Order Number.
+             * Same OrderNo can appear multiple times.
              * =================================================
              */
             itemGrandTotals.merge(
-                    workOrderNo,
-                    calculatedAmount,
+                    orderNo,
+                    calculatedNetAmount,
                     BigDecimal::add);
         }
 
         /*
          * =================================================
-         * NEW:
-         *
-         * COMPARE GRAND TOTAL WITH MASTER TOTAL
+         * 8. VALIDATE GRAND TOTAL AGAINST MASTER
          * =================================================
          */
         for (Map.Entry<String, BigDecimal> entry :
                 itemGrandTotals.entrySet()) {
 
-            String workOrderNo =
+            String orderNo =
                     entry.getKey();
 
             BigDecimal calculatedGrandTotal =
@@ -897,8 +809,7 @@ public class WorkOrderFileValidationService
                                     RoundingMode.HALF_UP);
 
             BigDecimal masterTotal =
-                    masterOrderTotals.get(
-                            workOrderNo);
+                    masterOrderTotals.get(orderNo);
 
             if (masterTotal == null) {
                 continue;
@@ -918,8 +829,7 @@ public class WorkOrderFileValidationService
                     masterTotal) != 0) {
 
                 Integer masterRow =
-                        masterOrderRows.get(
-                                workOrderNo);
+                        masterOrderRows.get(orderNo);
 
                 addRowError(
                         result,
@@ -927,72 +837,14 @@ public class WorkOrderFileValidationService
                                 ? masterRow
                                 : 0,
                         "[" + ExcelConstants
-                                .WORK_ORDER_MASTER_SHEET
-                                + "] "
-                                + "Total Order Amt mismatch "
-                                + "for Work Order No: "
-                                + workOrderNo
+                                .PURCHASE_ORDER_MASTER_SHEET + "] "
+                                + "Total Order Value mismatch "
+                                + "for OrderNo: "
+                                + orderNo
                                 + ". Expected from Items: "
                                 + calculatedGrandTotal
-                                + ", Actual Master Total Order Amt: "
+                                + ", Actual Master Total Order Value: "
                                 + masterTotal);
-            }
-        }
-
-        /*
-         * =================================================
-         * NEW:
-         *
-         * CHECK MASTER ORDERS WHICH HAVE NO ITEMS
-         *
-         * Example:
-         *
-         * Master:
-         * WO001 = 100000
-         *
-         * Items:
-         * No WO001
-         *
-         * This should fail.
-         * =================================================
-         */
-        for (Map.Entry<String, BigDecimal> entry :
-                masterOrderTotals.entrySet()) {
-
-            String workOrderNo =
-                    entry.getKey();
-
-            BigDecimal masterTotal =
-                    entry.getValue();
-
-            if (!itemGrandTotals.containsKey(
-                    workOrderNo)) {
-
-                /*
-                 * If master total is not zero,
-                 * items are missing.
-                 */
-                if (masterTotal.compareTo(
-                        BigDecimal.ZERO) != 0) {
-
-                    Integer masterRow =
-                            masterOrderRows.get(
-                                    workOrderNo);
-
-                    addRowError(
-                            result,
-                            masterRow != null
-                                    ? masterRow
-                                    : 0,
-                            "[" + ExcelConstants
-                                    .WORK_ORDER_MASTER_SHEET
-                                    + "] "
-                                    + "No items found for "
-                                    + "Work Order No: "
-                                    + workOrderNo
-                                    + ". Master Total Order Amt: "
-                                    + masterTotal);
-                }
             }
         }
     }
@@ -1064,7 +916,6 @@ public class WorkOrderFileValidationService
                         formulaEvaluator);
 
         if (value.isEmpty()) {
-
             return BigDecimal.ZERO;
         }
 
@@ -1107,7 +958,7 @@ public class WorkOrderFileValidationService
      * =====================================================
      * REQUIRED ABSTRACT METHOD
      *
-     * Returns Work Order Master sheet.
+     * Returns Purchase Order Master sheet.
      * =====================================================
      */
     @Override
@@ -1116,14 +967,14 @@ public class WorkOrderFileValidationService
 
         return workbook.getSheet(
                 ExcelConstants
-                        .WORK_ORDER_MASTER_SHEET);
+                        .PURCHASE_ORDER_MASTER_SHEET);
     }
 
     /**
      * =====================================================
-     * REQUIRED ABSTRACT METHOD
+     * FIND HEADER ROW
      *
-     * Find Master header row.
+     * FOR PURCHASE ORDER MASTER
      * =====================================================
      */
     @Override
@@ -1144,16 +995,10 @@ public class WorkOrderFileValidationService
             Map<String, Integer> headers =
                     createHeaderMap(row);
 
-            /*
-             * CHANGED:
-             *
-             * totalorderamt added to header detection.
-             */
             if (headers.containsKey("ulbname")
-                    && headers.containsKey("tendernumber")
-                    && headers.containsKey("workorderno")
-                    && headers.containsKey("workorderdate")
-                    && headers.containsKey("totalorderamt")) {
+                    && headers.containsKey("orderno")
+                    && headers.containsKey("orderdate")
+                    && headers.containsKey("ordername")) {
 
                 return i;
             }
@@ -1164,7 +1009,7 @@ public class WorkOrderFileValidationService
 
     /**
      * =====================================================
-     * FIND HEADER ROW FOR SPECIFIC SHEET
+     * FIND HEADER ROW FOR A SPECIFIC SHEET
      * =====================================================
      */
     private int findHeaderRow(
@@ -1187,23 +1032,18 @@ public class WorkOrderFileValidationService
 
             /*
              * ---------------------------------------------
-             * Work Order Master
+             * Purchase Order Master
              * ---------------------------------------------
              */
             if (ExcelConstants
-                    .WORK_ORDER_MASTER_SHEET
+                    .PURCHASE_ORDER_MASTER_SHEET
                     .equals(sheetName)) {
 
-                /*
-                 * CHANGED:
-                 *
-                 * totalorderamt added.
-                 */
                 if (headers.containsKey("ulbname")
-                        && headers.containsKey("tendernumber")
-                        && headers.containsKey("workorderno")
-                        && headers.containsKey("workorderdate")
-                        && headers.containsKey("totalorderamt")) {
+                        && headers.containsKey("orderno")
+                        && headers.containsKey("orderdate")
+                        && headers.containsKey("ordername")
+                        && headers.containsKey("totalordervalue")) {
 
                     return i;
                 }
@@ -1211,16 +1051,16 @@ public class WorkOrderFileValidationService
 
             /*
              * ---------------------------------------------
-             * Work Order Items
+             * Purchase Order Items
              * ---------------------------------------------
              */
             if (ExcelConstants
-                    .WORK_ORDER_ITEMS_SHEET
+                    .PURCHASE_ORDER_ITEMS_SHEET
                     .equals(sheetName)) {
 
-                if (headers.containsKey("tendernumber")
-                        && headers.containsKey("workorderno")
-                        && headers.containsKey("itemname")) {
+                if (headers.containsKey("ulbname")
+                        && headers.containsKey("orderno")
+                        && headers.containsKey("itemdescription")) {
 
                     return i;
                 }
@@ -1234,7 +1074,7 @@ public class WorkOrderFileValidationService
      * =====================================================
      * REQUIRED ABSTRACT METHOD
      *
-     * Validate Work Order Master headers.
+     * Validate Purchase Order Master headers.
      * =====================================================
      */
     @Override
@@ -1242,27 +1082,16 @@ public class WorkOrderFileValidationService
             Map<String, Integer> headerMap,
             FileValidationResult result) {
 
-        /*
-         * CHANGED:
-         *
-         * totalorderamt added.
-         */
         String[] requiredHeaders = {
 
                 "ulbname",
-                "tendernumber",
-                "workorderno",
-                "workorderdate",
-                "workordername",
-                "workordertype",
-                "active",
-                "contractorname",
-                "workname",
-                "workcode",
-                "totalorderamt",
-                "fund",
+                "orderno",
+                "orderdate",
+                "ordername",
+                "suppliername",
+                "sourceoffund",
                 "department",
-                "scheme"
+                "totalordervalue"
         };
 
         boolean valid = true;
@@ -1297,61 +1126,45 @@ public class WorkOrderFileValidationService
 
         /*
          * ---------------------------------------------
-         * Work Order Master
+         * Purchase Order Master
          * ---------------------------------------------
          */
         if (ExcelConstants
-                .WORK_ORDER_MASTER_SHEET
+                .PURCHASE_ORDER_MASTER_SHEET
                 .equals(sheetName)) {
 
-            /*
-             * CHANGED:
-             *
-             * totalorderamt added.
-             */
             requiredHeaders =
                     new String[] {
 
                             "ulbname",
-                            "tendernumber",
-                            "workorderno",
-                            "workorderdate",
-                            "workordername",
-                            "workordertype",
-                            "active",
-                            "contractorname",
-                            "workname",
-                            "workcode",
-                            "totalorderamt",
-                            "fund",
+                            "orderno",
+                            "orderdate",
+                            "ordername",
+                            "suppliername",
+                            "sourceoffund",
                             "department",
-                            "scheme"
+                            "totalordervalue"
                     };
 
         } else {
 
             /*
              * ---------------------------------------------
-             * Work Order Items
+             * Purchase Order Items
              * ---------------------------------------------
-             *
-             * CHANGED:
-             *
-             * Added all fields required for mathematical
-             * validation.
              */
             requiredHeaders =
                     new String[] {
 
-                            "tendernumber",
-                            "workorderno",
-                            "itemname",
+                            "ulbname",
+                            "orderno",
+                            "itemdescription",
                             "unit",
-                            "unitrate",
+                            "rate",
                             "gst",
                             "unitvaluewithgst",
-                            "quantity",
-                            "amount"
+                            "qty",
+                            "netamount"
                     };
         }
 
@@ -1360,8 +1173,7 @@ public class WorkOrderFileValidationService
         for (String header :
                 requiredHeaders) {
 
-            if (!headerMap.containsKey(
-                    header)) {
+            if (!headerMap.containsKey(header)) {
 
                 result.getErrors().add(
                         "Required column missing in "

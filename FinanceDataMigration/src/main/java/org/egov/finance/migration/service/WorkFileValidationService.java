@@ -5,6 +5,7 @@ import java.util.Map;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.egov.finance.migration.common.constants.ExcelConstants;
 import org.egov.finance.migration.common.dto.FileValidationResult;
 import org.egov.finance.migration.common.enums.MigrationType;
 import org.egov.finance.migration.service.validator.WorkRowValidator;
@@ -30,7 +31,14 @@ public class WorkFileValidationService
     protected Sheet getSheet(
             Workbook workbook) {
 
-        return workbook.getSheetAt(0);
+        Sheet sheet  = workbook.getSheet(ExcelConstants.WORK_SHEET);
+        
+        if (sheet == null) {
+            throw new IllegalArgumentException(
+                    "Required Excel sheet 'Work' not found.");
+        }
+        
+        return sheet;
     }
 
     @Override
