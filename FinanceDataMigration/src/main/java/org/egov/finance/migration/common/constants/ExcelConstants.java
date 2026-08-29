@@ -12,6 +12,9 @@ public class ExcelConstants {
 
     public static final String PURCHASE_ORDER_ITEMS_SHEET =
             "Purchase Order Items";
+    
+    public static final String WORK_SHEET =
+            "Work";
 
     private ExcelConstants() {
         // Prevent instantiation
