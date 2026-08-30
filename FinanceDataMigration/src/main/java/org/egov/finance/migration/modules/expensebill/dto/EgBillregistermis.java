@@ -5,14 +5,14 @@ public class EgBillregistermis {
 	private IdDTO fund;
 	private Long schemeId;
 	private Long subSchemeId;
-	private Long function;
+	private IdDTO function;
 	private String fundsource;
 	private String departmentcode;
 	private String narration;
 	private String partyBillNumber;
 	private String partyBillDate;
 	private String payto;
-	private Long egBillSubType;
+	private IdDTO egBillSubType;
 
 	public IdDTO getFund() {
 		return fund;
@@ -38,11 +38,11 @@ public class EgBillregistermis {
 		this.subSchemeId = subSchemeId;
 	}
 
-	public Long getFunction() {
+	public IdDTO getFunction() {
 		return function;
 	}
 
-	public void setFunction(Long function) {
+	public void setFunction(IdDTO function) {
 		this.function = function;
 	}
 
@@ -94,11 +94,11 @@ public class EgBillregistermis {
 		this.payto = payto;
 	}
 
-	public Long getEgBillSubType() {
+	public IdDTO getEgBillSubType() {
 		return egBillSubType;
 	}
 
-	public void setEgBillSubType(Long egBillSubType) {
+	public void setEgBillSubType(IdDTO egBillSubType) {
 		this.egBillSubType = egBillSubType;
 	}
 }

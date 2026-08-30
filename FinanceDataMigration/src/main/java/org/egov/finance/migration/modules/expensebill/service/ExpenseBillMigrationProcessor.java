@@ -25,15 +25,10 @@ import org.springframework.stereotype.Service;
 public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 
 	private final ExpenseBillExcelReader excelReader;
-
 	private final ExpenseBillRequestBuilder requestBuilder;
-
 	private final DuplicateDetectionService duplicateDetectionService;
-
 	private final ExpenseBillApiClient expenseBillApiClient;
-
 	private final MigrationJobRepository migrationJobRepository;
-
 	private final MigrationJobDetailRepository migrationJobDetailRepository;
 
 	public ExpenseBillMigrationProcessor(ExpenseBillExcelReader excelReader, ExpenseBillRequestBuilder requestBuilder,
@@ -61,8 +56,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 		List<RecordResult> recordResults = new ArrayList<>();
 
 		/*
-		 * ============================================================ STEP 1 : READ
-		 * EXCEL ============================================================
+		 * ============== STEP 1 : READ EXCEL ================================
 		 */
 
 		List<ExpenseBillRecord> records = new ArrayList<>();
@@ -74,16 +68,14 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 		}
 
 		/*
-		 * ============================================================ STEP 2 : GET
-		 * MIGRATION JOB ============================================================
+		 * ========== STEP 2 : GET MIGRATION JOB ===================================
 		 */
 
 		MigrationJob job = migrationJobRepository.findByJobId(request.getJobId())
 				.orElseThrow(() -> new IllegalArgumentException("Migration job not found: " + request.getJobId()));
 
 		/*
-		 * ============================================================ STEP 3 :
-		 * INITIALIZE JOB ============================================================
+		 * ========== STEP 3 : INITIALIZE JOB ======================================
 		 */
 
 		job.setTotalRecords(records.size());
@@ -103,8 +95,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 		int skipped = 0;
 
 		/*
-		 * ============================================================ STEP 4 : PROCESS
-		 * EACH EXPENSE BILL
+		 * =========== STEP 4 : PROCESS EACH EXPENSE BILL
 		 *
 		 * ONE ExpenseBillRecord = ONE API REQUEST
 		 * ============================================================
@@ -113,18 +104,14 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 		for (int i = 0; i < records.size(); i++) {
 
 			ExpenseBillRecord record = records.get(i);
-
 			long recordStart = System.currentTimeMillis();
-
 			RecordResult result = new RecordResult();
-
 			result.setRecordNumber(i + 1);
 			result.setStartRow(record.getStartRow());
 			result.setEndRow(record.getEndRow());
 
 			/*
-			 * ======================================================== DUPLICATE CHECK
-			 * ========================================================
+			 *============= DUPLICATE CHECK ======================
 			 */
 
 			boolean alreadyMigrated = duplicateDetectionService.isAlreadyMigrated(request.getTenantId(),
@@ -139,9 +126,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 				skipped++;
 
 				recordResults.add(result);
-
 				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name());
-
 				updateJobProgress(job, i + 1, records.size(), success, failed, skipped,
 						"Expense bill " + (i + 1) + " of " + records.size() + " skipped - already migrated.");
 
@@ -149,8 +134,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 			}
 
 			/*
-			 * ======================================================== BUILD REQUEST + CALL
-			 * EXPENSE BILL API ========================================================
+			 * ========= BUILD REQUEST + CALL EXPENSE BILL API ===============================
 			 */
 
 			try {
@@ -171,116 +155,84 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 					throw new RuntimeException("Unable to build ExpenseBillRequest.");
 				}
 
-				/*
-				 * Call Expense Bill Creation API
-				 */
-
+//				Call Expense Bill Creation API
+				
 				ExpenseBillResponse response = expenseBillApiClient.createExpenseBill(expenseBillRequest);
 
-				/*
-				 * Optional response validation
-				 */
+//				Optional response validation
 
 				if (response == null) {
-
 					throw new RuntimeException("Expense Bill API returned empty response.");
 				}
 
 				result.setStatus(RecordStatus.SUCCESS);
-
 				result.setMessage("Expense bill created successfully.");
-
 				success++;
 
 			} catch (Exception e) {
-
 				result.setStatus(RecordStatus.FAILED);
-
 				String errorMessage = getRootCauseMessage(e);
-
 				result.setMessage(errorMessage);
-
 				failed++;
 
 			} finally {
-
 				result.setExecutionTime(System.currentTimeMillis() - recordStart);
 			}
 
-			/*
-			 * ======================================================== SAVE RESULT
-			 * ========================================================
-			 */
+//			SAVE RESULT
 
 			recordResults.add(result);
-
 			saveMigrationDetail(job, request, result, result.getStatus().name());
 
-			/*
-			 * ======================================================== UPDATE REALTIME
-			 * PROGRESS ========================================================
-			 */
+//			UPDATE REALTIME PROGRESS
 
 			updateJobProgress(job, i + 1, records.size(), success, failed, skipped,
 					"Processing Expense Bill " + (i + 1) + " of " + records.size());
 		}
 
 		/*
-		 * ============================================================ STEP 5 : FINAL
-		 * JOB STATUS ============================================================
+		 * ========= STEP 5 : FINAL JOB STATUS =================
 		 */
 
 		job.setTotalRecords(records.size());
-
 		job.setSuccessRecords(success);
 		job.setFailedRecords(failed);
 		job.setSkippedRecords(skipped);
-
 		job.setProgressPercent(100);
-
 		job.setCurrentRecord(records.size());
-
 		String finalMessage;
 
 		if (failed > 0) {
-
 			finalMessage = "Expense Bill migration completed with " + failed + " failed record(s).";
 
 		} else if (skipped > 0) {
-
 			finalMessage = "Expense Bill migration completed successfully. " + skipped
 					+ " record(s) skipped as duplicate.";
 
 		} else {
-
 			finalMessage = "Expense Bill migration completed successfully.";
 		}
 
 		job.setCurrentMessage(finalMessage);
 
 		if (failed > 0) {
-
 			job.setStatus("COMPLETED_WITH_ERRORS");
 
 		} else {
-
 			job.setStatus("COMPLETED");
 		}
 
 		job.setCompletedTime(LocalDateTime.now());
-
 		migrationJobRepository.save(job);
 
 		/*
-		 * ============================================================ TOTAL EXECUTION
-		 * TIME ============================================================
+		 * ============= TOTAL EXECUTION TIME ========================
 		 */
 
 		long totalExecutionTime = System.currentTimeMillis() - startTime;
 
 		/*
-		 * ============================================================ RETURN FINAL
-		 * RESULT ============================================================
+		 * ============ RETURN FINAL RESULT ==========================
 		 */
 
 		return MigrationResult.builder().success(failed == 0).message(finalMessage).totalRecords(records.size())
@@ -289,40 +241,30 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 	}
 
 	/*
-	 * ============================================================ UPDATE JOB
-	 * PROGRESS ============================================================
+	 * ============ UPDATE JOB PROGRESS =============================
 	 */
 
 	private void updateJobProgress(MigrationJob job, int currentRecord, int totalRecords, int success, int failed,
 			int skipped, String message) {
 
 		job.setCurrentRecord(currentRecord);
-
 		job.setTotalRecords(totalRecords);
-
 		int progress = 0;
 
 		if (totalRecords > 0) {
-
 			progress = (int) (((double) currentRecord / totalRecords) * 100);
 		}
 
 		job.setProgressPercent(progress);
-
 		job.setSuccessRecords(success);
-
 		job.setFailedRecords(failed);
-
 		job.setSkippedRecords(skipped);
-
 		job.setCurrentMessage(message);
-
 		migrationJobRepository.saveAndFlush(job);
 	}
 
 	/*
-	 * ============================================================ SAVE MIGRATION
-	 * DETAIL ============================================================
+	 * ========== SAVE MIGRATION DETAIL ======================
 	 */
 
 	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status) {
@@ -330,49 +272,31 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 		MigrationJobDetail detail = new MigrationJobDetail();
 
 		detail.setJob(job);
-
 		detail.setTenantId(request.getTenantId());
-
 		detail.setModuleCode(request.getMigrationType().name());
-
 		detail.setRecordNumber(result.getRecordNumber());
-
 		detail.setStartRow(result.getStartRow());
-
 		detail.setEndRow(result.getEndRow());
-
 		detail.setStatus(status);
-
 		detail.setMessage(result.getMessage());
-
 		detail.setExecutionTime(result.getExecutionTime());
-
 		detail.setRecordKey(request.getMigrationType().name() + ":" + result.getStartRow() + "-" + result.getEndRow());
-
 		detail.setCreatedTime(LocalDateTime.now());
-
 		migrationJobDetailRepository.save(detail);
 	}
 
 	/*
-	 * ============================================================ GET ROOT CAUSE
-	 * ============================================================
+	 * ============== GET ROOT CAUSE ======================
 	 */
 
 	private String getRootCauseMessage(Throwable exception) {
-
 		Throwable root = exception;
-
 		while (root.getCause() != null) {
-
 			root = root.getCause();
 		}
-
 		if (root.getMessage() == null) {
-
 			return root.getClass().getSimpleName();
 		}
-
 		return root.getMessage();
 	}
 }

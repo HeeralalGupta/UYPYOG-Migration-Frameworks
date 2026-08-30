@@ -35,22 +35,78 @@ public class AccountDetailTypeServiceClient {
 	 *
 	 * { "id": 12, "name": "Employee" }
 	 */
+//	public Accountdetailtype getByName(String name, RequestInfo requestInfo, String tenantId) {
+//
+//		validate(name, requestInfo, tenantId);
+//
+//		String url = financeServiceUrl + "/rest/accountdetailtype/v1/_search?tenantId=" + tenantId;
+//
+//		AccountDetailTypeSearchRequest request = new AccountDetailTypeSearchRequest();
+//
+//		request.setRequestInfo(requestInfo);
+//		request.setTenantId(tenantId);
+//		request.setName(name.trim());
+//
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.setContentType(MediaType.APPLICATION_JSON);
+//
+//		HttpEntity<AccountDetailTypeSearchRequest> entity = new HttpEntity<>(request, headers);
+//		System.out.println("====================================");
+//		System.out.println("Sub Ledger Type SEARCH API CALL");
+//		System.out.println("URL : " + url);
+//		System.out.println("SubLedger Type Name : " + name);
+//		System.out.println("Tenant : " + tenantId);
+//		System.out.println("Token Available : " + (requestInfo != null && requestInfo.getAuthToken() != null
+//				&& !requestInfo.getAuthToken().trim().isEmpty()));
+//		System.out.println("====================================");
+//
+//		try {
+//
+//			ResponseEntity<Accountdetailtype> response = restTemplate.exchange(url, HttpMethod.POST, entity,
+//					new ParameterizedTypeReference<Accountdetailtype>() {
+//					});
+//
+//			Accountdetailtype accountDetailType = response.getBody();
+//
+//			if (accountDetailType == null || accountDetailType.getId() == null) {
+//				throw new IllegalArgumentException("SubLedger Type not found: " + name);
+//			}
+//
+//			return accountDetailType;
+//
+//		} catch (Exception exception) {
+//			throw new RuntimeException("Failed to fetch SubLedger Type: " + name, exception);
+//		}
+//	}
+
 	public Accountdetailtype getByName(String name, RequestInfo requestInfo, String tenantId) {
 
 		validate(name, requestInfo, tenantId);
 
-		String url = financeServiceUrl + "/services/EGF/rest/accountdetailtype/v1/_search?tenantId=" + tenantId;
+		String url = financeServiceUrl + "/rest/accountdetailtype/v1/_search?tenantId=" + tenantId;
 
 		AccountDetailTypeSearchRequest request = new AccountDetailTypeSearchRequest();
 
 		request.setRequestInfo(requestInfo);
 		request.setTenantId(tenantId);
-		request.setName(name.trim());
+
+		// IMPORTANT:
+		// API expects accountDetailTypes, NOT name
+		request.setAccountDetailTypes(name.trim());
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		HttpEntity<AccountDetailTypeSearchRequest> entity = new HttpEntity<>(request, headers);
+
+		System.out.println("====================================");
+		System.out.println("Sub Ledger Type SEARCH API CALL");
+		System.out.println("URL : " + url);
+		System.out.println("SubLedger Type Name : " + name);
+		System.out.println("Tenant : " + tenantId);
+		System.out.println("Token Available : " + (requestInfo != null && requestInfo.getAuthToken() != null
+				&& !requestInfo.getAuthToken().trim().isEmpty()));
+		System.out.println("====================================");
 
 		try {
 
@@ -59,22 +115,27 @@ public class AccountDetailTypeServiceClient {
 					});
 
 			Accountdetailtype accountDetailType = response.getBody();
+			System.out.println("====================================================");
+			System.out.println("SubLegder Type :"+ accountDetailType.getId()+" SubLegder Type Name :"+ accountDetailType.getName());
+			System.out.println("====================================================");
 
 			if (accountDetailType == null || accountDetailType.getId() == null) {
-				throw new IllegalArgumentException("Account Detail Type not found: " + name);
+
+				throw new IllegalArgumentException("SubLedger Type not found: " + name);
 			}
 
 			return accountDetailType;
 
 		} catch (Exception exception) {
-			throw new RuntimeException("Failed to fetch Account Detail Type: " + name, exception);
+
+			throw new RuntimeException("Failed to fetch SubLedger Type: " + name, exception);
 		}
 	}
 
 	private void validate(String name, RequestInfo requestInfo, String tenantId) {
 
 		if (name == null || name.trim().isEmpty()) {
-			throw new IllegalArgumentException("Account Detail Type name is required");
+			throw new IllegalArgumentException("SubLedger Type name is required");
 		}
 
 		if (requestInfo == null) {

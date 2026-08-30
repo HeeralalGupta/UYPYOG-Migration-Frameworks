@@ -13,9 +13,7 @@ public class AccountDetailTypeSearchRequest {
 
 	@JsonProperty("RequestInfo")
 	private RequestInfo requestInfo;
-
 	private String tenantId;
-
-	private String name;
+	private String accountDetailTypes;
 
 }

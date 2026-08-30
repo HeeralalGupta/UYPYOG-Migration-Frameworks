@@ -16,7 +16,7 @@ public class MigrationAsyncService {
 		this.factory = factory;
 	}
 
-	@Async
+//	@Async
 	public void processAsync(MigrationRequest request) {
 
 		try {

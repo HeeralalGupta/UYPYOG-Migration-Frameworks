@@ -1,4 +1,4 @@
-package org.egov.finance.migration.modules.journalvoucher.response;
+package org.egov.finance.migration.common.dto;
 
 import lombok.Data;
 
