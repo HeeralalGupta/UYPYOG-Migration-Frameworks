@@ -99,7 +99,7 @@ const moduleData = [
                 moduleType: "WORK",
                 status: "ACTIVE",
                 route: "/migration/upload/WORK",
-                template: "Work_Template.xlsx"
+                template: "Data_Migration.xlsx"
             }
         ]
     },
@@ -116,7 +116,7 @@ const moduleData = [
                 moduleType: "WORK_ORDER",
                 status: "ACTIVE",
                 route: "/migration/upload/WORK_ORDER",
-                template: "Wprk_Order_Template.xlsx"
+                template: "Data_Migration.xlsx"
             },
             {
                 code: "PURCHASE_ORDER",
@@ -128,7 +128,7 @@ const moduleData = [
                 moduleType: "PURCHASE_ORDER",
                 status: "ACTIVE",
                 route: "/migration/upload/PURCHASE_ORDER",
-                template: "Purchase_Order_Template.xlsx"
+                template: "Data_Migration.xlsx"
             }
         ]
     },
