@@ -19,8 +19,13 @@ public class TemplateController {
 
 	@GetMapping("/{module}")
 	public ResponseEntity<Resource> downloadTemplate(@PathVariable String module) throws IOException {
+		
 
 		String fileName = module.toUpperCase() + ".xlsx";
+		
+		if ("WORK".equalsIgnoreCase(module) || "WORK_ORDER".equalsIgnoreCase(module) || "PURCHASE_ORDER".equalsIgnoreCase(module)) {
+			fileName = "Data_Migration.xlsx";
+		}
 
 		String resourcePath = "/migration-templates/" + fileName;
 
