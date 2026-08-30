@@ -16,12 +16,15 @@ import org.egov.finance.migration.modules.expensebill.dto.ExpenseBillRecord;
 import org.egov.finance.migration.modules.expensebill.dto.ExpenseDebitRecord;
 import org.egov.finance.migration.modules.expensebill.dto.ExpenseDeductionRecord;
 import org.egov.finance.migration.modules.expensebill.dto.ExpenseNetPayableRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 @Component
 public class ExpenseBillExcelReader {
 
+	Logger log = LoggerFactory.getLogger(ExpenseBillExcelReader.class);
 	/*
 	 * Excel column indexes
 	 */
@@ -79,8 +82,21 @@ public class ExpenseBillExcelReader {
 	public List<ExpenseBillRecord> read(MultipartFile file) throws Exception {
 
 		List<ExpenseBillRecord> expenseRecords = new ArrayList<ExpenseBillRecord>();
+		
+		   if (file == null) {
+		        throw new IllegalArgumentException("Excel file is required.");
+		    }
 
-		try (InputStream inputStream = file.getInputStream();Workbook workbook = WorkbookFactory.create(inputStream)) {
+		    if (file.isEmpty()) {
+		        throw new IllegalArgumentException("Uploaded Excel file is empty.");
+		    }
+
+		    log.info("File name: {}", file.getOriginalFilename());
+		    log.info("Content type: {}", file.getContentType());
+		    log.info("File size: {} bytes", file.getSize());
+		
+		try (InputStream inputStream = file.getInputStream();
+				Workbook workbook = WorkbookFactory.create(inputStream)) {
 			Sheet sheet = workbook.getSheetAt(0);
 			ExpenseBillRecord currentRecord = null;
 
@@ -124,6 +140,8 @@ public class ExpenseBillExcelReader {
 				 */
 				addNetPayableDetail(row, currentRecord);
 			}
+		}catch (Exception e) {
+			throw new RuntimeException("Unable to read Expense Bill Excel file.", e);
 		}
 
 		return expenseRecords;

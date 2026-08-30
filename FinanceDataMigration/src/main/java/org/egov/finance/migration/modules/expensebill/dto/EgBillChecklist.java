@@ -7,7 +7,6 @@ import lombok.Setter;
 @Setter
 public class EgBillChecklist {
 
-	private Long id;
 	private String checklistvalue;
-	private AppConfigValue appconfigvalue;
+	private IdDTO appconfigvalue;
 }

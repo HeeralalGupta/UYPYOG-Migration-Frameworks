@@ -1,7 +1,9 @@
 package org.egov.finance.migration.common.util;
 
-import org.egov.finance.migration.common.dto.ChartOfAccountsRequest;
+import java.nio.charset.StandardCharsets;
+
 import org.egov.finance.migration.common.dto.ChartOfAccountsResponse;
+import org.egov.finance.migration.common.dto.ChartOfAccountsSearchRequest;
 import org.egov.finance.migration.common.dto.RequestInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -12,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriUtils;
 
 @Service
 public class ChartOfAccountsServiceClient {
@@ -20,6 +23,9 @@ public class ChartOfAccountsServiceClient {
 
 	@Value("${finance.local.baseurl}")
 	private String financeServiceUrl;
+
+	@Value("${glcode.search}")
+	private String glcodeSearch;
 
 	public ChartOfAccountsServiceClient(RestTemplate restTemplate) {
 
@@ -42,10 +48,10 @@ public class ChartOfAccountsServiceClient {
 
 		validate(glcode, requestInfo, tenantId);
 
-		String url = financeServiceUrl + "/services/EGF/rest/common/v1/getChartAccountCodeByGlCode" + "?tenantId="
-				+ tenantId;
+		String url = financeServiceUrl + glcodeSearch + "?tenantId="
+				+ UriUtils.encodeQueryParam(tenantId, StandardCharsets.UTF_8);
 
-		ChartOfAccountsRequest request = new ChartOfAccountsRequest();
+		ChartOfAccountsSearchRequest request = new ChartOfAccountsSearchRequest();
 
 		request.setRequestInfo(requestInfo);
 		request.setTenantId(tenantId);
@@ -55,7 +61,16 @@ public class ChartOfAccountsServiceClient {
 
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		HttpEntity<ChartOfAccountsRequest> entity = new HttpEntity<>(request, headers);
+		HttpEntity<ChartOfAccountsSearchRequest> entity = new HttpEntity<>(request, headers);
+
+		System.out.println("====================================");
+		System.out.println("GL Code SEARCH API CALL");
+		System.out.println("URL : " + url);
+		System.out.println("COA  GL Code : " + glcode);
+		System.out.println("Tenant : " + tenantId);
+		System.out.println("Token Available : " + (requestInfo != null && requestInfo.getAuthToken() != null
+				&& !requestInfo.getAuthToken().trim().isEmpty()));
+		System.out.println("====================================");
 
 		try {
 
@@ -88,4 +103,107 @@ public class ChartOfAccountsServiceClient {
 			throw new IllegalArgumentException("Tenant ID is required");
 		}
 	}
+
+//	public ChartOfAccounts getByGlCode(String glCode, RequestInfo requestInfo, String tenantId) {
+//
+//		try {
+//
+//			String url = financeHost + chartOfAccountsSearch + "?tenantId="
+//					+ UriUtils.encodeQueryParam(tenantId, StandardCharsets.UTF_8);
+//
+//			System.out.println("====================================");
+//			System.out.println("GL Code SEARCH API CALL");
+//			System.out.println("URL : " + url);
+//			System.out.println("COA GL Code : " + glCode);
+//			System.out.println("Tenant : " + tenantId);
+//			System.out.println("Token Available : " + (requestInfo != null && requestInfo.getAuthToken() != null));
+//			System.out.println("====================================");
+//
+//			ChartOfAccountsSearchRequest request = new ChartOfAccountsSearchRequest();
+//
+//			request.setGlcode(glCode);
+//			request.setRequestInfo(requestInfo);
+//			request.setTenantId(tenantId);
+//
+//			HttpHeaders headers = new HttpHeaders();
+//
+//			headers.setContentType(MediaType.APPLICATION_JSON);
+//
+//			/*
+//			 * IMPORTANT: Legacy EGF RestServiceAuthFilter may read token from HTTP header.
+//			 */
+//			if (requestInfo != null && requestInfo.getAuthToken() != null
+//					&& !requestInfo.getAuthToken().trim().isEmpty()) {
+//
+//				headers.set("authToken", requestInfo.getAuthToken());
+//			}
+//
+//			HttpEntity<ChartOfAccountsSearchRequest> entity = new HttpEntity<>(request, headers);
+//
+//			ResponseEntity<ChartOfAccountsResponse> response = restTemplate.exchange(url, HttpMethod.POST, entity,
+//					ChartOfAccountsResponse.class);
+//
+//			System.out.println("GL CODE API STATUS : " + response.getStatusCode());
+//
+//			ChartOfAccountsResponse body = response.getBody();
+//
+//			if (body == null) {
+//
+//				throw new IllegalArgumentException("Empty response received for GL Code: " + glCode);
+//			}
+//
+//			if (body.getChartOfAccounts() == null || body.getChartOfAccounts().isEmpty()) {
+//
+//				throw new IllegalArgumentException("Chart Of Account not found for GL Code: " + glCode);
+//			}
+//
+//			return body.getChartOfAccounts().get(0);
+//
+//		} catch (Exception e) {
+//
+//			throw new RuntimeException("Failed to fetch Chart Of Account for GL Code: " + glCode, e);
+//		}
+//	}
+//	public ChartOfAccounts getByGlCode(String glCode, RequestInfo requestInfo, String tenantId) {
+//
+//		try {
+//
+//			String url = financeHost + chartOfAccountsSearch + "?tenantId="
+//					+ UriUtils.encodeQueryParam(tenantId, StandardCharsets.UTF_8);
+//
+//			ChartOfAccountsSearchRequest request = new ChartOfAccountsSearchRequest();
+//
+//			request.setRequestInfo(requestInfo);
+//			request.setTenantId(tenantId);
+//			request.setGlcode(glCode);
+//
+//			HttpHeaders headers = new HttpHeaders();
+//			headers.setContentType(MediaType.APPLICATION_JSON);
+//
+//			HttpEntity<ChartOfAccountsSearchRequest> entity = new HttpEntity<>(request, headers);
+//
+//			System.out.println("====================================");
+//			System.out.println("GL CODE SEARCH API CALL");
+//			System.out.println("URL : " + url);
+//			System.out.println("COA GL Code : " + glCode);
+//			System.out.println("Tenant : " + tenantId);
+//			System.out.println("Token Available : " + (requestInfo != null && requestInfo.getAuthToken() != null));
+//			System.out.println("====================================");
+//
+//			ResponseEntity<ChartOfAccounts> response = restTemplate.exchange(url, HttpMethod.POST, entity,
+//					ChartOfAccounts.class);
+//
+//			System.out.println("GL CODE API STATUS : " + response.getStatusCode());
+//
+//			if (response.getBody() == null) {
+//				throw new IllegalArgumentException("Chart Of Account not found for GL Code: " + glCode);
+//			}
+//
+//			return response.getBody();
+//
+//		} catch (Exception e) {
+//
+//			throw new RuntimeException("Failed to fetch Chart Of Account for GL Code: " + glCode, e);
+//		}
+//	}
 }

@@ -1,39 +1,39 @@
 package org.egov.finance.migration.common.dto;
 
-import java.net.http.HttpResponse.ResponseInfo;
 import java.util.List;
 
 import org.egov.finance.migration.common.util.Pagination;
+import org.egov.finance.migration.modules.journalvoucher.response.ResponseInfo;
 
 public class SchemeResponse {
 
-    private ResponseInfo responseInfo;
+	private ResponseInfo responseInfo;
 
-    private List<Scheme> schemes;
+	private List<Scheme> schemes;
 
-    private Pagination pagination;
+	private Pagination pagination;
 
-    public ResponseInfo getResponseInfo() {
-        return responseInfo;
-    }
+	public ResponseInfo getResponseInfo() {
+		return responseInfo;
+	}
 
-    public void setResponseInfo(ResponseInfo responseInfo) {
-        this.responseInfo = responseInfo;
-    }
+	public void setResponseInfo(ResponseInfo responseInfo) {
+		this.responseInfo = responseInfo;
+	}
 
-    public List<Scheme> getSchemes() {
-        return schemes;
-    }
+	public List<Scheme> getSchemes() {
+		return schemes;
+	}
 
-    public void setSchemes(List<Scheme> schemes) {
-        this.schemes = schemes;
-    }
+	public void setSchemes(List<Scheme> schemes) {
+		this.schemes = schemes;
+	}
 
-    public Pagination getPagination() {
-        return pagination;
-    }
+	public Pagination getPagination() {
+		return pagination;
+	}
 
-    public void setPagination(Pagination pagination) {
-        this.pagination = pagination;
-    }
+	public void setPagination(Pagination pagination) {
+		this.pagination = pagination;
+	}
 }

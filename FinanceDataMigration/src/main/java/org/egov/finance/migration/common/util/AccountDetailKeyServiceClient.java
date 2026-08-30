@@ -41,7 +41,8 @@ public class AccountDetailKeyServiceClient {
 			String tenantId) {
 
 		validate(accountDetailTypeId, name, requestInfo, tenantId);
-		String url = financeServiceUrl + "/services/EGF/rest/accountdetailkey/v1/_search?tenantId="+tenantId;
+		
+		String url = financeServiceUrl + "/rest/accountdetailkey/v1/_search?tenantId="+tenantId;
 		AccountDetailKeySearchRequest request = new AccountDetailKeySearchRequest();
 
 		request.setRequestInfo(requestInfo);
@@ -52,6 +53,15 @@ public class AccountDetailKeyServiceClient {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity<AccountDetailKeySearchRequest> entity = new HttpEntity<>(request, headers);
+		
+		System.out.println("====================================");
+		System.out.println("Sub Ledger Master SEARCH API CALL");
+		System.out.println("URL : " + url);
+		System.out.println("SubLedger Master Name : " + name);
+		System.out.println("Tenant : " + tenantId);
+		System.out.println("Token Available : " + (requestInfo != null && requestInfo.getAuthToken() != null
+				&& !requestInfo.getAuthToken().trim().isEmpty()));
+		System.out.println("====================================");
 
 		try {
 
@@ -59,16 +69,20 @@ public class AccountDetailKeyServiceClient {
 					});
 
 			Accountdetailkey accountDetailKey = response.getBody();
+			
+			System.out.println("====================================================");
+			System.out.println("SubLegder Master key :"+accountDetailKey.getDetailkey()+" SubLegder Master Name :"+ accountDetailKey.getDetailname());
+			System.out.println("====================================================");
 
 			if (accountDetailKey == null || accountDetailKey.getId() == null) {
-				throw new IllegalArgumentException("Account Detail Key not found: " + name
-						+ " for Account Detail Type ID: " + accountDetailTypeId);
+				throw new IllegalArgumentException("Sub Ledger Master not found: " + name
+						+ " for Sub Ledger Master Type ID: " + accountDetailTypeId);
 			}
 
 			return accountDetailKey;
 
 		} catch (Exception exception) {
-			throw new RuntimeException("Failed to fetch Account Detail Key: " + name + " for Account Detail Type ID: "
+			throw new RuntimeException("Failed to fetch Sub Ledger Master: " + name + " for Sub Ledger Master Type ID: "
 					+ accountDetailTypeId, exception);
 		}
 	}
@@ -76,11 +90,11 @@ public class AccountDetailKeyServiceClient {
 	private void validate(Integer accountDetailTypeId, String name, RequestInfo requestInfo, String tenantId) {
 
 		if (accountDetailTypeId == null) {
-			throw new IllegalArgumentException("Account Detail Type ID is required");
+			throw new IllegalArgumentException("Sub Ledger Master Type ID is required");
 		}
 
 		if (name == null || name.trim().isEmpty()) {
-			throw new IllegalArgumentException("Account Detail Key name is required");
+			throw new IllegalArgumentException("Sub Ledger Master Key name is required");
 		}
 
 		if (requestInfo == null) {

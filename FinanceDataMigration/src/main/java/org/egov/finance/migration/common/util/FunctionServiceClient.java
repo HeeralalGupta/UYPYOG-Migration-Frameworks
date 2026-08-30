@@ -1,5 +1,7 @@
 package org.egov.finance.migration.common.util;
 
+import java.nio.charset.StandardCharsets;
+
 import org.egov.finance.migration.common.dto.Function;
 import org.egov.finance.migration.common.dto.FunctionRequest;
 import org.egov.finance.migration.common.dto.RequestInfo;
@@ -11,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriUtils;
 
 @Service
 public class FunctionServiceClient {
@@ -44,20 +47,22 @@ public class FunctionServiceClient {
 		request.setSortBy("name");
 
 		HttpHeaders headers = new HttpHeaders();
-
 		headers.setContentType(MediaType.APPLICATION_JSON);
-
 		HttpEntity<FunctionRequest> entity = new HttpEntity<>(request, headers);
 
+		String url = financeHost + functionSearch + "?token="
+				+ UriUtils.encodeQueryParam(requestInfo.getAuthToken(), StandardCharsets.UTF_8)+ "&tenantId="
+				+ UriUtils.encodeQueryParam(tenantId, StandardCharsets.UTF_8);
+		
 		System.out.println("====================================");
 		System.out.println("FUNCTION SEARCH API CALL");
-		System.out.println("URL : " + financeHost + functionSearch);
+		System.out.println("URL : " + url);
 		System.out.println("Function Name : " + functionName);
 		System.out.println("Tenant : " + tenantId);
 		System.out.println("Token Available : " + (requestInfo != null && requestInfo.getAuthToken() != null));
 		System.out.println("====================================");
 
-		ResponseEntity<FunctionResponse> response = restTemplate.exchange(financeHost + functionSearch, HttpMethod.POST,
+		ResponseEntity<FunctionResponse> response = restTemplate.exchange(url, HttpMethod.POST,
 				entity, FunctionResponse.class);
 
 		System.out.println("FUNCTION API STATUS : " + response.getStatusCode());
