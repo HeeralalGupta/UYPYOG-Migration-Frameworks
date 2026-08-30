@@ -5,7 +5,7 @@ public class EgBillregistermis {
 	private IdDTO fund;
 	private Long schemeId;
 	private Long subSchemeId;
-	private IdDTO function;
+	private Long function;
 	private String fundsource;
 	private String departmentcode;
 	private String narration;
@@ -38,11 +38,11 @@ public class EgBillregistermis {
 		this.subSchemeId = subSchemeId;
 	}
 
-	public IdDTO getFunction() {
+	public Long getFunction() {
 		return function;
 	}
 
-	public void setFunction(IdDTO function) {
+	public void setFunction(Long function) {
 		this.function = function;
 	}
 

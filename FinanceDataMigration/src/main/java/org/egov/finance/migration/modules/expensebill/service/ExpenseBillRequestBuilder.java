@@ -8,17 +8,21 @@ import java.util.Date;
 import java.util.List;
 
 import org.egov.finance.migration.common.dto.ChartOfAccountsResponse;
+import org.egov.finance.migration.common.dto.Function;
 import org.egov.finance.migration.common.dto.Fund;
 import org.egov.finance.migration.common.dto.MigrationRequest;
 import org.egov.finance.migration.common.dto.RequestInfo;
 import org.egov.finance.migration.common.dto.RequestInfoBuilder;
+import org.egov.finance.migration.common.dto.Scheme;
 import org.egov.finance.migration.common.util.AccountDetailKeyServiceClient;
 import org.egov.finance.migration.common.util.AccountDetailTypeServiceClient;
 import org.egov.finance.migration.common.util.Accountdetailkey;
 import org.egov.finance.migration.common.util.Accountdetailtype;
 import org.egov.finance.migration.common.util.ChartOfAccountsServiceClient;
 import org.egov.finance.migration.common.util.DepartmentMapping;
+import org.egov.finance.migration.common.util.FunctionServiceClient;
 import org.egov.finance.migration.common.util.FundServiceClient;
+import org.egov.finance.migration.common.util.SchemeServiceClient;
 import org.egov.finance.migration.modules.expensebill.dto.AppConfigValue;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillChecklist;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillPayeedetails;
@@ -39,6 +43,8 @@ public class ExpenseBillRequestBuilder {
 
 	private final RequestInfoBuilder requestInfoBuilder;
 	private final FundServiceClient fundServiceClient;
+	private final FunctionServiceClient functionServiceClient;
+	private final SchemeServiceClient schemeServiceClient;
 	private final AccountDetailTypeServiceClient accountDetailTypeServiceClient;
 	private final AccountDetailKeyServiceClient accountDetailKeyServiceClient;
 	private final ChartOfAccountsServiceClient chartOfAccountsServiceClient;
@@ -46,13 +52,16 @@ public class ExpenseBillRequestBuilder {
 	public ExpenseBillRequestBuilder(RequestInfoBuilder requestInfoBuilder, FundServiceClient fundServiceClient,
 			AccountDetailTypeServiceClient accountDetailTypeServiceClient,
 			AccountDetailKeyServiceClient accountDetailKeyServiceClient,
-			ChartOfAccountsServiceClient chartOfAccountsServiceClient) {
+			ChartOfAccountsServiceClient chartOfAccountsServiceClient, FunctionServiceClient functionServiceClient,
+			SchemeServiceClient schemeServiceClient) {
 
 		this.requestInfoBuilder = requestInfoBuilder;
 		this.fundServiceClient = fundServiceClient;
 		this.accountDetailTypeServiceClient = accountDetailTypeServiceClient;
 		this.accountDetailKeyServiceClient = accountDetailKeyServiceClient;
 		this.chartOfAccountsServiceClient = chartOfAccountsServiceClient;
+		this.functionServiceClient = functionServiceClient;
+		this.schemeServiceClient = schemeServiceClient;
 	}
 
 	/**
@@ -151,28 +160,37 @@ public class ExpenseBillRequestBuilder {
 		/***
 		 * call Scheme fetch api client then set id
 		 */
-		String scheme = record.getScheme();
-		//
-//		mis.setSchemeId();
 
-		/*
-		 * Sub Scheme
-		 */
+		if (hasValue(record.getScheme())) {
+			Scheme schemeByName = schemeServiceClient.getSchemeByName(record.getScheme(), record.getFund(), requestInfo,
+					tenantId);
+			if (schemeByName == null) {
+				throw new IllegalArgumentException("Scheme not found: " + record.getScheme());
+			}
+
+			if (!hasValue(schemeByName.getCode())) {
+				throw new IllegalArgumentException("Fund code not found for fund: " + record.getFund());
+			}
+			mis.setSchemeId(schemeByName.getId());
+		}
+
 		/***
 		 * call Sub-Scheme fetch api client then set id
 		 */
 //		mis.setSubSchemeId(record.getSubScheme());
 
-		/*
-		 * Function
+		/***
+		 * call Function fetch api client then set id
 		 */
-		if (record.getFunction() != null) {
 
-			/***
-			 * call Function fetch api client then set id
-			 */
+		if (hasValue(record.getFunction())) {
+			Function functionByName = functionServiceClient.getFunctionByName(record.getFunction(), requestInfo,
+					tenantId);
+			if (functionByName == null) {
+				throw new IllegalArgumentException("Function not found: " + record.getScheme());
+			}
 
-//			mis.setFunction(createIdReference(record.getFunction()));
+			mis.setFunction(functionByName.getId());
 		}
 
 		mis.setFundsource(null);
