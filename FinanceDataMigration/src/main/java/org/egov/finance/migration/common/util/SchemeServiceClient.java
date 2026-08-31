@@ -18,8 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriUtils;
 
-import tools.jackson.databind.ObjectMapper;
-
 @Service
 public class SchemeServiceClient {
 
@@ -30,87 +28,17 @@ public class SchemeServiceClient {
 
 	@Value("${scheme.search}")
 	private String schemeSearch;
-	private final ObjectMapper objectMapper;
 
-	public SchemeServiceClient(RestTemplate restTemplate, ObjectMapper objectMapper) {
-
+	public SchemeServiceClient(RestTemplate restTemplate) {
 		this.restTemplate = restTemplate;
-		this.objectMapper = objectMapper;
 	}
 
-	/*
-	 * public Scheme getSchemeByName(String schemeName, String fundName, RequestInfo
-	 * requestInfo, String tenantId) {
-	 * 
-	 * if (schemeName == null || schemeName.trim().isEmpty()) { throw new
-	 * IllegalArgumentException("Scheme name is empty."); }
-	 * 
-	 * if (fundName == null || fundName.trim().isEmpty()) { throw new
-	 * IllegalArgumentException("Fund name is empty while searching scheme."); }
-	 * 
-	 * SchemeRequest request = new SchemeRequest();
-	 * 
-	 * request.setRequestInfo(requestInfo); request.setTenantId(tenantId);
-	 * request.setIds(new ArrayList<Integer>());
-	 * request.setFundName(fundName.trim());
-	 * 
-	 * SchemeSearchRequest searchRequest = new SchemeSearchRequest();
-	 * 
-	 * searchRequest.setName(schemeName.trim()); searchRequest.setCode(null);
-	 * searchRequest.setFund(null);
-	 * 
-	 * request.setSchemeSerachRequest(searchRequest);
-	 * 
-	 * HttpHeaders headers = new HttpHeaders();
-	 * headers.setContentType(MediaType.APPLICATION_JSON);
-	 * 
-	 * HttpEntity<SchemeRequest> entity = new HttpEntity<>(request, headers);
-	 * 
-	 * String url = financeHost + schemeSearch + "?token=" +
-	 * UriUtils.encodeQueryParam(requestInfo.getAuthToken(), StandardCharsets.UTF_8)
-	 * + "&tenantId=" + UriUtils.encodeQueryParam(tenantId, StandardCharsets.UTF_8);
-	 * 
-	 * System.out.println("====================================");
-	 * System.out.println("SCHEME SEARCH API CALL"); System.out.println("URL : " +
-	 * url); System.out.println("Scheme Name : " + schemeName);
-	 * System.out.println("Fund Name : " + fundName); System.out.println("Tenant : "
-	 * + tenantId); System.out.println("====================================");
-	 * 
-	 * try {
-	 * 
-	 * ResponseEntity<SchemeResponse> response = restTemplate.exchange(url,
-	 * HttpMethod.POST, entity, SchemeResponse.class);
-	 * 
-	 * System.out.println("SCHEME API STATUS : " + response.getStatusCode());
-	 * 
-	 * SchemeResponse body = response.getBody();
-	 * 
-	 * if (body == null || body.getSchemes() == null || body.getSchemes().isEmpty())
-	 * {
-	 * 
-	 * throw new IllegalArgumentException("Scheme not found: " + schemeName +
-	 * " for fund: " + fundName); }
-	 * 
-	 * for (Scheme scheme : body.getSchemes()) {
-	 * 
-	 * if (scheme.getName() != null &&
-	 * scheme.getName().trim().equalsIgnoreCase(schemeName.trim())) {
-	 * 
-	 * System.out.println("SCHEME FOUND : " + scheme.getName() + ", ID : " +
-	 * scheme.getId());
-	 * 
-	 * return scheme; } }
-	 * 
-	 * throw new IllegalArgumentException("Exact scheme not found: " + schemeName +
-	 * " for fund: " + fundName);
-	 * 
-	 * } catch (Exception e) {
-	 * 
-	 * throw new RuntimeException( "Failed while searching scheme. " + "Scheme=" +
-	 * schemeName + ", Fund=" + fundName, e); } }
-	 */
-
 	public Scheme getSchemeByName(String schemeName, String fundName, RequestInfo requestInfo, String tenantId) {
+
+		/*
+		 * ===================================================== VALIDATION
+		 * =====================================================
+		 */
 
 		if (schemeName == null || schemeName.trim().isEmpty()) {
 			throw new IllegalArgumentException("Scheme name is empty.");
@@ -120,66 +48,126 @@ public class SchemeServiceClient {
 			throw new IllegalArgumentException("Fund name is empty while searching scheme.");
 		}
 
+		if (requestInfo == null) {
+			throw new IllegalArgumentException("RequestInfo is missing.");
+		}
+
+		String token = requestInfo.getAuthToken();
+
+		if (token == null || token.trim().isEmpty()) {
+			throw new IllegalArgumentException("Authentication token is missing.");
+		}
+
+		/*
+		 * ===================================================== SCHEME SEARCH REQUEST
+		 * =====================================================
+		 */
+
 		SchemeRequest request = new SchemeRequest();
 
 		request.setRequestInfo(requestInfo);
 		request.setTenantId(tenantId);
-		request.setIds(new ArrayList<Integer>());
+
+		/*
+		 * Finance controller uses:
+		 *
+		 * fundService.findByName(schemeRequest.getFundName())
+		 */
 		request.setFundName(fundName.trim());
 
+		/*
+		 * IDs list
+		 */
+		request.setIds(new ArrayList<Integer>());
+
+		/*
+		 * Nested scheme search request
+		 */
 		SchemeSearchRequest searchRequest = new SchemeSearchRequest();
 
 		searchRequest.setName(schemeName.trim());
 		searchRequest.setCode(null);
+
+		/*
+		 * Do not set Fund object.
+		 *
+		 * Finance controller resolves fund using fundName.
+		 */
 		searchRequest.setFund(null);
 
 		request.setSchemeSerachRequest(searchRequest);
+
+		/*
+		 * ===================================================== HTTP HEADERS
+		 * =====================================================
+		 */
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		HttpEntity<SchemeRequest> entity = new HttpEntity<>(request, headers);
 
-		String url = financeHost + schemeSearch + "?tenantId="
+		/*
+		 * ===================================================== AUTHENTICATION
+		 * =====================================================
+		 *
+		 * Old Finance security layer reads:
+		 *
+		 * request.getParameter("auth_token") request.getParameter("tenantId")
+		 *
+		 * Therefore token and tenantId must be sent as query parameters.
+		 */
+
+		String url = financeHost + schemeSearch + "?auth_token="
+				+ UriUtils.encodeQueryParam(token, StandardCharsets.UTF_8) + "&tenantId="
 				+ UriUtils.encodeQueryParam(tenantId, StandardCharsets.UTF_8);
 
-		System.out.println("====================================");
-		System.out.println("SCHEME SEARCH API CALL");
-		System.out.println("URL : " + url);
-		System.out.println("Scheme Name : " + schemeName);
-		System.out.println("Fund Name : " + fundName);
-		System.out.println("Tenant : " + tenantId);
-		System.out.println("====================================");
+		System.out.println("SCHEME SEARCH URL : " + url);
+		System.out.println("SCHEME NAME       : " + schemeName);
+		System.out.println("FUND NAME         : " + fundName);
+		System.out.println("TENANT ID         : " + tenantId);
 
-		try {
+		/*
+		 * ===================================================== CALL FINANCE API
+		 * =====================================================
+		 */
 
-			ResponseEntity<SchemeResponse> response = restTemplate.exchange(url, HttpMethod.POST, entity,
-					SchemeResponse.class);
+		ResponseEntity<SchemeResponse> response = restTemplate.exchange(url, HttpMethod.POST, entity,
+				SchemeResponse.class);
 
-			System.out.println("SCHEME API STATUS : " + response.getStatusCode());
+		System.out.println("SCHEME API STATUS : " + response.getStatusCode());
 
-			SchemeResponse body = response.getBody();
+		/*
+		 * ===================================================== RESPONSE
+		 * =====================================================
+		 */
 
-			if (body == null || body.getSchemes() == null || body.getSchemes().isEmpty()) {
+		SchemeResponse body = response.getBody();
 
-				throw new IllegalArgumentException("Scheme not found: " + schemeName + " for fund: " + fundName);
-			}
+		if (body == null || body.getSchemes() == null || body.getSchemes().isEmpty()) {
 
-			for (Scheme scheme : body.getSchemes()) {
-
-				if (scheme.getName() != null && scheme.getName().trim().equalsIgnoreCase(schemeName.trim())) {
-					System.out.println("SCHEME FOUND : " + scheme.getName() + ", ID : " + scheme.getId());
-					return scheme;
-				}
-			}
-
-			throw new IllegalArgumentException("Exact scheme not found: " + schemeName + " for fund: " + fundName);
-
-		} catch (Exception e) {
-
-			throw new RuntimeException(
-					"Failed while searching scheme. " + "Scheme=" + schemeName + ", Fund=" + fundName, e);
+			throw new IllegalArgumentException("Scheme not found: " + schemeName + " for fund: " + fundName);
 		}
-	}
 
+		/*
+		 * ===================================================== EXACT NAME MATCH
+		 * =====================================================
+		 *
+		 * API search may be LIKE based. Therefore do not blindly return first result.
+		 */
+
+		for (Scheme scheme : body.getSchemes()) {
+
+			if (scheme.getName() != null && scheme.getName().trim().equalsIgnoreCase(schemeName.trim())) {
+
+				return scheme;
+			}
+		}
+
+		/*
+		 * Exact scheme was not found.
+		 */
+
+		throw new IllegalArgumentException("Exact scheme not found: " + schemeName + " for fund: " + fundName);
+	}
 }

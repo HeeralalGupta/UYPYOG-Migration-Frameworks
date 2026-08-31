@@ -1,5 +1,6 @@
 package org.egov.finance.migration.common.util;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 import org.egov.finance.migration.common.dto.Function;
@@ -13,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriUtils;
 
 @Service
 public class FunctionServiceClient {
@@ -32,40 +32,109 @@ public class FunctionServiceClient {
 
 	public Function getFunctionByName(String functionName, RequestInfo requestInfo, String tenantId) {
 
+		/*
+		 * ===================================================== VALIDATION
+		 * =====================================================
+		 */
+
 		if (functionName == null || functionName.trim().isEmpty()) {
 			throw new IllegalArgumentException("Function name is empty.");
 		}
 
+		if (requestInfo == null) {
+			throw new IllegalArgumentException("RequestInfo is required.");
+		}
+
+		if (requestInfo.getAuthToken() == null || requestInfo.getAuthToken().trim().isEmpty()) {
+			throw new IllegalArgumentException("Auth token is required.");
+		}
+
+		if (tenantId == null || tenantId.trim().isEmpty()) {
+			throw new IllegalArgumentException("Tenant ID is required.");
+		}
+
+		/*
+		 * ===================================================== REQUEST BODY
+		 * =====================================================
+		 */
+
 		FunctionRequest request = new FunctionRequest();
-		
+
 		request.setRequestInfo(requestInfo);
 		request.setTenantId(tenantId);
 		request.setName(functionName.trim());
 		request.setActive(true);
+		request.setIds(null);
 		request.setPageSize(20);
 		request.setOffset(0);
 		request.setSortBy("name");
 
+		/*
+		 * ===================================================== QUERY PARAMETERS
+		 * =====================================================
+		 *
+		 * Legacy Finance security expects:
+		 *
+		 * auth_token tenantId
+		 *
+		 * in query string.
+		 */
+
+		String encodedTenantId = URLEncoder.encode(tenantId.trim(), StandardCharsets.UTF_8);
+		String encodedAuthToken = URLEncoder.encode(requestInfo.getAuthToken().trim(), StandardCharsets.UTF_8);
+		String url = financeHost + functionSearch + "?tenantId=" + encodedTenantId + "&auth_token=" + encodedAuthToken;
+
+		/*
+		 * ===================================================== HEADERS
+		 * =====================================================
+		 */
+
 		HttpHeaders headers = new HttpHeaders();
+
 		headers.setContentType(MediaType.APPLICATION_JSON);
+
 		HttpEntity<FunctionRequest> entity = new HttpEntity<>(request, headers);
 
-		String url = financeHost + functionSearch + "?token="
-				+ UriUtils.encodeQueryParam(requestInfo.getAuthToken(), StandardCharsets.UTF_8)+ "&tenantId="
-				+ UriUtils.encodeQueryParam(tenantId, StandardCharsets.UTF_8);
-		
+		/*
+		 * ===================================================== LOG
+		 * =====================================================
+		 */
+
 		System.out.println("====================================");
 		System.out.println("FUNCTION SEARCH API CALL");
 		System.out.println("URL : " + url);
 		System.out.println("Function Name : " + functionName);
 		System.out.println("Tenant : " + tenantId);
-		System.out.println("Token Available : " + (requestInfo != null && requestInfo.getAuthToken() != null));
+		System.out.println("Token Available : "
+				+ (requestInfo.getAuthToken() != null && !requestInfo.getAuthToken().trim().isEmpty()));
 		System.out.println("====================================");
 
-		ResponseEntity<FunctionResponse> response = restTemplate.exchange(url, HttpMethod.POST,
-				entity, FunctionResponse.class);
+		/*
+		 * ===================================================== API CALL
+		 * =====================================================
+		 */
+
+		ResponseEntity<FunctionResponse> response;
+
+		try {
+			response = restTemplate.exchange(url, HttpMethod.POST, entity, FunctionResponse.class);
+		} catch (Exception e) {
+
+			throw new RuntimeException("Failed to search Function: " + functionName, e);
+		}
+
+		/*
+		 * ===================================================== STATUS
+		 * =====================================================
+		 */
 
 		System.out.println("FUNCTION API STATUS : " + response.getStatusCode());
+
+		/*
+		 * ===================================================== RESPONSE
+		 * =====================================================
+		 */
+
 		FunctionResponse body = response.getBody();
 
 		if (body == null || body.getFunctions() == null || body.getFunctions().isEmpty()) {
@@ -73,20 +142,28 @@ public class FunctionServiceClient {
 		}
 
 		/*
-		 * API search is LIKE based.
+		 * ===================================================== EXACT NAME MATCH
+		 * =====================================================
 		 *
-		 * Therefore do not blindly take the first result. First try exact function
-		 * name.
+		 * Search API is LIKE based, so don't blindly take the first result.
 		 */
+
 		for (Function function : body.getFunctions()) {
+
 			if (function.getName() != null && function.getName().trim().equalsIgnoreCase(functionName.trim())) {
+				if (function.getId() == null) {
+					throw new IllegalArgumentException("Function ID not found for function: " + functionName);
+				}
+
 				return function;
 			}
 		}
 
 		/*
-		 * Exact function name was not found.
+		 * ===================================================== EXACT MATCH NOT FOUND
+		 * =====================================================
 		 */
-		throw new IllegalArgumentException("Function not found: " + functionName);
+
+		throw new IllegalArgumentException("Exact function not found: " + functionName);
 	}
 }
