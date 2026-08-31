@@ -9,7 +9,7 @@ public class BillSubtypeMapping {
 
 	static {
 
-		BILL_SUBTYPE_MAP.put("Contigent", 1L);
+		BILL_SUBTYPE_MAP.put("Contingent", 1L);
 		BILL_SUBTYPE_MAP.put("Salary", 2L);
 		BILL_SUBTYPE_MAP.put("Pension", 3L);
 		BILL_SUBTYPE_MAP.put("Works", 4L);
