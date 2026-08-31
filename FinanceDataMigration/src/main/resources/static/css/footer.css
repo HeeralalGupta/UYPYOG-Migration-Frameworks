@@ -171,3 +171,17 @@
     text-decoration:underline;
 
 }
+/* =========================================================
+   FOOTER POSITION
+   ========================================================= */
+
+footer {
+    position: relative !important;
+    width: 100%;
+    clear: both;
+}
+
+.footer {
+    position: relative !important;
+}
+

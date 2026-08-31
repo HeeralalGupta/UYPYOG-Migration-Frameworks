@@ -27,5 +27,8 @@ public class MigrationProcessorFactory {
 		}
 		return processor;
 	}
-
+	
+	public int getMigrationModuleCount() {
+	    return processorMap.size();
+	}
 }

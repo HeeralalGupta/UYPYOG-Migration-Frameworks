@@ -1536,4 +1536,191 @@ linear-gradient(180deg,#f4f8ff,#eef4ff);
 }
 
 
+.dashboard-live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    margin-left: 10px;
+    padding: 4px 9px;
+
+    border-radius: 20px;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    background: #ecfdf3;
+    color: #15803d;
+
+    vertical-align: middle;
+}
+
+.live-dot {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+
+    animation: dashboardPulse 1.5s infinite;
+}
+
+@keyframes dashboardPulse {
+
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.45;
+        transform: scale(0.8);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.dashboard-updated {
+    color: #64748b;
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   MIGRATION ACTIVITY
+   ========================================================= */
+
+.activity-panel {
+    min-height: 390px;
+}
+
+.activity-controls {
+    display: flex;
+    align-items: center;
+}
+
+.activity-range {
+    min-width: 130px;
+
+    padding: 8px 12px;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #475569;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    outline: none;
+}
+
+.activity-range:focus {
+    border-color: #2563eb;
+}
+
+.activity-chart-container {
+    position: relative;
+
+    width: 100%;
+
+    height: 300px;
+
+    margin-top: 15px;
+}
+
+.activity-chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+
+/* =========================================================
+   MIGRATION ACTIVITY - LEFT COLUMN
+   ========================================================= */
+
+.activity-small-panel {
+    margin-top: 18px;
+    padding-bottom: 12px;
+}
+
+.activity-chart-small {
+    position: relative;
+    width: 100%;
+    height: 260px;
+    margin-top: 8px;
+}
+
+.activity-chart-small canvas {
+    display: block;
+
+    width: 100% !important;
+    height: 100% !important;
+}
+
+
+/* =========================================================
+   DASHBOARD MAIN ROW
+   ========================================================= */
+
+.dashboard-main-row {
+    align-items: stretch;
+}
+
+
+/* =========================================================
+   LEFT COLUMN
+   ========================================================= */
+
+.dashboard-left-column {
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+   ========================================================= */
+
+.dashboard-left-column .quick-panel {
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   MIGRATION ACTIVITY
+   ========================================================= */
+
+.dashboard-left-column .activity-small-panel {
+    flex: 1;
+    min-height: 0;
+}
+
+
+/* =========================================================
+   RECENT JOBS
+   ========================================================= */
+
+.dashboard-right-column {
+    display: flex;
+}
+
+.dashboard-right-column .recent-panel {
+    width: 100%;
+    height: 100%;
+}
+
+
+
+
+
+
 
