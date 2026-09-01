@@ -82,22 +82,22 @@ public class ExpenseBillRequestBuilder {
 
 		request.setExpenseBillRequest(buildExpenseBillRequest(record, requestInfo, tenantId));
 
-		try {
-
-			String requestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(request);
-
-			System.out.println();
-			System.out.println("==========================================================");
-			System.out.println("       COMPLETE EXPENSE BILL REQUEST JSON");
-			System.out.println("==========================================================");
-			System.out.println(requestJson);
-			System.out.println("==========================================================");
-
-		} catch (Exception e) {
-
-			System.err.println("ERROR WHILE CONVERTING REQUEST TO JSON");
-			e.printStackTrace();
-		}
+//		try {
+//
+//			String requestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(request);
+//
+//			System.out.println();
+//			System.out.println("==========================================================");
+//			System.out.println("       COMPLETE EXPENSE BILL REQUEST JSON");
+//			System.out.println("==========================================================");
+//			System.out.println(requestJson);
+//			System.out.println("==========================================================");
+//
+//		} catch (Exception e) {
+//
+//			System.err.println("ERROR WHILE CONVERTING REQUEST TO JSON");
+//			e.printStackTrace();
+//		}
 		return request;
 	}
 
@@ -551,18 +551,17 @@ public class ExpenseBillRequestBuilder {
 		BigDecimal totalAmount = BigDecimal.ZERO;
 
 		/*
-		 * Add all debit amounts
+		 * Add all Net  Payable amount amounts
 		 */
-		if (record.getDebitDetails() != null) {
-			for (ExpenseDebitRecord debitDetail : record.getDebitDetails()) {
-				if (debitDetail.getDebitAmount() != null) {
-					totalAmount = totalAmount.add(debitDetail.getDebitAmount());
-				}
+		if (record.getNetPayableDetail() != null) {
+			ExpenseNetPayableRecord netPayableRecord = record.getNetPayableDetail();
+			if (netPayableRecord.getCreditAmount() != null) {
+				totalAmount = totalAmount.add(netPayableRecord.getCreditAmount());
 			}
 		}
 
 		/*
-		 * Add all credit amounts
+		 * Add all Deduction amount (credit) amounts
 		 */
 		if (record.getDeductionDetails() != null) {
 			for (ExpenseDeductionRecord creditDetail : record.getDeductionDetails()) {
