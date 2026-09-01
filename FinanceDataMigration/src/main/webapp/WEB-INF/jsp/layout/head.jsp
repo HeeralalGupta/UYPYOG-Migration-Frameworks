@@ -18,8 +18,9 @@
 	href="${pageContext.request.contextPath}/css/theme.css">
 <link rel="stylesheet"
 	href="${pageContext.request.contextPath}/css/upload.css">
-	<link rel="stylesheet"
+<link rel="stylesheet"
 	href="${pageContext.request.contextPath}/css/module-selection.css">
+
 <link rel="stylesheet"
 	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <link
