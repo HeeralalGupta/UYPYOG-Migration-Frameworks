@@ -1,5 +1,8 @@
 package org.egov.finance.migration.common.util;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 import org.egov.finance.migration.common.dto.RequestInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -83,7 +86,9 @@ public class AccountDetailTypeServiceClient {
 
 		validate(name, requestInfo, tenantId);
 
-		String url = financeServiceUrl + "/rest/accountdetailtype/v1/_search?tenantId=" + tenantId;
+		String encodedTenantId = URLEncoder.encode(tenantId.trim(), StandardCharsets.UTF_8);
+		String encodedAuthToken = URLEncoder.encode(requestInfo.getAuthToken().trim(), StandardCharsets.UTF_8);
+		String url = financeServiceUrl + "/rest/accountdetailtype/v1/_search" + "?tenantId=" + encodedTenantId + "&auth_token=" + encodedAuthToken;
 
 		AccountDetailTypeSearchRequest request = new AccountDetailTypeSearchRequest();
 
