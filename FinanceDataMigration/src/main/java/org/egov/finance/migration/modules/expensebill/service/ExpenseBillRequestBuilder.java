@@ -82,22 +82,6 @@ public class ExpenseBillRequestBuilder {
 
 		request.setExpenseBillRequest(buildExpenseBillRequest(record, requestInfo, tenantId));
 
-//		try {
-//
-//			String requestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(request);
-//
-//			System.out.println();
-//			System.out.println("==========================================================");
-//			System.out.println("       COMPLETE EXPENSE BILL REQUEST JSON");
-//			System.out.println("==========================================================");
-//			System.out.println(requestJson);
-//			System.out.println("==========================================================");
-//
-//		} catch (Exception e) {
-//
-//			System.err.println("ERROR WHILE CONVERTING REQUEST TO JSON");
-//			e.printStackTrace();
-//		}
 		return request;
 	}
 
