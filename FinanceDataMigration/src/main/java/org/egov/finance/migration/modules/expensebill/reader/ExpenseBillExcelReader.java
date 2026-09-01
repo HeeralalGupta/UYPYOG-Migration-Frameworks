@@ -79,40 +79,58 @@ public class ExpenseBillExcelReader {
 	 *
 	 * Multiple rows with blank SN belong to the previous ExpenseRecord.
 	 */
+
 	public List<ExpenseBillRecord> read(MultipartFile file) throws Exception {
 
-		List<ExpenseBillRecord> expenseRecords = new ArrayList<ExpenseBillRecord>();
-		
-		   if (file == null) {
-		        throw new IllegalArgumentException("Excel file is required.");
-		    }
+		List<ExpenseBillRecord> expenseRecords = new ArrayList<>();
 
-		    if (file.isEmpty()) {
-		        throw new IllegalArgumentException("Uploaded Excel file is empty.");
-		    }
+		if (file == null) {
+			throw new IllegalArgumentException("Excel file is required.");
+		}
 
-		    log.info("File name: {}", file.getOriginalFilename());
-		    log.info("Content type: {}", file.getContentType());
-		    log.info("File size: {} bytes", file.getSize());
-		
-		try (InputStream inputStream = file.getInputStream();
-				Workbook workbook = WorkbookFactory.create(inputStream)) {
+		if (file.isEmpty()) {
+			throw new IllegalArgumentException("Uploaded Excel file is empty.");
+		}
+
+		log.info("File name: {}", file.getOriginalFilename());
+		log.info("Content type: {}", file.getContentType());
+		log.info("File size: {} bytes", file.getSize());
+
+		try (InputStream inputStream = file.getInputStream(); Workbook workbook = WorkbookFactory.create(inputStream)) {
+
 			Sheet sheet = workbook.getSheetAt(0);
 			ExpenseBillRecord currentRecord = null;
 
 			for (int rowIndex = DATA_START_ROW; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
-
 				Row row = sheet.getRow(rowIndex);
 
 				if (isRowEmpty(row)) {
 					continue;
 				}
 
+				// Convert Apache POI row index to actual Excel row number
+				int excelRowNumber = rowIndex + 1;
+
 				/*
 				 * If SN is present, this is a new Expense Bill.
 				 */
 				if (hasValue(row, COL_SN)) {
+
+					/*
+					 * Close previous bill record.
+					 */
+					if (currentRecord != null) {
+						currentRecord.setEndRow(excelRowNumber - 1);
+					}
+
 					currentRecord = createExpenseRecord(row);
+
+					/*
+					 * Set row tracking for migration and duplicate detection.
+					 */
+					currentRecord.setStartRow(excelRowNumber);
+					currentRecord.setEndRow(excelRowNumber);
+
 					expenseRecords.add(currentRecord);
 
 				} else if (currentRecord == null) {
@@ -122,6 +140,11 @@ public class ExpenseBillExcelReader {
 					 */
 					continue;
 				}
+
+				/*
+				 * Update current bill's end row.
+				 */
+				currentRecord.setEndRow(excelRowNumber);
 
 				/*
 				 * Add Debit Detail
@@ -135,14 +158,24 @@ public class ExpenseBillExcelReader {
 
 				/*
 				 * Set Net Payable Detail
-				 *
-				 * Usually this will be available only once for a bill.
 				 */
 				addNetPayableDetail(row, currentRecord);
 			}
-		}catch (Exception e) {
+
+		} catch (Exception e) {
 			throw new RuntimeException("Unable to read Expense Bill Excel file.", e);
 		}
+
+		/*
+		 * Debug all records
+		 */
+		log.info("==============================================");
+		log.info("TOTAL EXPENSE BILL RECORDS READ: {}", expenseRecords.size());
+
+		expenseRecords.forEach(record -> log.info("SN={} | StartRow={} | EndRow={} | PartyBillNo={}",
+				record.getSerialNumber(), record.getStartRow(), record.getEndRow(), record.getPartyBillNo()));
+
+		log.info("==============================================");
 
 		return expenseRecords;
 	}
