@@ -1033,23 +1033,30 @@ function exportReport() {
         buildReportParams();
 
 
+    const query =
+        params.toString();
+
+
     const url =
         getContextPath()
         +
         "/migration/reports/export"
         +
         (
-            params.toString()
-                ? "?"
-                +
-                params.toString()
+            query
+                ? "?" + query
                 : ""
         );
 
 
+    console.log(
+        "Export Report:",
+        url
+    );
+
+
     window.location.href =
         url;
-
 }
 
 
@@ -1263,3 +1270,4 @@ function getContextPath() {
     return window.contextPath || "";
 
 }
+
