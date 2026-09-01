@@ -401,13 +401,31 @@ public class ExpenseBillRequestBuilder {
 		return billDetails;
 	}
 
+//	private String extractNumericGlCode(String glCodeValue) {
+//
+//		if (glCodeValue == null || glCodeValue.trim().isEmpty()) {
+//			return null;
+//		}
+//
+//		String value = glCodeValue.trim();
+//		return value.replaceFirst("^([0-9]+).*", "$1");
+//	}
+
 	private String extractNumericGlCode(String glCodeValue) {
 
-		if (glCodeValue != null && glCodeValue.contains("-")) {
-			return glCodeValue.substring(0, glCodeValue.indexOf("-")).trim();
+		if (glCodeValue == null || glCodeValue.trim().isEmpty()) {
+			return null;
 		}
 
-		return glCodeValue != null ? glCodeValue.trim() : null;
+		String value = glCodeValue.trim();
+
+		java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(\\d+)").matcher(value);
+
+		if (matcher.find()) {
+			return matcher.group(1);
+		}
+
+		throw new IllegalArgumentException("Invalid GL Code format: " + glCodeValue);
 	}
 
 	/**
@@ -535,7 +553,7 @@ public class ExpenseBillRequestBuilder {
 		BigDecimal totalAmount = BigDecimal.ZERO;
 
 		/*
-		 * Add all Net  Payable amount amounts
+		 * Add all Net Payable amount amounts
 		 */
 		if (record.getNetPayableDetail() != null) {
 			ExpenseNetPayableRecord netPayableRecord = record.getNetPayableDetail();

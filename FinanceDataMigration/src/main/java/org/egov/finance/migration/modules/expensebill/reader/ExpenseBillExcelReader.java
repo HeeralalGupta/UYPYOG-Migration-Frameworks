@@ -99,29 +99,28 @@ public class ExpenseBillExcelReader {
 		try (InputStream inputStream = file.getInputStream(); Workbook workbook = WorkbookFactory.create(inputStream)) {
 
 			Sheet sheet = workbook.getSheetAt(0);
+
 			ExpenseBillRecord currentRecord = null;
 
 			for (int rowIndex = DATA_START_ROW; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+
 				Row row = sheet.getRow(rowIndex);
 
 				if (isRowEmpty(row)) {
 					continue;
 				}
 
-				// Convert Apache POI row index to actual Excel row number
+				/*
+				 * Convert Apache POI row index to actual Excel row number.
+				 *
+				 * POI index 4 = Excel Row 5
+				 */
 				int excelRowNumber = rowIndex + 1;
 
 				/*
-				 * If SN is present, this is a new Expense Bill.
+				 * If SN is present, create a new Expense Bill.
 				 */
 				if (hasValue(row, COL_SN)) {
-
-					/*
-					 * Close previous bill record.
-					 */
-					if (currentRecord != null) {
-						currentRecord.setEndRow(excelRowNumber - 1);
-					}
 
 					currentRecord = createExpenseRecord(row);
 
@@ -133,18 +132,25 @@ public class ExpenseBillExcelReader {
 
 					expenseRecords.add(currentRecord);
 
+					log.info("New Expense Bill detected. SN={} | StartRow={}", currentRecord.getSerialNumber(),
+							currentRecord.getStartRow());
+
 				} else if (currentRecord == null) {
 
 					/*
 					 * Ignore rows before first valid bill row.
 					 */
-					continue;
-				}
+					log.warn("Ignoring row {} because no Expense Bill SN found.", excelRowNumber);
 
-				/*
-				 * Update current bill's end row.
-				 */
-				currentRecord.setEndRow(excelRowNumber);
+					continue;
+
+				} else {
+
+					/*
+					 * Continuation row belongs to the current Expense Bill.
+					 */
+					currentRecord.setEndRow(excelRowNumber);
+				}
 
 				/*
 				 * Add Debit Detail
@@ -163,17 +169,25 @@ public class ExpenseBillExcelReader {
 			}
 
 		} catch (Exception e) {
+
+			log.error("Unable to read Expense Bill Excel file.", e);
+
 			throw new RuntimeException("Unable to read Expense Bill Excel file.", e);
 		}
 
 		/*
-		 * Debug all records
+		 * Debug all grouped records.
 		 */
 		log.info("==============================================");
 		log.info("TOTAL EXPENSE BILL RECORDS READ: {}", expenseRecords.size());
+		log.info("==============================================");
 
-		expenseRecords.forEach(record -> log.info("SN={} | StartRow={} | EndRow={} | PartyBillNo={}",
-				record.getSerialNumber(), record.getStartRow(), record.getEndRow(), record.getPartyBillNo()));
+		expenseRecords.forEach(record -> log.info(
+				"SN={} | StartRow={} | EndRow={} | DebitDetails={} | DeductionDetails={} | PartyBillNo={}",
+				record.getSerialNumber(), record.getStartRow(), record.getEndRow(),
+				record.getDebitDetails() != null ? record.getDebitDetails().size() : 0,
+				record.getDeductionDetails() != null ? record.getDeductionDetails().size() : 0,
+				record.getPartyBillNo()));
 
 		log.info("==============================================");
 
