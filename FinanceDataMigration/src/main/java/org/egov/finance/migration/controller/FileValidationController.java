@@ -4,10 +4,12 @@ import org.egov.finance.migration.common.dto.FileValidationResult;
 import org.egov.finance.migration.service.BankAccountFileValidationService;
 import org.egov.finance.migration.service.BankBranchFileValidationService;
 import org.egov.finance.migration.service.BankFileValidationService;
+import org.egov.finance.migration.service.ContractorFileValidationService;
 import org.egov.finance.migration.service.FileValidationService;
 import org.egov.finance.migration.service.FundFileValidationService;
 import org.egov.finance.migration.service.PurchaseOrderFileValidationService;
 import org.egov.finance.migration.service.SchemeFileValidationService;
+import org.egov.finance.migration.service.SupplierFileValidationService;
 import org.egov.finance.migration.service.WorkFileValidationService;
 import org.egov.finance.migration.service.WorkOrderFileValidationService;
 import org.springframework.http.MediaType;
@@ -24,6 +26,8 @@ public class FileValidationController {
 	private final BankFileValidationService bankFileValidationService;
 	private final BankBranchFileValidationService bankBranchFileValidationService;
 	private final BankAccountFileValidationService bankAccountFileValidationService;
+	private final ContractorFileValidationService contractorFileValidationService;
+	private final SupplierFileValidationService supplierFileValidationService;
 	private final WorkFileValidationService workFileValidationService;
 	private final WorkOrderFileValidationService workOrderFileValidationService;
 	private final PurchaseOrderFileValidationService purchaseOrderFileValidationService;
@@ -34,6 +38,8 @@ public class FileValidationController {
 			BankFileValidationService bankFileValidationService,
 			BankBranchFileValidationService bankBranchFileValidationService,
 			BankAccountFileValidationService bankAccountFileValidationService,
+			ContractorFileValidationService contractorFileValidationService,
+			SupplierFileValidationService supplierFileValidationService,
 			WorkFileValidationService workFileValidationService,
 			WorkOrderFileValidationService workOrderFileValidationService,
 			PurchaseOrderFileValidationService purchaseOrderFileValidationService) {
@@ -44,6 +50,8 @@ public class FileValidationController {
 		this.bankFileValidationService = bankFileValidationService;
 		this.bankBranchFileValidationService = bankBranchFileValidationService;
 		this.bankAccountFileValidationService = bankAccountFileValidationService;
+		this.contractorFileValidationService = contractorFileValidationService;
+		this.supplierFileValidationService = supplierFileValidationService;
 		this.workFileValidationService = workFileValidationService;
 		this.workOrderFileValidationService = workOrderFileValidationService;
 		this.purchaseOrderFileValidationService = purchaseOrderFileValidationService;
@@ -81,11 +89,21 @@ public class FileValidationController {
 		return bankAccountFileValidationService.validate(file);
 	}
 	
+	@PostMapping(value = "/validate/CONTRACTOR", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public FileValidationResult validateContractorFile(@RequestParam("file") MultipartFile file) {
+		return contractorFileValidationService.validate(file);
+	}
+	
 	@PostMapping(value = "/validate/WORK", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public FileValidationResult validateWorkFile(@RequestParam("file") MultipartFile file) {
 		return workFileValidationService.validate(file);
 	}
-
+    
+	@PostMapping(value = "/validate/SUPPLIER", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public FileValidationResult validateSupplierFile(@RequestParam("file") MultipartFile file) {
+		return supplierFileValidationService.validate(file);
+	}
+	
 	@PostMapping(value = "/validate/WORK_ORDER", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public FileValidationResult validateWorkOrderFile(@RequestParam("file") MultipartFile file) {
 		return workOrderFileValidationService.validate(file);
