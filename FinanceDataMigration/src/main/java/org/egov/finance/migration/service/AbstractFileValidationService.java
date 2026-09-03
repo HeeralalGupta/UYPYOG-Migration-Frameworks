@@ -59,7 +59,7 @@ public abstract class AbstractFileValidationService {
                 result.setValid(false);
 
                 result.getErrors().add(
-                        "Header row not found");
+                        "Header row not found in the Excel sheet.");
 
                 return result;
             }
@@ -255,5 +255,52 @@ public abstract class AbstractFileValidationService {
         }
 
         return true;
+    }
+    protected boolean validateHeaderRow(
+            Sheet sheet,
+            FileValidationResult result,
+            String... requiredHeaders) {
+
+        int headerRow = checkHeaderRow(
+                sheet,
+                requiredHeaders);
+
+        if (headerRow == -1) {
+
+            result.getErrors().add(
+                    "Excel sheet not correct or header row not available. "
+                    + "Required headers must be present in Excel Row 3.");
+
+            return false;
+        }
+
+        return true;
+    }
+    protected int checkHeaderRow(
+            Sheet sheet,
+            String... requiredHeaders) {
+
+        // Excel Row 3 = Java index 2
+        final int HEADER_ROW_INDEX = 2;
+
+        Row headerRow = sheet.getRow(HEADER_ROW_INDEX);
+
+        // Row 3 does not exist
+        if (headerRow == null) {
+            return -1;
+        }
+
+        Map<String, Integer> headers =
+                createHeaderMap(headerRow);
+
+        // Check all required headers
+        for (String header : requiredHeaders) {
+
+            if (!headers.containsKey(header)) {
+                return -1;
+            }
+        }
+
+        return HEADER_ROW_INDEX;
     }
 }

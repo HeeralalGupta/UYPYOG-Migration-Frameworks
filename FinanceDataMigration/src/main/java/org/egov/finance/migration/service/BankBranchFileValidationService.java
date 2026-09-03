@@ -54,68 +54,14 @@ public class BankBranchFileValidationService
     protected int findHeaderRow(
             Sheet sheet) {
 
-        /*
-         * =====================================================
-         * FIND HEADER ROW
-         * =====================================================
-         *
-         * Actual Bank Branch Excel headers:
-         *
-         * Sl. No.
-         * ULB Name *
-         * Bank *
-         * Branch Name/Location *
-         * IFSC Code *
-         * Branch Code *
-         * MICR
-         * Address *
-         * Contact Person
-         * Phone Number
-         * Narration
-         *
-         * createHeaderMap() should normalize them to:
-         *
-         * ulbname
-         * bank
-         * branchnamelocation
-         * ifsccode
-         * branchcode
-         * micr
-         * address
-         * contactperson
-         * phonenumber
-         * narration
-         */
-
-        for (int i = 0;
-                i <= sheet.getLastRowNum();
-                i++) {
-
-            Row row = sheet.getRow(i);
-
-            if (row == null) {
-                continue;
-            }
-
-            Map<String, Integer> headers =
-                    createHeaderMap(row);
-
-            /*
-             * Check mandatory Bank Branch columns.
-             */
-
-            if (headers.containsKey("ulbname")
-                    && headers.containsKey("bank")
-                    && headers.containsKey("branchnamelocation")
-                    && headers.containsKey("ifsccode")
-                    && headers.containsKey("branchcode")
-                    && headers.containsKey("address")) {
-
-                return i;
-            }
-        }
-
-        return -1;
+        return checkHeaderRow(
+                sheet,
+                "ulbname",
+                "bank",
+                "branchnamelocation",
+                "ifsccode",
+                "branchcode",
+                "address");
     }
 
     @Override
