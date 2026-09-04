@@ -57,58 +57,22 @@ public class ContractorFileValidationService
     protected int findHeaderRow(
             Sheet sheet) {
 
-        /*
-         * =====================================================
-         * FIND CONTRACTOR HEADER ROW
-         * =====================================================
-         *
-         * Uploaded Excel:
-         *
-         * Row 1 -> Contractor Details
-         * Row 2 -> Note
-         * Row 3 -> Header
-         * Row 4 -> First Data
-         *
-         * We search dynamically instead of hard-coding
-         * row number.
-         */
-
-        for (int i = 0;
-                i <= sheet.getLastRowNum();
-                i++) {
-
-            Row row = sheet.getRow(i);
-
-            if (row == null) {
-                continue;
-            }
-
-            Map<String, Integer> headers =
-                    createHeaderMap(row);
-
-            /*
-             * Check important Contractor headers.
-             */
-            if (headers.containsKey("ulbname")
-                    && headers.containsKey("contractorname")
-                    && headers.containsKey("correspondenceaddress")
-                    && headers.containsKey("contactperson")
-                    && headers.containsKey("mobilenumber")
-                    && headers.containsKey("email")
-                    && headers.containsKey("bankname")
-                    && headers.containsKey("bankbranch")
-                    && headers.containsKey("ifsccode")
-                    && headers.containsKey("bankaccountnumber")
-                    && headers.containsKey("contractortype")
-                    && headers.containsKey("source")
-                    && headers.containsKey("status")
-                    && headers.containsKey("pannumber")) {
-
-                return i;
-            }
-        }
-
-        return -1;
+        return checkHeaderRow(
+                sheet,
+                "ulbname",
+                "contractorname",
+                "correspondenceaddress",
+                "contactperson",
+                "mobilenumber",
+                "email",
+                "bankname",
+                "bankbranch",
+                "ifsccode",
+                "bankaccountnumber",
+                "contractortype",
+                "source",
+                "status",
+                "pannumber");
     }
 
     @Override

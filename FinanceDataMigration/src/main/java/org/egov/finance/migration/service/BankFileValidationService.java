@@ -55,50 +55,13 @@ public class BankFileValidationService
     protected int findHeaderRow(
             Sheet sheet) {
 
-        /*
-         * =====================================================
-         * FIND HEADER ROW
-         * =====================================================
-         *
-         * The service will search the complete Excel
-         * until it finds:
-         *
-         * ULB Name
-         * Bank Name
-         * Narration
-         *
-         * Example:
-         *
-         * Row 1 -> Bank Master
-         * Row 2 -> Note
-         * Row 3 -> Header
-         * Row 4 -> First Data
-         */
-
-        for (int i = 0;
-                i <= sheet.getLastRowNum();
-                i++) {
-
-            Row row = sheet.getRow(i);
-
-            if (row == null) {
-                continue;
-            }
-
-            Map<String, Integer> headers =
-                    createHeaderMap(row);
-
-            if (headers.containsKey("ulbname")
-                    && headers.containsKey("bankname")
-                    && headers.containsKey("narration")) {
-
-                return i;
-            }
-        }
-
-        return -1;
+        return checkHeaderRow(
+                sheet,
+                "ulbname",
+                "bankname",
+                "narration");
     }
-
+   
     @Override
     protected boolean validateHeaders(
             Map<String, Integer> headerMap,
@@ -132,4 +95,5 @@ public class BankFileValidationService
 
         return valid;
     }
+    
 }

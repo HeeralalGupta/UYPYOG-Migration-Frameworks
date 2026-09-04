@@ -54,54 +54,15 @@ public class BankAccountFileValidationService
     protected int findHeaderRow(
             Sheet sheet) {
 
-        /*
-         * =====================================================
-         * FIND HEADER ROW
-         * =====================================================
-         *
-         * Excel columns:
-         *
-         * Sl. No.
-         * ULB Name
-         * Bank Branch
-         * IFSC Code
-         * Account Number
-         * Fund
-         * Account Type
-         * Description
-         * Pay To
-         * Usage Type
-         *
-         * The service searches the complete Excel sheet
-         * until all required headers are found.
-         */
-
-        for (int i = 0;
-                i <= sheet.getLastRowNum();
-                i++) {
-
-            Row row = sheet.getRow(i);
-
-            if (row == null) {
-                continue;
-            }
-
-            Map<String, Integer> headers =
-                    createHeaderMap(row);
-
-            if (headers.containsKey("ulbname")
-                    && headers.containsKey("bankbranch")
-                    && headers.containsKey("ifsccode")
-                    && headers.containsKey("accountnumber")
-                    && headers.containsKey("fund")
-                    && headers.containsKey("accounttype")
-                    && headers.containsKey("usagetype")) {
-
-                return i;
-            }
-        }
-
-        return -1;
+        return checkHeaderRow(
+                sheet,
+                "ulbname",
+                "bankbranch",
+                "ifsccode",
+                "accountnumber",
+                "fund",
+                "accounttype",
+                "usagetype");
     }
 
     @Override

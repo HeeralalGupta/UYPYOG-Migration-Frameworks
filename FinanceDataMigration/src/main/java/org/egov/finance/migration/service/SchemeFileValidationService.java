@@ -55,50 +55,14 @@ public class SchemeFileValidationService
     protected int findHeaderRow(
             Sheet sheet) {
 
-        /*
-         * =====================================================
-         * FIND HEADER ROW
-         * =====================================================
-         *
-         * Excel:
-         *
-         * Row 1 -> Scheme Master
-         * Row 2 -> Note
-         * Row 3 -> Header
-         * Row 4 -> First data row
-         *
-         * However, we are not hard-coding row 3.
-         * We search for the required headers.
-         */
-
-        for (int i = 0;
-                i <= sheet.getLastRowNum();
-                i++) {
-
-            Row row = sheet.getRow(i);
-
-            if (row == null) {
-                continue;
-            }
-
-            Map<String, Integer> headers =
-                    createHeaderMap(row);
-
-            /*
-             * Required Scheme columns.
-             */
-            if (headers.containsKey("ulbname")
-                    && headers.containsKey("schemename")
-                    && headers.containsKey("fund")
-                    && headers.containsKey("status")
-                    && headers.containsKey("startdate")
-                    && headers.containsKey("enddate")) {
-
-                return i;
-            }
-        }
-
-        return -1;
+        return checkHeaderRow(
+                sheet,
+                "ulbname",
+                "schemename",
+                "fund",
+                "status",
+                "startdate",
+                "enddate");
     }
 
     @Override

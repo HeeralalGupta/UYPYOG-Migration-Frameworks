@@ -57,74 +57,22 @@ public class SupplierFileValidationService
     protected int findHeaderRow(
             Sheet sheet) {
 
-        /*
-         * =====================================================
-         * FIND SUPPLIER HEADER ROW
-         * =====================================================
-         *
-         * Uploaded Excel structure:
-         *
-         * Row 1 -> Supplier Details
-         * Row 2 -> Note
-         * Row 3 -> Header
-         * Row 4 -> First data row
-         *
-         * We search dynamically instead of hard-coding
-         * row number 3.
-         */
-
-        for (int i = 0;
-                i <= sheet.getLastRowNum();
-                i++) {
-
-            Row row = sheet.getRow(i);
-
-            if (row == null) {
-                continue;
-            }
-
-            Map<String, Integer> headers =
-                    createHeaderMap(row);
-
-            /*
-             * Required columns from Supplier Excel.
-             *
-             * ULB Name
-             * Supplier Name
-             * Correspondence Address
-             * Contact Person
-             * Mobile Number
-             * Email
-             * Bank Name
-             * Bank Branch
-             * IFSC Code
-             * Bank Account Number
-             * Supplier Type
-             * Source
-             * Status
-             * PAN Number
-             */
-
-            if (headers.containsKey("ulbname")
-                    && headers.containsKey("suppliername")
-                    && headers.containsKey("correspondenceaddress")
-                    && headers.containsKey("contactperson")
-                    && headers.containsKey("mobilenumber")
-                    && headers.containsKey("email")
-                    && headers.containsKey("bankname")
-                    && headers.containsKey("bankbranch")
-                    && headers.containsKey("ifsccode")
-                    && headers.containsKey("bankaccountnumber")
-                    && headers.containsKey("suppliertype")
-                    && headers.containsKey("source")
-                    && headers.containsKey("status")
-                    && headers.containsKey("pannumber")) {
-
-                return i;
-            }
-        }
-
-        return -1;
+        return checkHeaderRow(
+                sheet,
+                "ulbname",
+                "suppliername",
+                "correspondenceaddress",
+                "contactperson",
+                "mobilenumber",
+                "email",
+                "bankname",
+                "bankbranch",
+                "ifsccode",
+                "bankaccountnumber",
+                "suppliertype",
+                "source",
+                "status",
+                "pannumber");
     }
 
     @Override

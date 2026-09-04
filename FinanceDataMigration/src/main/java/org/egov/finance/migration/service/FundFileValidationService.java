@@ -53,37 +53,11 @@ public class FundFileValidationService
     protected int findHeaderRow(
             Sheet sheet) {
 
-        /*
-         * Excel:
-         *
-         * Row 1 -> Fund Master
-         * Row 2 -> Note
-         * Row 3 -> Header
-         * Row 4 -> First data row
-         */
-
-        for (int i = 0;
-                i <= sheet.getLastRowNum();
-                i++) {
-
-            Row row = sheet.getRow(i);
-
-            if (row == null) {
-                continue;
-            }
-
-            Map<String, Integer> headers =
-                    createHeaderMap(row);
-
-            if (headers.containsKey("ulbname")
-                    && headers.containsKey("fundname")
-                    && headers.containsKey("natureoffund")) {
-
-                return i;
-            }
-        }
-
-        return -1;
+        return checkHeaderRow(
+                sheet,
+                "ulbname",
+                "fundname",
+                "natureoffund");
     }
 
     @Override
