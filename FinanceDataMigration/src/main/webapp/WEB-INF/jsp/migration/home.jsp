@@ -38,7 +38,9 @@
 
 <link rel="stylesheet"
 	href="${pageContext.request.contextPath}/css/theme.css">
-
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/css/common.css">
+<link rel="icon" type="images/png" href="images/favicon.png">
 
 <!-- =========================================================
          FONT AWESOME
@@ -664,7 +666,7 @@
 	<script src="${pageContext.request.contextPath}/js/home.js">
 		
 	</script>
-
+	<script src="${pageContext.request.contextPath}/js/common.js"></script>
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
 		

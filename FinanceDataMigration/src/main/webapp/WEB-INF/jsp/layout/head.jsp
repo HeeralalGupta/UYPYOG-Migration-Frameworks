@@ -2,6 +2,7 @@
     pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<link rel="icon" type="images/png" href="images/favicon.png">
 <link rel="stylesheet"
 	href="${pageContext.request.contextPath}/css/base.css">
 <link rel="stylesheet"
@@ -24,6 +25,8 @@
 	href="${pageContext.request.contextPath}/css/reports.css">
 <link rel="stylesheet"
 	href="${pageContext.request.contextPath}/css/settings.css">
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/css/common.css">
 
 <link rel="stylesheet"
 	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
