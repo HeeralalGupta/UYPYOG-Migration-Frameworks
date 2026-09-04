@@ -520,41 +520,74 @@ function populateTenantDropdown(tenants) {
         return;
     }
 
+    const user = getMigrationUser();
+
+    const currentTenant =
+        user.tenantId;
+
+    console.log(
+        "History Current Tenant:",
+        currentTenant
+    );
+
+
+    /*
+     * Clear existing Tom Select options
+     */
     tenantSelect.clearOptions();
 
-    tenantSelect.addOption({
-        value: "ALL",
-        text: "All Tenants"
-    });
 
-    tenants.forEach(function (tenant) {
-
-        if (
-            tenant === null ||
-            tenant === undefined ||
-            String(tenant).trim() === ""
-        ) {
-            return;
-        }
-
-        const value = String(tenant).trim();
-
-        /*
-         * hr.gurugram -> Gurugram
-         * hr.ambala -> Ambala
-         * hr.faridabad -> Faridabad
-         */
-        const displayName =
-            getTenantDisplayName(value);
+    /*
+     * No tenant received from Finance
+     */
+    if (!currentTenant) {
 
         tenantSelect.addOption({
-            value: value,
-            text: displayName
+            value: "",
+            text: "Tenant not provided"
         });
 
+        tenantSelect.setValue(
+            "",
+            true
+        );
+
+        tenantSelect.disable();
+
+        return;
+    }
+
+
+    /*
+     * Show ONLY current Finance tenant
+     */
+    tenantSelect.addOption({
+        value: currentTenant,
+        text: getTenantDisplayName(
+            currentTenant
+        )
     });
 
-    tenantSelect.setValue("ALL", true);
+
+    /*
+     * Select current tenant
+     */
+    tenantSelect.setValue(
+        currentTenant,
+        true
+    );
+
+
+    /*
+     * Prevent user from changing tenant
+     */
+    tenantSelect.disable();
+
+
+    console.log(
+        "History tenant locked:",
+        currentTenant
+    );
 }
 
 function getTenantDisplayName(tenant) {
@@ -743,13 +776,6 @@ function buildFilterParams() {
         );
 
 
-    const tenant =
-        getSelectValue(
-            tenantSelect,
-            "filterTenant"
-        );
-
-
     const fromDate =
         getInputValue(
             "filterFromDate"
@@ -762,16 +788,21 @@ function buildFilterParams() {
         );
 
 
+    /*
+     * Job ID
+     */
     if (jobId) {
 
         params.set(
             "jobId",
             jobId
         );
-
     }
 
 
+    /*
+     * Module
+     */
     if (
         module &&
         module !== "ALL"
@@ -781,10 +812,12 @@ function buildFilterParams() {
             "module",
             module
         );
-
     }
 
 
+    /*
+     * Status
+     */
     if (
         status &&
         status !== "ALL"
@@ -794,45 +827,54 @@ function buildFilterParams() {
             "status",
             status
         );
-
     }
 
 
-    if (
-        tenant &&
-        tenant !== "ALL"
-    ) {
+    /*
+     * Tenant
+     *
+     * ALWAYS use Finance-provided tenant
+     */
+    const user =
+        getMigrationUser();
+
+    const tenant =
+        user.tenantId;
+
+    if (tenant) {
 
         params.set(
             "tenant",
             tenant
         );
-
     }
 
 
+    /*
+     * From date
+     */
     if (fromDate) {
 
         params.set(
             "fromDate",
             fromDate
         );
-
     }
 
 
+    /*
+     * To date
+     */
     if (toDate) {
 
         params.set(
             "toDate",
             toDate
         );
-
     }
 
 
     return params;
-
 }
 
 
@@ -2079,7 +2121,6 @@ function resetFilters() {
             "ALL",
             true
         );
-
     }
 
 
@@ -2089,25 +2130,19 @@ function resetFilters() {
             "ALL",
             true
         );
-
     }
 
 
-    if (tenantSelect) {
-
-        tenantSelect.setValue(
-            "ALL",
-            true
-        );
-
-    }
+    /*
+     * DO NOT reset tenant.
+     *
+     * Tenant must remain the Finance tenant.
+     */
 
 
     currentPage = 0;
 
-
     loadHistory();
-
 }
 
 

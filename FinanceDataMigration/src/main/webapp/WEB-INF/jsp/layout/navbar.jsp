@@ -70,7 +70,7 @@
 
     <div class="nav-right">
 
-        <button type="button"
+        <!-- <button type="button"
                 class="notification-btn"
                 title="Notifications">
 
@@ -78,17 +78,17 @@
 
             <span class="notification-dot"></span>
 
-        </button>
+        </button> -->
 
 
-        <button type="button"
+       <!--  <button type="button"
                 class="help-btn">
 
             <i class="fa-solid fa-circle-question"></i>
 
             <span>Help</span>
 
-        </button>
+        </button> -->
 
     </div>
 

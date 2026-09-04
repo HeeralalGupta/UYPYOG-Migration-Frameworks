@@ -92,16 +92,15 @@
 			<div class="user-info">
 
 				<div class="user-name">
-					Administrator
+					${empty userContext.username ? 'User' : userContext.username}
 				</div>
 
 				<div class="user-role">
-					Finance Administrator
+					${empty userContext.tenantId ? 'No Tenant' : userContext.tenantId.substring(3).toUpperCase()}
 				</div>
 
 			</div>
 
-			<i class="fa-solid fa-chevron-down user-arrow"></i>
 
 		</div>
 

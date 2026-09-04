@@ -2,8 +2,9 @@ package org.egov.finance.migration.dashboard.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.Arrays;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,141 +29,241 @@ public class DashboardService {
 		this.migrationProcessorFactory = migrationProcessorFactory;
 	}
 
-	public DashboardResponse getDashboard() {
+	/*
+	 * ============================================================ DASHBOARD
+	 * ============================================================
+	 */
+	public DashboardResponse getDashboard(String tenantId) {
+
 		DashboardResponse response = new DashboardResponse();
 
 		/*
-		 * ===================================================== 1. MIGRATION MODULES
-		 * =====================================================
+		 * ======================================================== GET JOBS
+		 * ========================================================
+		 */
+		List<MigrationJob> allJobs = migrationJobRepository.findAll();
+
+		/*
+		 * ======================================================== FILTER BY TENANT
+		 * ========================================================
+		 *
+		 * If tenantId is provided, show only that tenant's jobs.
+		 *
+		 * If tenantId is blank/null, existing behavior is retained and all jobs are
+		 * used.
+		 */
+		List<MigrationJob> jobs;
+
+		if (tenantId == null || tenantId.isBlank()) {
+
+			jobs = allJobs;
+
+		} else {
+
+			jobs = allJobs.stream()
+					.filter(job -> job.getTenantId() != null && tenantId.equalsIgnoreCase(job.getTenantId()))
+					.collect(Collectors.toList());
+		}
+
+		/*
+		 * ======================================================== 1. MIGRATION MODULES
+		 * ========================================================
+		 *
+		 * This is application-wide, so it is not filtered by tenant.
 		 */
 		response.setMigrationModules(migrationProcessorFactory.getMigrationModuleCount());
 
 		/*
-		 * ===================================================== 2. TOTAL JOBS
-		 * =====================================================
+		 * ======================================================== 2. TOTAL JOBS
+		 * ========================================================
 		 */
-		response.setTotalJobs(migrationJobRepository.count());
+		response.setTotalJobs(Long.valueOf(jobs.size()));
 
 		/*
-		 * ===================================================== 3. TODAY JOBS
-		 * =====================================================
+		 * ======================================================== 3. TODAY JOBS
+		 * ========================================================
 		 */
-
 		LocalDate today = LocalDate.now();
-		LocalDateTime startOfDay = LocalDateTime.of(today, LocalTime.MIN);
-		LocalDateTime endOfDay = LocalDateTime.of(today, LocalTime.MAX);
-		response.setTodayJobs(migrationJobRepository.countByStartedTimeBetween(startOfDay, endOfDay));
+
+		long todayJobs = jobs.stream().filter(job -> job.getStartedTime() != null)
+				.filter(job -> job.getStartedTime().toLocalDate().equals(today)).count();
+
+		response.setTodayJobs(todayJobs);
 
 		/*
-		 * ===================================================== 4. SUCCESSFUL JOBS
-		 * =====================================================
+		 * ======================================================== 4. SUCCESSFUL JOBS
+		 * ========================================================
+		 *
+		 * Your current application uses COMPLETED.
 		 */
+		long successfulJobs = jobs.stream().filter(job -> "COMPLETED".equalsIgnoreCase(job.getStatus())).count();
 
-		long successfulJobs = migrationJobRepository.countByStatus("COMPLETED");
 		response.setSuccessfulJobs(successfulJobs);
 
 		/*
-		 * ===================================================== 5. FAILED JOBS
-		 * =====================================================
+		 * ======================================================== 5. FAILED JOBS
+		 * ========================================================
 		 *
-		 * Your processors use:
+		 * Your existing application uses COMPLETED_WITH_ERRORS.
 		 *
-		 * COMPLETED_WITH_ERRORS
+		 * FAILED is also included so that jobs failed by MigrationAsyncService are
+		 * counted.
 		 */
+		long failedJobs = jobs.stream().filter(job -> {
 
-		long failedJobs = migrationJobRepository.countByStatus("COMPLETED_WITH_ERRORS");
+			String status = job.getStatus();
+
+			return "COMPLETED_WITH_ERRORS".equalsIgnoreCase(status) || "FAILED".equalsIgnoreCase(status);
+		}).count();
+
 		response.setFailedJobs(failedJobs);
 
 		/*
-		 * ===================================================== 6. SUCCESS RATE
-		 * =====================================================
+		 * ======================================================== 6. SUCCESS RATE
+		 * ========================================================
 		 */
-
 		long completedJobs = successfulJobs + failedJobs;
+
 		double successRate = 0.0;
+
 		if (completedJobs > 0) {
+
 			successRate = (successfulJobs * 100.0) / completedJobs;
 		}
+
 		response.setSuccessRate(Math.round(successRate * 10.0) / 10.0);
 
 		/*
-		 * ===================================================== 7. RUNNING JOBS
-		 * =====================================================
+		 * ======================================================== 7. RUNNING JOBS
+		 * ========================================================
 		 */
+		long runningJobs = jobs.stream().filter(job -> {
 
-		long runningJobs = migrationJobRepository.countByStatusIn(Arrays.asList("RUNNING", "PROCESSING"));
+			String status = job.getStatus();
+
+			return "RUNNING".equalsIgnoreCase(status) || "PROCESSING".equalsIgnoreCase(status);
+		}).count();
+
 		response.setRunningJobs(runningJobs);
 
 		/*
-		 * ===================================================== 8. RECENT JOBS
-		 * =====================================================
+		 * ======================================================== 8. RECENT JOBS
+		 * ========================================================
 		 */
+		List<MigrationJob> recentJobs = jobs.stream().filter(job -> job.getStartedTime() != null)
+				.sorted(Comparator.comparing(MigrationJob::getStartedTime, Comparator.reverseOrder())).limit(10)
+				.collect(Collectors.toList());
 
-		List<MigrationJob> jobs = migrationJobRepository.findTop10ByOrderByStartedTimeDesc();
-		response.setRecentJobs(jobs.stream().map(this::convertToRecentJob).collect(Collectors.toList()));
+		response.setRecentJobs(recentJobs.stream().map(this::convertToRecentJob).collect(Collectors.toList()));
+
 		return response;
 	}
 
+	/*
+	 * ============================================================ CONVERT JOB TO
+	 * RECENT JOB DTO ============================================================
+	 */
 	private RecentMigrationJob convertToRecentJob(MigrationJob job) {
 
 		RecentMigrationJob recent = new RecentMigrationJob();
 
 		recent.setJobId(job.getJobId());
+
 		recent.setModule(job.getModuleCode());
+
 		recent.setTenant(job.getTenantId());
+
 		recent.setStatus(job.getStatus());
+
 		recent.setTotalRecords(job.getTotalRecords());
+
 		recent.setSuccessRecords(job.getSuccessRecords());
+
 		recent.setFailedRecords(job.getFailedRecords());
+
 		recent.setSkippedRecords(job.getSkippedRecords());
+
 		recent.setStartedAt(job.getStartedTime());
+
 		recent.setCompletedAt(job.getCompletedTime());
+
 		recent.setProgressPercent(job.getProgressPercent());
+
 		recent.setCurrentMessage(job.getCurrentMessage());
 
 		return recent;
 	}
 
-	public MigrationActivityResponse getMigrationActivity(int days) {
+	/*
+	 * ============================================================ MIGRATION
+	 * ACTIVITY ============================================================
+	 */
+	public MigrationActivityResponse getMigrationActivity(int days, String tenantId) {
 
+		/*
+		 * Default days
+		 */
 		if (days <= 0) {
 			days = 7;
 		}
 
 		/*
-		 * Prevent someone from requesting an unnecessarily large range from the
-		 * dashboard.
+		 * Prevent unnecessarily large range
 		 */
 		if (days > 90) {
 			days = 90;
 		}
 
 		LocalDate today = LocalDate.now();
+
 		LocalDate startDate = today.minusDays(days - 1);
+
 		LocalDateTime startDateTime = startDate.atStartOfDay();
+
 		LocalDateTime endDateTime = today.plusDays(1).atStartOfDay();
+
+		/*
+		 * ======================================================== GET JOBS WITHIN DATE
+		 * RANGE ========================================================
+		 */
 		List<MigrationJob> jobs = migrationJobRepository.findByStartedTimeBetween(startDateTime, endDateTime);
 
 		/*
-		 * ===================================================== PREPARE RESPONSE
-		 * =====================================================
+		 * ======================================================== FILTER BY TENANT
+		 * ========================================================
 		 */
+		if (tenantId != null && !tenantId.isBlank()) {
 
-		MigrationActivityResponse response = new MigrationActivityResponse();
-		List<String> labels = new java.util.ArrayList<>();
-		List<Long> successful = new java.util.ArrayList<>();
-		List<Long> failed = new java.util.ArrayList<>();
-		List<Long> running = new java.util.ArrayList<>();
+			jobs = jobs.stream()
+					.filter(job -> job.getTenantId() != null && tenantId.equalsIgnoreCase(job.getTenantId()))
+					.collect(Collectors.toList());
+		}
 
 		/*
-		 * ===================================================== BUILD DAILY DATA
-		 * =====================================================
+		 * ======================================================== PREPARE RESPONSE
+		 * ========================================================
 		 */
+		MigrationActivityResponse response = new MigrationActivityResponse();
+
+		List<String> labels = new ArrayList<>();
+
+		List<Long> successful = new ArrayList<>();
+
+		List<Long> failed = new ArrayList<>();
+
+		List<Long> running = new ArrayList<>();
+
+		/*
+		 * ======================================================== BUILD DAILY DATA
+		 * ========================================================
+		 */
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM");
 
 		for (int i = 0; i < days; i++) {
 
 			LocalDate date = startDate.plusDays(i);
-			labels.add(date.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM")));
+
+			labels.add(date.format(formatter));
 
 			long successCount = 0;
 			long failedCount = 0;
@@ -190,6 +291,7 @@ public class DashboardService {
 				 * Successful
 				 */
 				if ("COMPLETED".equalsIgnoreCase(status)) {
+
 					successCount++;
 				}
 
@@ -197,22 +299,30 @@ public class DashboardService {
 				 * Failed
 				 */
 				else if ("COMPLETED_WITH_ERRORS".equalsIgnoreCase(status) || "FAILED".equalsIgnoreCase(status)) {
+
 					failedCount++;
 				}
 
 				/*
-				 * Currently running
+				 * Running
 				 */
 				else if ("RUNNING".equalsIgnoreCase(status) || "PROCESSING".equalsIgnoreCase(status)) {
+
 					runningCount++;
 				}
 			}
 
 			successful.add(successCount);
+
 			failed.add(failedCount);
+
 			running.add(runningCount);
 		}
 
+		/*
+		 * ======================================================== SET RESPONSE
+		 * ========================================================
+		 */
 		response.setLabels(labels);
 		response.setSuccessful(successful);
 		response.setFailed(failed);
@@ -220,5 +330,4 @@ public class DashboardService {
 
 		return response;
 	}
-
 }

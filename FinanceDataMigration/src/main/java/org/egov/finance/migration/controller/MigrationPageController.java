@@ -9,6 +9,7 @@ import org.egov.finance.migration.config.TenantConfig;
 import org.egov.finance.migration.history.dto.MigrationHistoryOptionsResponse;
 import org.egov.finance.migration.history.dto.MigrationHistoryResponse;
 import org.egov.finance.migration.history.service.MigrationHistoryService;
+import org.egov.finance.migration.service.UserContextService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,26 +21,28 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import jakarta.servlet.http.HttpSession;
+
 @Controller
 @RequestMapping("/migration")
 public class MigrationPageController {
 
 	private final TenantConfig tenantConfig;
 	private final MigrationHistoryService migrationHistoryService;
+	private final UserContextService userContextService;
 
-	public MigrationPageController(TenantConfig tenantConfig, MigrationHistoryService migrationHistoryService) {
+	public MigrationPageController(TenantConfig tenantConfig, MigrationHistoryService migrationHistoryService,
+			UserContextService userContextService) {
 		this.tenantConfig = tenantConfig;
 		this.migrationHistoryService = migrationHistoryService;
+		this.userContextService = userContextService;
 	}
 
-//    @GetMapping({"", "/"})
-//    public String tenantSelection() {
-//
-//        return "migration/tenant-selection";
-//    }
-
 	@GetMapping({ "", "/" })
-	public String home() {
+	public String home(@RequestParam(required = false) String ms_tenant_id, @RequestParam(required = false) String username, HttpSession session) {
+		if (ms_tenant_id != null && !ms_tenant_id.isBlank() && username != null && !username.isBlank()) {
+			userContextService.setUserContext(session, username, ms_tenant_id);
+		}
 		return "migration/home";
 	}
 
@@ -93,12 +96,10 @@ public class MigrationPageController {
 	@GetMapping("/history/export")
 	public ResponseEntity<byte[]> exportHistory(
 
-			@RequestParam(required = false) String jobId,
-			@RequestParam(required = false) String module,
-			@RequestParam(required = false) String tenant,
-			@RequestParam(required = false) String status,
-			@RequestParam(required = false) String fromDate,
-			@RequestParam(required = false) String toDate) throws IOException {
+			@RequestParam(required = false) String jobId, @RequestParam(required = false) String module,
+			@RequestParam(required = false) String tenant, @RequestParam(required = false) String status,
+			@RequestParam(required = false) String fromDate, @RequestParam(required = false) String toDate)
+			throws IOException {
 
 		LocalDateTime from = parseFromDate(fromDate);
 		LocalDateTime to = parseToDate(toDate);

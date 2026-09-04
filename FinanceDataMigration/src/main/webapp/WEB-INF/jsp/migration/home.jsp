@@ -669,7 +669,13 @@
 	<script src="${pageContext.request.contextPath}/js/common.js"></script>
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
-		
+	
+	</script>
+		<script>
+	    window.migrationUser = {
+	        username: '${userContext.username}',
+	        tenantId: '${userContext.tenantId}'
+	    };
 	</script>
 
 </body>

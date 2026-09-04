@@ -331,11 +331,11 @@
 			        Tenant
 			    </label>
 			
-			    <select id="filterTenant">
+			    <select id="filterTenant" data-tenant-dropdown>
 			
-			        <option value="ALL">
-			            All Tenants
-			        </option>
+			       <option value="">
+				        Loading...
+				    </option>
 			
 			    </select>
 			

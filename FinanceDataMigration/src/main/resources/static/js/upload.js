@@ -8,6 +8,11 @@ document.addEventListener("DOMContentLoaded", function() {
     console.log("Migration Upload JS Loaded");
     console.log("=================================");
     setMigrationStep("upload");
+	// ==========================================
+	// SET TENANT FROM FINANCE URL
+	// ==========================================
+
+	setUserTenant();
 
     /* =====================================================
        ELEMENTS
@@ -735,7 +740,7 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log("VALIDATE BUTTON CLICKED");
             console.log("=================================");
 
-			
+
             /* ---------------------------------------------
                Check file
             --------------------------------------------- */
@@ -788,13 +793,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 return;
             }
-			
-			const tenantSelect =
-			        document.getElementById("tenantId");
-			
-			if(!tenantSelect){
-				console.error("Please select ulb name.");
-			}
+
+            const tenantSelect =
+                document.getElementById("tenantId");
+
+            if (!tenantSelect) {
+                console.error("Please select ulb name.");
+            }
 
 
             const module =
@@ -962,6 +967,13 @@ document.addEventListener("DOMContentLoaded", function() {
                     showValidationSuccess(result);
 
                     setMigrationStep("validate");
+
+
+
+
+                    /* ==========================================
+                       PROCESS MIGRATION
+                       ========================================== */
 
                     const processBtn =
                         document.getElementById(
@@ -3567,11 +3579,60 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-
-
-
-
-
-
-
+// DOM Ended
 });
+
+
+// Setting user tenants
+function setUserTenant() {
+
+    const params = new URLSearchParams(window.location.search);
+
+    const tenantId = params.get("ms_tenant_id");
+    const username = params.get("username");
+
+    console.log("URL Tenant:", tenantId);
+    console.log("URL Username:", username);
+
+    const tenantSelect =
+        document.getElementById("tenantId");
+
+    if (!tenantSelect) {
+        return;
+    }
+
+    if (!tenantId) {
+
+        console.error(
+            "Tenant ID was not provided in URL."
+        );
+
+        tenantSelect.innerHTML =
+            '<option value="">Tenant not provided</option>';
+
+        tenantSelect.disabled = true;
+
+        return;
+    }
+
+    /*
+     * Show ONLY the tenant received from URL
+     */
+    const displayName =
+        tenantId.startsWith("hr.")
+            ? tenantId.substring(3)
+            : tenantId;
+
+    tenantSelect.innerHTML = `
+					        <option value="${tenantId}" selected>
+					            ${displayName.charAt(0).toUpperCase() + displayName.slice(1)}
+					        </option>
+					    `;
+
+    /*
+     * Lock tenant selection
+     */
+    tenantSelect.disabled = true;
+
+    console.log("Selected Tenant:", tenantSelect.value);
+}

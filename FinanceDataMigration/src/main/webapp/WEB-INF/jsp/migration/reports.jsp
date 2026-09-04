@@ -195,11 +195,11 @@
                     Tenant
                 </label>
 
-                <select id="reportTenant">
+                <select id="reportTenant" data-tenant-dropdown>
 
-                    <option value="ALL">
-                        All Tenants
-                    </option>
+                    <option value="">
+				        Loading...
+				    </option>
 
                 </select>
 

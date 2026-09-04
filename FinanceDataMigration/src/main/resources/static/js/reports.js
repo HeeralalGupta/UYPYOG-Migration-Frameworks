@@ -111,37 +111,33 @@ async function loadReportOptions() {
 
     try {
 
-        const response =
-            await fetch(
-                getContextPath()
-                +
-                "/migration/history/options",
-                {
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    },
-
-                    cache: "no-store"
-                }
-            );
-
+        const response = await fetch(
+            getContextPath() +
+            "/migration/history/options",
+            {
+                headers: {
+                    "Accept": "application/json"
+                },
+                cache: "no-store"
+            }
+        );
 
         if (!response.ok) {
 
             throw new Error(
-                "Options API returned HTTP "
-                +
+                "Options API returned HTTP " +
                 response.status
             );
-
         }
-
 
         const data =
             await response.json();
 
-
+        /*
+         * =====================================================
+         * MODULE
+         * =====================================================
+         */
         populateSelect(
             "reportModule",
             data.modules || [],
@@ -149,22 +145,23 @@ async function loadReportOptions() {
         );
 
 
-        populateSelect(
-            "reportTenant",
-            data.tenants || [],
-            "All Tenants"
-        );
+        /*
+         * =====================================================
+         * TENANT
+         *
+         * DO NOT load all tenants.
+         * Use only Finance-provided tenant.
+         * =====================================================
+         */
+        setReportTenant();
 
-    }
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "Unable to load report options:",
             error
         );
-
     }
-
 }
 
 
@@ -354,28 +351,19 @@ function buildReportParams() {
     const params =
         new URLSearchParams();
 
-
     const fromDate =
         document.getElementById(
             "reportFromDate"
         )?.value;
-
 
     const toDate =
         document.getElementById(
             "reportToDate"
         )?.value;
 
-
     const module =
         document.getElementById(
             "reportModule"
-        )?.value;
-
-
-    const tenant =
-        document.getElementById(
-            "reportTenant"
         )?.value;
 
 
@@ -385,7 +373,6 @@ function buildReportParams() {
             "fromDate",
             fromDate
         );
-
     }
 
 
@@ -395,7 +382,6 @@ function buildReportParams() {
             "toDate",
             toDate
         );
-
     }
 
 
@@ -408,27 +394,28 @@ function buildReportParams() {
             "module",
             module
         );
-
     }
 
 
-    if (
-        tenant &&
-        tenant !== "ALL"
-    ) {
+    /*
+     * =====================================================
+     * ALWAYS USE FINANCE USER TENANT
+     * =====================================================
+     */
+    const user =
+        getMigrationUser();
+
+    if (user.tenantId) {
 
         params.set(
             "tenant",
-            tenant
+            user.tenantId
         );
-
     }
 
 
     return params;
-
 }
-
 
 /* ============================================================
  * SUMMARY
@@ -1012,9 +999,7 @@ function resetReportFilters() {
         module.value = "ALL";
     }
 
-    if (tenant) {
-        tenant.value = "ALL";
-    }
+ 
 
 
     generateReport();
@@ -1271,3 +1256,60 @@ function getContextPath() {
 
 }
 
+
+function setReportTenant() {
+
+    const user = getMigrationUser();
+
+    console.log(
+        "Report User:",
+        user
+    );
+
+    const tenantSelect =
+        document.getElementById("reportTenant");
+
+    if (!tenantSelect) {
+        return;
+    }
+
+    if (!user.tenantId) {
+
+        tenantSelect.innerHTML = `
+            <option value="">
+                Tenant not provided
+            </option>
+        `;
+
+        tenantSelect.disabled = true;
+
+        return;
+    }
+
+    const displayName =
+        formatTenant(user.tenantId);
+
+    /*
+     * Show ONLY current tenant
+     */
+    tenantSelect.innerHTML = `
+        <option
+            value="${user.tenantId}"
+            selected>
+            ${displayName}
+        </option>
+    `;
+
+    tenantSelect.value =
+        user.tenantId;
+
+    /*
+     * Lock dropdown
+     */
+    tenantSelect.disabled = true;
+
+    console.log(
+        "Report tenant:",
+        tenantSelect.value
+    );
+}

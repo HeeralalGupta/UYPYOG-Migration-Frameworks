@@ -16,16 +16,20 @@ public class DashboardController {
 	private final DashboardService dashboardService;
 
 	public DashboardController(DashboardService dashboardService) {
+
 		this.dashboardService = dashboardService;
 	}
 
 	@GetMapping
-	public ResponseEntity<DashboardResponse> getDashboard() {
-		return ResponseEntity.ok(dashboardService.getDashboard());
+	public ResponseEntity<DashboardResponse> getDashboard(@RequestParam(required = false) String tenantId) {
+
+		return ResponseEntity.ok(dashboardService.getDashboard(tenantId));
 	}
 
 	@GetMapping("/activity")
-	public ResponseEntity<MigrationActivityResponse> getMigrationActivity(@RequestParam(defaultValue = "7") int days) {
-		return ResponseEntity.ok(dashboardService.getMigrationActivity(days));
+	public ResponseEntity<MigrationActivityResponse> getMigrationActivity(@RequestParam(defaultValue = "7") int days,
+			@RequestParam(required = false) String tenantId) {
+
+		return ResponseEntity.ok(dashboardService.getMigrationActivity(days, tenantId));
 	}
 }

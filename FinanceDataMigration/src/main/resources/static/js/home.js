@@ -84,11 +84,14 @@ async function loadDashboard(isInitialLoad = false) {
             showDashboardLoading();
 
         }
+		const user = getMigrationUser();
 
+		const tenantId = user.tenantId;
 
         const url =
-            getContextPath()
-            + "/migration/dashboard";
+            getContextPath() + 
+			"/migration/dashboard?tenantId=" +
+			    encodeURIComponent(tenantId)
 
 
         console.log(
@@ -1048,11 +1051,13 @@ async function loadMigrationActivity(
 ) {
 
     try {
+		const user = getMigrationUser();
 
+		const tenantId = user.tenantId;
         const url =
-            getContextPath()
-            + "/migration/dashboard/activity?days="
-            + encodeURIComponent(days);
+		getContextPath() +
+		    "/migration/dashboard/activity?days=7&tenantId=" +
+		    encodeURIComponent(tenantId)
 
 
         console.log(

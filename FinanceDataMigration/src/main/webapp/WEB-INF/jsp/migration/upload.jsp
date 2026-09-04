@@ -256,17 +256,18 @@
 						class="fa-solid fa-building"></i> Select ULB <span
 						class="required-star">*</span>
 					</label> <select id="tenantId" name="tenantId"
-						class="form-select tenant-select" required>
+						class="form-select tenant-select" data-tenant-dropdown required>
 
 
-						<option value=""></option>
-						<c:forEach var="tenant" items="${tenants}">
+						<option value="">Loading...</option>
+						<%-- <c:forEach var="tenant" items="${tenants}">
 							<option value="${tenant}">
 								${tenant.substring(3,4).toUpperCase()}${tenant.substring(4)}</option>
-						</c:forEach>
+						</c:forEach> --%>
 
-					</select> <small class="tenant-help-text"> Select the ULB where the
-						migration will be performed. </small>
+					</select> 
+					<!-- <small class="tenant-help-text"> Select the ULB where the
+						migration will be performed. </small> -->
 
 				</div>
 
@@ -1061,7 +1062,9 @@
 
 
 	</main>
-
+	<script>
+	    window.contextPath = '${pageContext.request.contextPath}';
+	</script>
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 	<script
 		src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
