@@ -156,6 +156,21 @@ public abstract class AbstractFileValidationService {
             }
 
             result.setTotalRows(totalRows);
+            
+            /*
+             * =====================================================
+             * CHECK DATA ROW EXISTENCE
+             * =====================================================
+             */
+            if (totalRows == 0) {
+
+                result.setValid(false);
+
+                result.getErrors().add(
+                        "At least one data row is required.");
+
+                return result;
+            }
 
             /*
              * =====================================================

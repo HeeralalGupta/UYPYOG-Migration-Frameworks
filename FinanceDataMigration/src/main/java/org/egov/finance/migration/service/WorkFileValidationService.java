@@ -31,7 +31,15 @@ public class WorkFileValidationService
     protected Sheet getSheet(
             Workbook workbook) {
 
-        Sheet sheet  = workbook.getSheet(ExcelConstants.WORK_SHEET);
+    	Sheet sheet = null;
+
+    	for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+    	    if (ExcelConstants.WORK_SHEET.equalsIgnoreCase(
+    	            workbook.getSheetName(i))) {
+    	        sheet = workbook.getSheetAt(i);
+    	        break;
+    	    }
+    	}
         
         if (sheet == null) {
             throw new IllegalArgumentException(
