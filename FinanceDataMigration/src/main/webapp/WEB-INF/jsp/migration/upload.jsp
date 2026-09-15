@@ -250,26 +250,26 @@
 					         TENANT / ULB SELECTION
 					 ====================================================== -->
 
-				<div class="tenant-selection">
-
-					<label for="tenantId" class="tenant-label"> <i
-						class="fa-solid fa-building"></i> Select ULB <span
-						class="required-star">*</span>
-					</label> <select id="tenantId" name="tenantId"
-						class="form-select tenant-select" data-tenant-dropdown required>
-
-
-						<option value="">Loading...</option>
-						<%-- <c:forEach var="tenant" items="${tenants}">
-							<option value="${tenant}">
-								${tenant.substring(3,4).toUpperCase()}${tenant.substring(4)}</option>
-						</c:forEach> --%>
-
-					</select> 
-					<!-- <small class="tenant-help-text"> Select the ULB where the
-						migration will be performed. </small> -->
-
-				</div>
+				<!-- TENANT / ULB SELECTION - HIDDEN -->
+			<div class="tenant-selection" style="display: none;">
+		
+			    <label for="tenantId" class="tenant-label">
+			        <i class="fa-solid fa-building"></i>
+			        Select ULB
+			        <span class="required-star">*</span>
+			    </label>
+			
+			    <select id="tenantId"
+			            name="tenantId"
+			            class="form-select tenant-select"
+			            data-tenant-dropdown
+			            required>
+			
+			        <option value="">Loading...</option>
+			
+			    </select>
+			
+			</div>
 
 				<!-- DROP ZONE -->
 
