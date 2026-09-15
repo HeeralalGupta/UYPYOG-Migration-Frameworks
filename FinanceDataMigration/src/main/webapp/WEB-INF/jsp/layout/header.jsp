@@ -81,7 +81,7 @@
 
 
 		<!-- USER -->
-		<div class="user-box">
+<%-- 		<div class="user-box">
 
 			<div class="user-avatar">
 
@@ -102,7 +102,7 @@
 			</div>
 
 
-		</div>
+		</div> --%>
 
 	</div>
 

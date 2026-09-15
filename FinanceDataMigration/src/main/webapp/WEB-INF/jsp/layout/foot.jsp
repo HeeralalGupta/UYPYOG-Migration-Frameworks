@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-	<%@ include file="../layout/footer.jsp"%>
+	<%-- <%@ include file="../layout/footer.jsp"%> --%>
 	
 	<script>window.contextPath ="${pageContext.request.contextPath}";</script>
 	<script src="${pageContext.request.contextPath}/js/app.js"></script>

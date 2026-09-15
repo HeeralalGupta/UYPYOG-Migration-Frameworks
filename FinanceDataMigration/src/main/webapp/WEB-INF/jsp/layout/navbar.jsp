@@ -55,7 +55,7 @@
 
 
         <!-- SETTINGS -->
-        <a href="<c:url value='/migration/settings'/>"
+        <%-- <a href="<c:url value='/migration/settings'/>"
            class="nav-item"
            data-page="settings">
 
@@ -63,7 +63,7 @@
 
             <span>Settings</span>
 
-        </a>
+        </a> --%>
 
     </div>
 
