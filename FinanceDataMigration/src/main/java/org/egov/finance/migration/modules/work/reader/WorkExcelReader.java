@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
@@ -147,19 +148,28 @@ public class WorkExcelReader {
      */
     private Date parseDate(Cell cell) {
 
-        if (cell == null) {
+        if (cell == null || cell.getCellType() == CellType.BLANK) {
             return null;
         }
 
         /*
          * Excel native date cell
          */
-        if (DateUtil.isCellDateFormatted(cell)) {
+        if (cell.getCellType() == CellType.NUMERIC
+                && DateUtil.isCellDateFormatted(cell)) {
             return cell.getDateCellValue();
         }
 
         /*
-         * Date stored as text
+         * Formula cell returning date
+         */
+        if (cell.getCellType() == CellType.FORMULA
+                && DateUtil.isCellDateFormatted(cell)) {
+            return cell.getDateCellValue();
+        }
+
+        /*
+         * Date stored as text / other supported cell types
          */
         String value = formatter.formatCellValue(cell).trim();
 
@@ -170,14 +180,23 @@ public class WorkExcelReader {
         String[] formats = {
                 "dd/MM/yyyy",
                 "dd-MM-yyyy",
+                "dd.MM.yyyy",
                 "yyyy-MM-dd",
-                "MM/dd/yyyy"
+                "yyyy/MM/dd",
+                "yyyy.MM.dd",
+                "MM/dd/yyyy",
+                "MM-dd-yyyy",
+                "MM.dd.yyyy",
+                "dd/MM/yyyy HH:mm:ss",
+                "dd-MM-yyyy HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss",
+                "dd/MM/yyyy HH:mm",
+                "dd-MM-yyyy HH:mm",
+                "yyyy-MM-dd HH:mm"
         };
 
         for (String format : formats) {
-
             try {
-
                 java.text.SimpleDateFormat dateFormat =
                         new java.text.SimpleDateFormat(format);
 
