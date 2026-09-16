@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
@@ -28,8 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class PurchaseOrderExcelReader {
 
-    private static final int DATA_START_ROW = 3;
-
     private final DataFormatter formatter = new DataFormatter();
 
     public List<PurchaseOrderRecord> read(MultipartFile file) {
@@ -40,13 +39,20 @@ public class PurchaseOrderExcelReader {
             /*
              * Find sheets by sheet name.
              */
-            Sheet masterSheet =
-                    workbook.getSheet(
-                            ExcelConstants.PURCHASE_ORDER_MASTER_SHEET);
+        	Sheet masterSheet = null;
+        	Sheet itemsSheet = null;
 
-            Sheet itemsSheet =
-                    workbook.getSheet(
-                            ExcelConstants.PURCHASE_ORDER_ITEMS_SHEET);
+        	for (Sheet sheet : workbook) {
+        	    if (sheet.getSheetName().equalsIgnoreCase(
+        	            ExcelConstants.PURCHASE_ORDER_MASTER_SHEET)) {
+        	        masterSheet = sheet;
+        	    }
+
+        	    if (sheet.getSheetName().equalsIgnoreCase(
+        	            ExcelConstants.PURCHASE_ORDER_ITEMS_SHEET)) {
+        	        itemsSheet = sheet;
+        	    }
+        	}
 
             validateSheets(masterSheet, itemsSheet);
 
@@ -85,7 +91,14 @@ public class PurchaseOrderExcelReader {
         List<PurchaseOrderRecord> records =
                 new ArrayList<>();
 
-        for (int rowIndex = DATA_START_ROW;
+        int headerRowIndex =
+                findMasterHeaderRow(sheet);
+
+        Map<String, Integer> headerMap =
+                buildHeaderMap(
+                        sheet.getRow(headerRowIndex));
+
+        for (int rowIndex = headerRowIndex + 1;
              rowIndex <= sheet.getLastRowNum();
              rowIndex++) {
 
@@ -96,7 +109,9 @@ public class PurchaseOrderExcelReader {
             }
 
             PurchaseOrderRecord record =
-                    createPurchaseOrderRecord(row);
+                    createPurchaseOrderRecord(
+                            row,
+                            headerMap);
 
             /*
              * Actual Excel row number.
@@ -115,11 +130,12 @@ public class PurchaseOrderExcelReader {
     }
 
     /**
-     * Convert one Purchase Order Master row
-     * into PurchaseOrderRecord.
+     * Create Purchase Order Master record
+     * using dynamic column positions.
      */
     private PurchaseOrderRecord createPurchaseOrderRecord(
-            Row row) {
+            Row row,
+            Map<String, Integer> headerMap) {
 
         PurchaseOrderRecord record =
                 new PurchaseOrderRecord();
@@ -145,48 +161,92 @@ public class PurchaseOrderExcelReader {
          */
 
         record.setUlbName(
-                getCellValue(row, 1));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "ulbname"));
 
         record.setOrderNo(
-                getCellValue(row, 2));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "orderno"));
 
         record.setOrderDate(
-                parseDate(row.getCell(3)));
+                parseDate(
+                        getCell(
+                                row,
+                                headerMap,
+                                "orderdate")));
 
         record.setOrderName(
-                getCellValue(row, 4));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "ordername"));
 
         record.setDescription(
-                getCellValue(row, 5));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "description"));
 
         record.setSupplierName(
-                getCellValue(row, 6));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "suppliername"));
 
         record.setFund(
-                getCellValue(row, 7));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "sourceoffund"));
 
         record.setDepartment(
-                getCellValue(row, 8));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "department"));
 
         record.setScheme(
-                getCellValue(row, 9));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "scheme"));
 
         record.setSubScheme(
-                getCellValue(row, 10));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "subscheme"));
 
         record.setSanctionNo(
-                getCellValue(row, 11));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "sanctionno"));
 
         record.setSanctionDate(
-                parseDate(row.getCell(12)));
+                parseDate(
+                        getCell(
+                                row,
+                                headerMap,
+                                "sanctiondate")));
 
         record.setAdvancePayable(
                 parseBigDecimal(
-                        getCellValue(row, 13)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "advancepayable")));
 
         record.setTotalOrderValue(
                 parseBigDecimal(
-                        getCellValue(row, 14)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "totalordervalue")));
 
         return record;
     }
@@ -200,7 +260,14 @@ public class PurchaseOrderExcelReader {
         List<PurchaseOrderItemRecord> records =
                 new ArrayList<>();
 
-        for (int rowIndex = DATA_START_ROW;
+        int headerRowIndex =
+                findItemHeaderRow(sheet);
+
+        Map<String, Integer> headerMap =
+                buildHeaderMap(
+                        sheet.getRow(headerRowIndex));
+
+        for (int rowIndex = headerRowIndex + 1;
              rowIndex <= sheet.getLastRowNum();
              rowIndex++) {
 
@@ -211,7 +278,9 @@ public class PurchaseOrderExcelReader {
             }
 
             PurchaseOrderItemRecord record =
-                    createPurchaseOrderItemRecord(row);
+                    createPurchaseOrderItemRecord(
+                            row,
+                            headerMap);
 
             /*
              * Actual Excel row number.
@@ -225,11 +294,12 @@ public class PurchaseOrderExcelReader {
     }
 
     /**
-     * Convert one Purchase Order Items row
-     * into PurchaseOrderItemRecord.
+     * Create Purchase Order Item record
+     * using dynamic column positions.
      */
     private PurchaseOrderItemRecord createPurchaseOrderItemRecord(
-            Row row) {
+            Row row,
+            Map<String, Integer> headerMap) {
 
         PurchaseOrderItemRecord record =
                 new PurchaseOrderItemRecord();
@@ -250,43 +320,253 @@ public class PurchaseOrderExcelReader {
          */
 
         record.setUlbName(
-                getCellValue(row, 1));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "ulbname"));
 
         record.setOrderNo(
-                getCellValue(row, 2));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "orderno"));
 
         record.setItemDescription(
-                getCellValue(row, 3));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "itemdescription"));
 
         record.setUnit(
-                getCellValue(row, 4));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "unit"));
 
         record.setRate(
                 parseBigDecimal(
-                        getCellValue(row, 5)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "rate")));
 
         record.setGst(
                 parseBigDecimal(
-                        getCellValue(row, 6)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "gst")));
 
         record.setUnitValueWithGst(
                 parseBigDecimal(
-                        getCellValue(row, 7)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "unitvaluewithgst")));
 
         record.setQuantity(
                 parseBigDecimal(
-                        getCellValue(row, 8)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "qty")));
 
         record.setNetAmount(
                 parseBigDecimal(
-                        getCellValue(row, 9)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "netamount")));
 
         return record;
     }
 
     /**
-     * Match Purchase Order Items with their parent
-     * Purchase Order using ONLY Order No.
+     * Find Purchase Order Master header row dynamically.
+     */
+    private int findMasterHeaderRow(Sheet sheet) {
+
+        String[] knownHeaders = {
+                "ulbname",
+                "orderno",
+                "orderdate",
+                "ordername",
+                "suppliername",
+                "sourceoffund",
+                "department",
+                "scheme",
+                "subscheme",
+                "sanctionno",
+                "sanctiondate",
+                "advancepayable",
+                "totalordervalue"
+        };
+
+        return findHeaderRow(sheet, knownHeaders);
+    }
+
+    /**
+     * Find Purchase Order Items header row dynamically.
+     */
+    private int findItemHeaderRow(Sheet sheet) {
+
+        String[] knownHeaders = {
+                "ulbname",
+                "orderno",
+                "itemdescription",
+                "unit",
+                "rate",
+                "gst",
+                "unitvaluewithgst",
+                "qty",
+                "netamount"
+        };
+
+        return findHeaderRow(sheet, knownHeaders);
+    }
+
+    /**
+     * Find header row by matching known headers.
+     */
+    private int findHeaderRow(
+            Sheet sheet,
+            String[] knownHeaders) {
+
+        for (int rowIndex = 0;
+             rowIndex <= sheet.getLastRowNum();
+             rowIndex++) {
+
+            Row row = sheet.getRow(rowIndex);
+
+            if (row == null) {
+                continue;
+            }
+
+            int matchedHeaders = 0;
+
+            for (Cell cell : row) {
+
+                String header =
+                        normalizeHeader(
+                                formatter.formatCellValue(cell));
+
+                for (String knownHeader : knownHeaders) {
+
+                    if (knownHeader.equals(header)) {
+                        matchedHeaders++;
+                        break;
+                    }
+                }
+            }
+
+            /*
+             * At least 5 known headers are required
+             * to identify the header row.
+             */
+            if (matchedHeaders >= 5) {
+                return rowIndex;
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Purchase Order header row not found.");
+    }
+
+    /**
+     * Build header name -> column index mapping.
+     */
+    private Map<String, Integer> buildHeaderMap(
+            Row headerRow) {
+
+        Map<String, Integer> headerMap =
+                new HashMap<>();
+
+        for (Cell cell : headerRow) {
+
+            String header =
+                    normalizeHeader(
+                            formatter.formatCellValue(cell));
+
+            if (!header.isEmpty()) {
+
+                headerMap.put(
+                        header,
+                        cell.getColumnIndex());
+            }
+        }
+
+        return headerMap;
+    }
+
+    /**
+     * Normalize Excel header.
+     *
+     * Examples:
+     *
+     * "ULB Name"              -> "ulbname"
+     * "Order No."             -> "orderno"
+     * "Order Date"            -> "orderdate"
+     * "Source of Fund"        -> "sourceoffund"
+     * "Unit Value With GST"   -> "unitvaluewithgst"
+     */
+    private String normalizeHeader(String value) {
+
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .trim()
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]", "");
+    }
+
+    /**
+     * Get cell using dynamic header mapping.
+     */
+    private Cell getCell(
+            Row row,
+            Map<String, Integer> headerMap,
+            String header) {
+
+        Integer columnIndex =
+                headerMap.get(header);
+
+        if (columnIndex == null) {
+            return null;
+        }
+
+        return row.getCell(
+                columnIndex,
+                Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+    }
+
+    /**
+     * Get cell value using dynamic header mapping.
+     */
+    private String getCellValue(
+            Row row,
+            Map<String, Integer> headerMap,
+            String header) {
+
+        Cell cell =
+                getCell(
+                        row,
+                        headerMap,
+                        header);
+
+        if (cell == null) {
+            return "";
+        }
+
+        return formatter
+                .formatCellValue(cell)
+                .trim();
+    }
+
+    /**
+     * Match Purchase Order Items with
+     * their parent Purchase Order.
      */
     private void attachItems(
             List<PurchaseOrderRecord> purchaseOrders,
@@ -295,13 +575,11 @@ public class PurchaseOrderExcelReader {
         Map<String, PurchaseOrderRecord> purchaseOrderMap =
                 new HashMap<>();
 
-        /*
-         * Create lookup using Order No.
-         */
         for (PurchaseOrderRecord purchaseOrder : purchaseOrders) {
 
             String orderNo =
-                    normalize(purchaseOrder.getOrderNo());
+                    normalize(
+                            purchaseOrder.getOrderNo());
 
             if (orderNo.isEmpty()) {
                 continue;
@@ -318,7 +596,8 @@ public class PurchaseOrderExcelReader {
         for (PurchaseOrderItemRecord item : items) {
 
             String orderNo =
-                    normalize(item.getOrderNo());
+                    normalize(
+                            item.getOrderNo());
 
             PurchaseOrderRecord purchaseOrder =
                     purchaseOrderMap.get(orderNo);
@@ -345,7 +624,9 @@ public class PurchaseOrderExcelReader {
             return "";
         }
 
-        return value.trim().toLowerCase();
+        return value
+                .trim()
+                .toLowerCase();
     }
 
     /**
@@ -371,26 +652,6 @@ public class PurchaseOrderExcelReader {
     }
 
     /**
-     * Read cell value as String.
-     */
-    private String getCellValue(
-            Row row,
-            int columnIndex) {
-
-        Cell cell = row.getCell(
-                columnIndex,
-                Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-
-        if (cell == null) {
-            return "";
-        }
-
-        return formatter
-                .formatCellValue(cell)
-                .trim();
-    }
-
-    /**
      * Parse numeric value into BigDecimal.
      */
     private BigDecimal parseBigDecimal(
@@ -398,13 +659,16 @@ public class PurchaseOrderExcelReader {
 
         if (value == null
                 || value.trim().isEmpty()) {
+
             return null;
         }
 
         try {
 
             return new BigDecimal(
-                    value.replace(",", "").trim());
+                    value
+                            .replace(",", "")
+                            .trim());
 
         } catch (NumberFormatException e) {
 
@@ -420,15 +684,17 @@ public class PurchaseOrderExcelReader {
      */
     private Date parseDate(Cell cell) {
 
-        if (cell == null) {
+        if (cell == null
+                || cell.getCellType() == CellType.BLANK) {
+
             return null;
         }
 
         /*
-         * Native Excel date / numeric date
+         * Native Excel date / numeric date.
          */
         if (cell.getCellType()
-                == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
+                == CellType.NUMERIC) {
 
             if (DateUtil.isCellDateFormatted(cell)) {
                 return cell.getDateCellValue();
@@ -443,11 +709,22 @@ public class PurchaseOrderExcelReader {
         }
 
         /*
+         * Formula cell returning date.
+         */
+        if (cell.getCellType()
+                == CellType.FORMULA
+                && DateUtil.isCellDateFormatted(cell)) {
+
+            return cell.getDateCellValue();
+        }
+
+        /*
          * Date stored as text.
          */
-        String value = formatter
-                .formatCellValue(cell)
-                .trim();
+        String value =
+                formatter
+                        .formatCellValue(cell)
+                        .trim();
 
         if (value.isEmpty()) {
             return null;
@@ -456,8 +733,19 @@ public class PurchaseOrderExcelReader {
         String[] formats = {
                 "dd/MM/yyyy",
                 "dd-MM-yyyy",
+                "dd.MM.yyyy",
                 "yyyy-MM-dd",
-                "MM/dd/yyyy"
+                "yyyy/MM/dd",
+                "yyyy.MM.dd",
+                "MM/dd/yyyy",
+                "MM-dd-yyyy",
+                "MM.dd.yyyy",
+                "dd/MM/yyyy HH:mm:ss",
+                "dd-MM-yyyy HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss",
+                "dd/MM/yyyy HH:mm",
+                "dd-MM-yyyy HH:mm",
+                "yyyy-MM-dd HH:mm"
         };
 
         for (String format : formats) {
@@ -472,7 +760,7 @@ public class PurchaseOrderExcelReader {
                 return dateFormat.parse(value);
 
             } catch (ParseException ignored) {
-                // Try next format
+                // Try next date format.
             }
         }
 
@@ -485,11 +773,13 @@ public class PurchaseOrderExcelReader {
      */
     private boolean isEmptyRow(Row row) {
 
-        for (int i = 0;
-             i < row.getLastCellNum();
-             i++) {
+        for (Cell cell : row) {
 
-            if (!getCellValue(row, i).isEmpty()) {
+            if (!formatter
+                    .formatCellValue(cell)
+                    .trim()
+                    .isEmpty()) {
+
                 return false;
             }
         }
