@@ -265,7 +265,7 @@
 			            data-tenant-dropdown
 			            required>
 			
-			        <option value="">Loading...</option>
+			        <option value="">Loading..</option>
 			
 			    </select>
 			

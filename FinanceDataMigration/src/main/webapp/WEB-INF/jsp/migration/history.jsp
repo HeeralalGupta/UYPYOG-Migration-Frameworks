@@ -466,10 +466,6 @@
                         </th>
 
                         <th>
-                            Tenant
-                        </th>
-
-                        <th>
                             Status
                         </th>
 

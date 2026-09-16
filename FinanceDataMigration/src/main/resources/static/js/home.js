@@ -539,15 +539,11 @@ function renderRecentJobs(jobs) {
                         <!-- JOB ID -->
                         <td>
 
-                            <span class="job-id">
-
-                                ${escapeHtml(
-                                    shortenJobId(
-                                        job.jobId
-                                    )
-                                )}
-
-                            </span>
+							<span class="job-id">
+							    ${escapeHtml(
+							        job.jobId || "-"
+							    )}
+							</span>
 
                         </td>
 
@@ -569,13 +565,7 @@ function renderRecentJobs(jobs) {
 
 
                         <!-- TENANT -->
-                        <td>
-
-                            ${escapeHtml(
-                                job.tenant || "-"
-                            )}
-
-                        </td>
+                       
 
 
                         <!-- STATUS -->

@@ -1121,19 +1121,13 @@ function createJobRow(
 
             <td>
 
-                <span
-                    class="history-job-id"
-                    title="${escapeHtml(
-                        job.jobId || "-"
-                    )}">
+				<span
+			        class="history-job-id"
+			        title="${escapeHtml(job.jobId || "-")}">
 
-                    ${escapeHtml(
-                        shortenJobId(
-                            job.jobId
-                        )
-                    )}
+			        ${escapeHtml(job.jobId || "-")}
 
-                </span>
+			    </span>
 
             </td>
 
@@ -1150,15 +1144,6 @@ function createJobRow(
                     )}
 
                 </span>
-
-            </td>
-
-
-            <td>
-
-                ${escapeHtml(
-                    job.tenant || "-"
-                )}
 
             </td>
 

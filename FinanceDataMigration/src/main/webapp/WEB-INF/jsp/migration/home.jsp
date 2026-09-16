@@ -495,9 +495,9 @@
 		         RECENT MIGRATION JOBS
 		         ================================================= -->
 		
-		    <div class="col-xl-7 col-lg-12">
-		
-		        <div class="dashboard-panel recent-panel h-100">
+		    <div class="col-xl-7 col-lg-12 recent-jobs-column">
+
+    			<div class="dashboard-panel recent-panel">
 		
 		            <div class="panel-header">
 		
@@ -564,8 +564,8 @@
 		
 		
 		            <div class="table-wrapper">
-		
-		                <table class="migration-table">
+						
+		                <table class="migration-table" id="recentJobsTable">
 		
 		                    <thead>
 		
@@ -574,8 +574,6 @@
 		                            <th>Job ID</th>
 		
 		                            <th>Module</th>
-		
-		                            <th>Tenant</th>
 		
 		                            <th>Status</th>
 		

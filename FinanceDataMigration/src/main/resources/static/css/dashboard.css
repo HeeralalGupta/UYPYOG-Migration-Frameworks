@@ -1226,6 +1226,7 @@ body {
     min-height: 0;
 
     margin-top: 18px;
+    margin-bottom: 35px;
 }
 
 .activity-controls {
@@ -1343,18 +1344,39 @@ body {
 }
 
 
+
 /* =========================================================
    MAIN DASHBOARD ROW
    ========================================================= */
 
 .dashboard-main-row {
     align-items: stretch;
-
-    width: 100%;
-
-    max-width: 100%;
 }
 
+.dashboard-right-column {
+    display: flex;
+    min-width: 0;
+    align-items: stretch;
+}
+
+.dashboard-right-column .recent-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: auto !important;
+    min-height: 0;
+    max-height: none !important;
+}
+
+.dashboard-right-column .recent-panel .table-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.dashboard-right-column .recent-panel table {
+    width: 100%;
+}
 
 /* =========================================================
    RIGHT COLUMN
@@ -1367,14 +1389,20 @@ body {
 }
 
 .dashboard-right-column .recent-panel {
-    width: 100%;
-
-    height: auto;
-
-    min-width: 0;
+    height: 367px !important;
+    min-height: 367px !important;
+    max-height: 367px !important;
 }
 
+.dashboard-right-column .recent-panel .table-responsive {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
 
+.dashboard-right-column .recent-panel table {
+    width: 100%;
+}
 /* =========================================================
    LEGACY SUMMARY CLASSES
    Kept only for compatibility
@@ -1617,3 +1645,67 @@ body {
     }
 
 }
+
+#recentJobsTable {
+    width: 100%;
+    min-width: 1000px;
+    table-layout: auto;
+}
+
+#recentJobsTable th,
+#recentJobsTable td {
+    padding: 14px 12px;
+    white-space: nowrap;
+}
+
+#recentJobsTable .job-id {
+    white-space: nowrap;
+    font-family: monospace;
+}
+
+
+/* Stretch the Recent Jobs column */
+.recent-jobs-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Recent Jobs panel fills its column */
+.recent-jobs-column .recent-panel {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 680px;
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: column;
+}
+
+/* Keep the table inside the panel */
+.recent-jobs-column .table-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+/* Keep full Job IDs visible */
+.recent-jobs-column .migration-table {
+    width: 100%;
+    min-width: 900px;
+}
+
+.recent-jobs-column .migration-table th,
+.recent-jobs-column .migration-table td {
+    white-space: nowrap;
+}
+
+
+
+
+
+
+
+
+
