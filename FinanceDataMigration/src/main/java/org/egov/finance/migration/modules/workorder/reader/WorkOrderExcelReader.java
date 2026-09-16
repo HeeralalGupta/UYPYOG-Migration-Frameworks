@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
@@ -26,9 +27,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class WorkOrderExcelReader {
 
-    private static final int DATA_START_ROW = 3;
-
-
     private final DataFormatter formatter = new DataFormatter();
 
     public List<WorkOrderRecord> read(MultipartFile file) {
@@ -39,11 +37,18 @@ public class WorkOrderExcelReader {
             /*
              * Find sheets by sheet name.
              */
-            Sheet masterSheet =
-                    workbook.getSheet(ExcelConstants.WORK_ORDER_MASTER_SHEET);
+        	Sheet masterSheet = null;
+        	Sheet itemsSheet = null;
 
-            Sheet itemsSheet =
-                    workbook.getSheet(ExcelConstants.WORK_ORDER_ITEMS_SHEET);
+        	for (Sheet sheet : workbook) {
+        	    if (sheet.getSheetName().equalsIgnoreCase(ExcelConstants.WORK_ORDER_MASTER_SHEET)) {
+        	        masterSheet = sheet;
+        	    }
+
+        	    if (sheet.getSheetName().equalsIgnoreCase(ExcelConstants.WORK_ORDER_ITEMS_SHEET)) {
+        	        itemsSheet = sheet;
+        	    }
+        	}
 
             validateSheets(masterSheet, itemsSheet);
 
@@ -83,7 +88,12 @@ public class WorkOrderExcelReader {
         List<WorkOrderRecord> records =
                 new ArrayList<>();
 
-        for (int rowIndex = DATA_START_ROW;
+        int headerRowIndex = findMasterHeaderRow(sheet);
+
+        Map<String, Integer> headerMap =
+                buildHeaderMap(sheet.getRow(headerRowIndex));
+
+        for (int rowIndex = headerRowIndex + 1;
              rowIndex <= sheet.getLastRowNum();
              rowIndex++) {
 
@@ -94,7 +104,7 @@ public class WorkOrderExcelReader {
             }
 
             WorkOrderRecord record =
-                    createWorkOrderRecord(row);
+                    createWorkOrderRecord(row, headerMap);
 
             /*
              * Actual Excel row number.
@@ -113,11 +123,11 @@ public class WorkOrderExcelReader {
     }
 
     /**
-     * Convert one Work Order Master row
-     * into WorkOrderRecord.
+     * Create Work Order Master record using dynamic columns.
      */
     private WorkOrderRecord createWorkOrderRecord(
-            Row row) {
+            Row row,
+            Map<String, Integer> headerMap) {
 
         WorkOrderRecord record =
                 new WorkOrderRecord();
@@ -151,75 +161,101 @@ public class WorkOrderExcelReader {
          */
 
         record.setUlbName(
-                getCellValue(row, 1));
+                getCellValue(row, headerMap, "ulbname"));
 
         record.setTenderNumber(
-                getCellValue(row, 2));
+                getCellValue(row, headerMap, "tendernumber"));
 
         record.setWorkOrderNo(
-                getCellValue(row, 3));
+                getCellValue(row, headerMap, "workorderno"));
 
         record.setWorkOrderDate(
-                parseDate(row.getCell(4)));
+                parseDate(
+                        getCell(
+                                row,
+                                headerMap,
+                                "workorderdate")));
 
         record.setWorkOrderName(
-                getCellValue(row, 5));
+                getCellValue(row, headerMap, "workordername"));
 
         record.setWorkOrderType(
-                getCellValue(row, 6));
+                getCellValue(row, headerMap, "workordertype"));
 
         record.setDescription(
-                getCellValue(row, 7));
+                getCellValue(row, headerMap, "description"));
 
         record.setActive(
-                getCellValue(row, 8));
+                getCellValue(row, headerMap, "active"));
 
         record.setContractorName(
-                getCellValue(row, 9));
+                getCellValue(row, headerMap, "contractorname"));
 
         record.setWorkName(
-                getCellValue(row, 10));
+                getCellValue(row, headerMap, "workname"));
 
         record.setWorkCode(
-                getCellValue(row, 11));
+                getCellValue(row, headerMap, "workcode"));
 
         record.setTotalOrderAmt(
                 parseBigDecimal(
-                        getCellValue(row, 12)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "totalorderamt")));
 
         record.setAdvancePayable(
                 parseBigDecimal(
-                        getCellValue(row, 13)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "advancepayable")));
 
         record.setFund(
-                getCellValue(row, 14));
+                getCellValue(row, headerMap, "fund"));
 
         record.setDepartment(
-                getCellValue(row, 15));
+                getCellValue(row, headerMap, "department"));
 
         record.setScheme(
-                getCellValue(row, 16));
+                getCellValue(row, headerMap, "scheme"));
 
         record.setSubScheme(
-                getCellValue(row, 17));
+                getCellValue(row, headerMap, "subscheme"));
 
         record.setWorkOrderIssuingAuthority(
-                getCellValue(row, 18));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "workorderissuingauthority"));
 
         record.setSanctionDate(
-                parseDate(row.getCell(19)));
+                parseDate(
+                        getCell(
+                                row,
+                                headerMap,
+                                "sanctiondate")));
 
         record.setEmdAmount(
                 parseBigDecimal(
-                        getCellValue(row, 20)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "emdamount")));
 
         record.setBgAmount(
                 parseBigDecimal(
-                        getCellValue(row, 21)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "bgamount")));
 
         record.setApbgAmount(
                 parseBigDecimal(
-                        getCellValue(row, 22)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "apbgamount")));
 
         return record;
     }
@@ -233,7 +269,12 @@ public class WorkOrderExcelReader {
         List<WorkOrderItemRecord> records =
                 new ArrayList<>();
 
-        for (int rowIndex = DATA_START_ROW;
+        int headerRowIndex = findItemHeaderRow(sheet);
+
+        Map<String, Integer> headerMap =
+                buildHeaderMap(sheet.getRow(headerRowIndex));
+
+        for (int rowIndex = headerRowIndex + 1;
              rowIndex <= sheet.getLastRowNum();
              rowIndex++) {
 
@@ -244,7 +285,9 @@ public class WorkOrderExcelReader {
             }
 
             WorkOrderItemRecord record =
-                    createWorkOrderItemRecord(row);
+                    createWorkOrderItemRecord(
+                            row,
+                            headerMap);
 
             /*
              * Actual Excel row number.
@@ -258,11 +301,11 @@ public class WorkOrderExcelReader {
     }
 
     /**
-     * Convert one Work Order Items row
-     * into WorkOrderItemRecord.
+     * Create Work Order Item record using dynamic columns.
      */
     private WorkOrderItemRecord createWorkOrderItemRecord(
-            Row row) {
+            Row row,
+            Map<String, Integer> headerMap) {
 
         WorkOrderItemRecord record =
                 new WorkOrderItemRecord();
@@ -284,46 +327,247 @@ public class WorkOrderExcelReader {
          */
 
         record.setTenderNumber(
-                getCellValue(row, 1));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "tendernumber"));
 
         record.setWorkOrderNo(
-                getCellValue(row, 2));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "workorderno"));
 
         record.setItemName(
-                getCellValue(row, 3));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "itemname"));
 
         record.setGlCode(
-                getCellValue(row, 4));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "glcode"));
 
         record.setUnit(
-                getCellValue(row, 5));
+                getCellValue(
+                        row,
+                        headerMap,
+                        "unit"));
 
         record.setUnitRate(
                 parseBigDecimal(
-                        getCellValue(row, 6)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "unitrate")));
 
         record.setGst(
                 parseBigDecimal(
-                        getCellValue(row, 7)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "gst")));
 
         record.setUnitValueWithGst(
                 parseBigDecimal(
-                        getCellValue(row, 8)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "unitvaluewithgst")));
 
         record.setQuantity(
                 parseBigDecimal(
-                        getCellValue(row, 9)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "quantity")));
 
         record.setAmount(
                 parseBigDecimal(
-                        getCellValue(row, 10)));
+                        getCellValue(
+                                row,
+                                headerMap,
+                                "amount")));
 
         return record;
     }
 
     /**
-     * Match Work Order Items with their parent
-     * Work Order using ONLY workOrderNo.
+     * Find Master header row dynamically.
+     */
+    private int findMasterHeaderRow(Sheet sheet) {
+
+        String[] headers = {
+                "ulbname",
+                "tendernumber",
+                "workorderno",
+                "workorderdate",
+                "workordername",
+                "workordertype",
+                "contractorname",
+                "workname",
+                "workcode",
+                "fund"
+        };
+
+        return findHeaderRow(sheet, headers);
+    }
+
+    /**
+     * Find Items header row dynamically.
+     */
+    private int findItemHeaderRow(Sheet sheet) {
+
+        String[] headers = {
+                "tendernumber",
+                "workorderno",
+                "itemname",
+                "glcode",
+                "unit",
+                "unitrate",
+                "gst",
+                "unitvaluewithgst",
+                "quantity",
+                "amount"
+        };
+
+        return findHeaderRow(sheet, headers);
+    }
+
+    /**
+     * Find header row by matching known headers.
+     */
+    private int findHeaderRow(
+            Sheet sheet,
+            String[] knownHeaders) {
+
+        for (int rowIndex = 0;
+             rowIndex <= sheet.getLastRowNum();
+             rowIndex++) {
+
+            Row row = sheet.getRow(rowIndex);
+
+            if (row == null) {
+                continue;
+            }
+
+            int matchedHeaders = 0;
+
+            for (Cell cell : row) {
+
+                String header =
+                        normalizeHeader(
+                                formatter.formatCellValue(cell));
+
+                for (String knownHeader : knownHeaders) {
+
+                    if (knownHeader.equals(header)) {
+                        matchedHeaders++;
+                        break;
+                    }
+                }
+            }
+
+            if (matchedHeaders >= 5) {
+                return rowIndex;
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Excel header row not found.");
+    }
+
+    /**
+     * Build header -> column index mapping.
+     */
+    private Map<String, Integer> buildHeaderMap(
+            Row headerRow) {
+
+        Map<String, Integer> headerMap =
+                new HashMap<>();
+
+        for (Cell cell : headerRow) {
+
+            String header =
+                    normalizeHeader(
+                            formatter.formatCellValue(cell));
+
+            if (!header.isEmpty()) {
+
+                headerMap.put(
+                        header,
+                        cell.getColumnIndex());
+            }
+        }
+
+        return headerMap;
+    }
+
+    /**
+     * Normalize Excel header.
+     *
+     * Example:
+     * "Work Order No." -> "workorderno"
+     */
+    private String normalizeHeader(String value) {
+
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .trim()
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]", "");
+    }
+
+    /**
+     * Get cell using dynamic header mapping.
+     */
+    private Cell getCell(
+            Row row,
+            Map<String, Integer> headerMap,
+            String header) {
+
+        Integer columnIndex =
+                headerMap.get(header);
+
+        if (columnIndex == null) {
+            return null;
+        }
+
+        return row.getCell(
+                columnIndex,
+                Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+    }
+
+    /**
+     * Get cell value using dynamic header mapping.
+     */
+    private String getCellValue(
+            Row row,
+            Map<String, Integer> headerMap,
+            String header) {
+
+        Cell cell =
+                getCell(
+                        row,
+                        headerMap,
+                        header);
+
+        if (cell == null) {
+            return "";
+        }
+
+        return formatter
+                .formatCellValue(cell)
+                .trim();
+    }
+
+    /**
+     * Match Work Order Items with Work Order Master.
      */
     private void attachItems(
             List<WorkOrderRecord> workOrders,
@@ -338,7 +582,8 @@ public class WorkOrderExcelReader {
         for (WorkOrderRecord workOrder : workOrders) {
 
             String workOrderNo =
-                    normalize(workOrder.getWorkOrderNo());
+                    normalize(
+                            workOrder.getWorkOrderNo());
 
             if (workOrderNo.isEmpty()) {
                 continue;
@@ -355,7 +600,8 @@ public class WorkOrderExcelReader {
         for (WorkOrderItemRecord item : items) {
 
             String workOrderNo =
-                    normalize(item.getWorkOrderNo());
+                    normalize(
+                            item.getWorkOrderNo());
 
             WorkOrderRecord workOrder =
                     workOrderMap.get(workOrderNo);
@@ -407,34 +653,11 @@ public class WorkOrderExcelReader {
         }
     }
 
-    /**
-     * Read cell value as String.
-     */
-    private String getCellValue(
-            Row row,
-            int columnIndex) {
-
-        Cell cell = row.getCell(
-                columnIndex,
-                Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-
-        if (cell == null) {
-            return "";
-        }
-
-        return formatter
-                .formatCellValue(cell)
-                .trim();
-    }
-
-    /**
-     * Parse numeric value into BigDecimal.
-     */
     private BigDecimal parseBigDecimal(
             String value) {
 
-        if (value == null
-                || value.trim().isEmpty()) {
+        if (value == null ||
+                value.trim().isEmpty()) {
 
             return null;
         }
@@ -447,8 +670,7 @@ public class WorkOrderExcelReader {
         } catch (NumberFormatException e) {
 
             throw new IllegalArgumentException(
-                    "Invalid numeric value: "
-                            + value,
+                    "Invalid numeric value: " + value,
                     e);
         }
     }
@@ -458,25 +680,32 @@ public class WorkOrderExcelReader {
      */
     private Date parseDate(Cell cell) {
 
-        if (cell == null) {
+        if (cell == null ||
+                cell.getCellType() == CellType.BLANK) {
+
             return null;
         }
 
-        // Native Excel date / numeric date
-        if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
+        if (cell.getCellType() == CellType.NUMERIC) {
 
             if (DateUtil.isCellDateFormatted(cell)) {
                 return cell.getDateCellValue();
             }
 
-            // Excel numeric date even if formatting is not detected
-            return DateUtil.getJavaDate(cell.getNumericCellValue());
+            return DateUtil.getJavaDate(
+                    cell.getNumericCellValue());
         }
 
-        // Date stored as text
-        String value = formatter
-                .formatCellValue(cell)
-                .trim();
+        if (cell.getCellType() == CellType.FORMULA
+                && DateUtil.isCellDateFormatted(cell)) {
+
+            return cell.getDateCellValue();
+        }
+
+        String value =
+                formatter
+                        .formatCellValue(cell)
+                        .trim();
 
         if (value.isEmpty()) {
             return null;
@@ -485,8 +714,19 @@ public class WorkOrderExcelReader {
         String[] formats = {
                 "dd/MM/yyyy",
                 "dd-MM-yyyy",
+                "dd.MM.yyyy",
                 "yyyy-MM-dd",
-                "MM/dd/yyyy"
+                "yyyy/MM/dd",
+                "yyyy.MM.dd",
+                "MM/dd/yyyy",
+                "MM-dd-yyyy",
+                "MM.dd.yyyy",
+                "dd/MM/yyyy HH:mm:ss",
+                "dd-MM-yyyy HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss",
+                "dd/MM/yyyy HH:mm",
+                "dd-MM-yyyy HH:mm",
+                "yyyy-MM-dd HH:mm"
         };
 
         for (String format : formats) {
@@ -501,7 +741,7 @@ public class WorkOrderExcelReader {
                 return dateFormat.parse(value);
 
             } catch (ParseException ignored) {
-                // Try next format
+                // Try next format.
             }
         }
 
@@ -514,11 +754,13 @@ public class WorkOrderExcelReader {
      */
     private boolean isEmptyRow(Row row) {
 
-        for (int i = 0;
-             i < row.getLastCellNum();
-             i++) {
+        for (Cell cell : row) {
 
-            if (!getCellValue(row, i).isEmpty()) {
+            if (!formatter
+                    .formatCellValue(cell)
+                    .trim()
+                    .isEmpty()) {
+
                 return false;
             }
         }

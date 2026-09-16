@@ -96,10 +96,23 @@ public class WorkOrderFileValidationService
              * 1. GET WORK ORDER MASTER SHEET
              * =================================================
              */
-            Sheet masterSheet =
-                    workbook.getSheet(
-                            ExcelConstants
-                                    .WORK_ORDER_MASTER_SHEET);
+            /*
+             * =================================================
+             * 2. GET WORK ORDER ITEMS SHEET
+             * =================================================
+             */
+            Sheet masterSheet = null;
+            Sheet itemsSheet = null;
+
+            for (Sheet sheet : workbook) {
+                if (sheet.getSheetName().equalsIgnoreCase(ExcelConstants.WORK_ORDER_MASTER_SHEET)) {
+                    masterSheet = sheet;
+                }
+
+                if (sheet.getSheetName().equalsIgnoreCase(ExcelConstants.WORK_ORDER_ITEMS_SHEET)) {
+                    itemsSheet = sheet;
+                }
+            }
 
             if (masterSheet == null) {
 
@@ -113,15 +126,6 @@ public class WorkOrderFileValidationService
                 return result;
             }
 
-            /*
-             * =================================================
-             * 2. GET WORK ORDER ITEMS SHEET
-             * =================================================
-             */
-            Sheet itemsSheet =
-                    workbook.getSheet(
-                            ExcelConstants
-                                    .WORK_ORDER_ITEMS_SHEET);
 
             if (itemsSheet == null) {
 

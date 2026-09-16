@@ -92,10 +92,25 @@ public class PurchaseOrderFileValidationService
              * 1. GET PURCHASE ORDER MASTER SHEET
              * =================================================
              */
-            Sheet masterSheet =
-                    workbook.getSheet(
-                            ExcelConstants
-                                    .PURCHASE_ORDER_MASTER_SHEET);
+            /*
+             * =================================================
+             * 2. GET PURCHASE ORDER ITEMS SHEET
+             * =================================================
+             */
+            Sheet masterSheet = null;
+            Sheet itemsSheet = null;
+
+            for (Sheet sheet : workbook) {
+                if (sheet.getSheetName().equalsIgnoreCase(
+                        ExcelConstants.PURCHASE_ORDER_MASTER_SHEET)) {
+                    masterSheet = sheet;
+                }
+
+                if (sheet.getSheetName().equalsIgnoreCase(
+                        ExcelConstants.PURCHASE_ORDER_ITEMS_SHEET)) {
+                    itemsSheet = sheet;
+                }
+            }
 
             if (masterSheet == null) {
 
@@ -108,16 +123,6 @@ public class PurchaseOrderFileValidationService
 
                 return result;
             }
-
-            /*
-             * =================================================
-             * 2. GET PURCHASE ORDER ITEMS SHEET
-             * =================================================
-             */
-            Sheet itemsSheet =
-                    workbook.getSheet(
-                            ExcelConstants
-                                    .PURCHASE_ORDER_ITEMS_SHEET);
 
             if (itemsSheet == null) {
 
