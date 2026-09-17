@@ -173,7 +173,7 @@
 
 					<div class="card-details">
 
-						<div class="card-label">Migration Templates</div>
+						<div class="card-label">Migration Active Templates</div>
 
 
 						<div id="migrationModulesCount" class="card-number">0</div>
