@@ -23,6 +23,7 @@ import org.egov.finance.migration.common.util.DepartmentMapping;
 import org.egov.finance.migration.common.util.FunctionServiceClient;
 import org.egov.finance.migration.common.util.FundServiceClient;
 import org.egov.finance.migration.common.util.SchemeServiceClient;
+import org.egov.finance.migration.exception.ExpenseBillBuildException;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillChecklist;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillDetailsIdDTO;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillPayeedetails;
@@ -76,10 +77,8 @@ public class ExpenseBillRequestBuilder {
 		ExpenseBillCreateRequest request = new ExpenseBillCreateRequest();
 		String tenantId = migrationRequest.getTenantId();
 		request.setTenantId(tenantId);
-
 		RequestInfo requestInfo = requestInfoBuilder.build(tenantId);
 		request.setRequestInfo(requestInfo);
-
 		request.setExpenseBillRequest(buildExpenseBillRequest(record, requestInfo, tenantId));
 
 		return request;
@@ -104,14 +103,6 @@ public class ExpenseBillRequestBuilder {
 		/*
 		 * egBillregister
 		 */
-
-		try {
-			EgBillregister buildBillRegister = buildBillRegister(record, requestInfo, tenantId);
-			expenseBillRequest.setEgBillregister(buildBillRegister);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
 		try {
 
 			String requestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(expenseBillRequest);
@@ -122,7 +113,8 @@ public class ExpenseBillRequestBuilder {
 			System.out.println("==========================================================");
 			System.out.println(requestJson);
 			System.out.println("==========================================================");
-
+			EgBillregister buildBillRegister = buildBillRegister(record, requestInfo, tenantId);
+			expenseBillRequest.setEgBillregister(buildBillRegister);
 		} catch (Exception e) {
 
 			System.err.println("ERROR WHILE CONVERTING REQUEST TO JSON");
@@ -253,17 +245,19 @@ public class ExpenseBillRequestBuilder {
 		/*
 		 * Bill Sub Type
 		 */
-		if (record.getBillSubType() != null) {
+		if (hasValue(record.getBillSubType())) {
 
-			if (hasValue(record.getBillSubType())) {
-				Long billSubTypeId = BillSubtypeMapping.getBillSubTypeId(record.getBillSubType());
+			String billSubType = record.getBillSubType().trim();
+			Integer billSubTypeId = BillSubtypeMapping.getBillSubTypeId(billSubType);
 
-				if (billSubTypeId == null) {
-					throw new IllegalArgumentException("Invalid Bill Sub Type: " + record.getBillSubType());
-				}
-				mis.setEgBillSubType(new IdDTO(billSubTypeId));
+			if (billSubTypeId == null) {
+				throw new IllegalArgumentException("Invalid Bill Sub Type: " + billSubType
+						+ ". Valid values are: Contingent, Salary, Pension, Works, Supplies, Recovery, Deposit, Advance, GPF, Others, Expense");
 			}
+
+			mis.setEgBillSubType(new IdDTO(billSubTypeId.longValue()));
 		}
+
 		mis.setPayto(record.getSubLedgerMaster());
 
 //		System.out.println("====================================");
@@ -308,11 +302,9 @@ public class ExpenseBillRequestBuilder {
 	private List<EgBilldetails> buildBillDetails(ExpenseBillRecord record, RequestInfo requestInfo, String tenantId) {
 
 		List<EgBilldetails> billDetails = new ArrayList<>();
-
 		requestInfo.setAction("_search");
 
 		if (record.getDebitDetails() == null && record.getDeductionDetails() == null) {
-
 			return billDetails;
 		}
 
@@ -327,19 +319,13 @@ public class ExpenseBillRequestBuilder {
 			for (ExpenseDebitRecord sourceDetail : record.getDebitDetails()) {
 
 				EgBilldetails billDetail = new EgBilldetails();
-
 				String numericGlCode = extractNumericGlCode(sourceDetail.getGlCode());
-
 				ChartOfAccountsResponse chartOfAccounts = chartOfAccountsServiceClient.getByGlCode(numericGlCode,
 						requestInfo, tenantId);
-
 				billDetail.setGlcodeid(chartOfAccounts.getId());
-
 				billDetail.setDebitamount(sourceDetail.getDebitAmount());
-
 				totalDebit = totalDebit
 						.add(sourceDetail.getDebitAmount() != null ? sourceDetail.getDebitAmount() : BigDecimal.ZERO);
-
 				billDetails.add(billDetail);
 			}
 		}
@@ -352,19 +338,13 @@ public class ExpenseBillRequestBuilder {
 			for (ExpenseDeductionRecord sourceDetail : record.getDeductionDetails()) {
 
 				EgBilldetails billDetail = new EgBilldetails();
-
 				String numericGlCode = extractNumericGlCode(sourceDetail.getGlCode());
-
 				ChartOfAccountsResponse chartOfAccounts = chartOfAccountsServiceClient.getByGlCode(numericGlCode,
 						requestInfo, tenantId);
-
 				billDetail.setGlcodeid(chartOfAccounts.getId());
-
 				billDetail.setCreditamount(sourceDetail.getCreditAmount());
-
 				totalCredit = totalCredit
 						.add(sourceDetail.getCreditAmount() != null ? sourceDetail.getCreditAmount() : BigDecimal.ZERO);
-
 				billDetails.add(billDetail);
 			}
 		}
@@ -379,13 +359,9 @@ public class ExpenseBillRequestBuilder {
 			String numericNetPayableGlCode = extractNumericGlCode(record.getNetPayableDetail().getGlCode());
 			ChartOfAccountsResponse netPayableGl = chartOfAccountsServiceClient.getByGlCode(numericNetPayableGlCode,
 					requestInfo, tenantId);
-
 			EgBilldetails netPayableDetail = new EgBilldetails();
-
 			netPayableDetail.setGlcodeid(netPayableGl.getId());
-
 			netPayableDetail.setCreditamount(netPayableAmount);
-
 			billDetails.add(netPayableDetail);
 		}
 
@@ -418,7 +394,6 @@ public class ExpenseBillRequestBuilder {
 		}
 
 		String value = glCodeValue.trim();
-
 		java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(\\d+)").matcher(value);
 
 		if (matcher.find()) {
@@ -467,24 +442,24 @@ public class ExpenseBillRequestBuilder {
 		billPayeedetails.setAccountDetailKeyId(accountDetailKey.getDetailkey().longValue());
 		payeeDetails.add(billPayeedetails);
 
-		try {
-
-			String requestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(payeeDetails);
-
-			System.out.println();
-			System.out.println("==========================================================");
-			System.out.println("        EXPENSE BILL REGISTER JSON");
-			System.out.println("==========================================================");
-			System.out.println(requestJson);
-			System.out.println("==========================================================");
-
-		} catch (Exception e) {
-
-			System.err.println("ERROR WHILE CONVERTING REQUEST TO JSON");
-			e.printStackTrace();
-		}
-
-		System.out.println("====================================================");
+//		try {
+//
+//			String requestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(payeeDetails);
+//
+//			System.out.println();
+//			System.out.println("==========================================================");
+//			System.out.println("        EXPENSE BILL REGISTER JSON");
+//			System.out.println("==========================================================");
+//			System.out.println(requestJson);
+//			System.out.println("==========================================================");
+//
+//		} catch (Exception e) {
+//
+//			System.err.println("ERROR WHILE CONVERTING REQUEST TO JSON");
+//			e.printStackTrace();
+//		}
+//
+//		System.out.println("====================================================");
 		return payeeDetails;
 	}
 
@@ -597,4 +572,5 @@ public class ExpenseBillRequestBuilder {
 	private String defaultString(String value) {
 		return value != null ? value : "";
 	}
+
 }
