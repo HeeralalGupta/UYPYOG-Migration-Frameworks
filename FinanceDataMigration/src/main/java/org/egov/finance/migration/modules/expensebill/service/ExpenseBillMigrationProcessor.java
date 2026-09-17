@@ -19,6 +19,7 @@ import org.egov.finance.migration.modules.expensebill.reader.ExpenseBillExcelRea
 import org.egov.finance.migration.modules.expensebill.response.ExpenseBillResponse;
 import org.egov.finance.migration.processor.AbstractMigrationProcessor;
 import org.egov.finance.migration.service.DuplicateDetectionService;
+import org.egov.finance.migration.service.validator.ExpenseBillDataValidator;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,10 +31,12 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 	private final ExpenseBillApiClient expenseBillApiClient;
 	private final MigrationJobRepository migrationJobRepository;
 	private final MigrationJobDetailRepository migrationJobDetailRepository;
+	private final ExpenseBillDataValidator billDataValidator;
 
 	public ExpenseBillMigrationProcessor(ExpenseBillExcelReader excelReader, ExpenseBillRequestBuilder requestBuilder,
 			DuplicateDetectionService duplicateDetectionService, ExpenseBillApiClient expenseBillApiClient,
-			MigrationJobRepository migrationJobRepository, MigrationJobDetailRepository migrationJobDetailRepository) {
+			MigrationJobRepository migrationJobRepository, MigrationJobDetailRepository migrationJobDetailRepository,
+			ExpenseBillDataValidator billDataValidator) {
 
 		this.excelReader = excelReader;
 		this.requestBuilder = requestBuilder;
@@ -41,6 +44,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 		this.expenseBillApiClient = expenseBillApiClient;
 		this.migrationJobRepository = migrationJobRepository;
 		this.migrationJobDetailRepository = migrationJobDetailRepository;
+		this.billDataValidator= billDataValidator;
 	}
 
 	@Override
@@ -111,7 +115,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 			result.setEndRow(record.getEndRow());
 
 			/*
-			 *============= DUPLICATE CHECK ======================
+			 * ============= DUPLICATE CHECK ======================
 			 */
 
 			boolean alreadyMigrated = duplicateDetectionService.isAlreadyMigrated(request.getTenantId(),
@@ -134,7 +138,8 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 			}
 
 			/*
-			 * ========= BUILD REQUEST + CALL EXPENSE BILL API ===============================
+			 * ========= BUILD REQUEST + CALL EXPENSE BILL API
+			 * ===============================
 			 */
 
 			try {
@@ -148,15 +153,10 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 				 */
 
 				ExpenseBillCreateRequest expenseBillRequest = requestBuilder.build(record, request);
-
-				if (expenseBillRequest == null || expenseBillRequest.getExpenseBillRequest() == null
-						|| expenseBillRequest.getExpenseBillRequest().getEgBillregister() == null) {
-
-					throw new RuntimeException("Unable to build ExpenseBillRequest.");
-				}
+				billDataValidator.validateExpenseBillRequest(expenseBillRequest);
 
 //				Call Expense Bill Creation API
-				
+
 				ExpenseBillResponse response = expenseBillApiClient.createExpenseBill(expenseBillRequest);
 
 //				Optional response validation
