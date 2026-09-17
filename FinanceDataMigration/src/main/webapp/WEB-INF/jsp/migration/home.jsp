@@ -99,7 +99,7 @@
              WELCOME SECTION
              ===================================================== -->
 
-		<div class="welcome-section">
+		<%-- <div class="welcome-section">
 
 			<div class="welcome-content">
 
@@ -146,7 +146,7 @@
 
 			</div>
 
-		</div>
+		</div> --%>
 
 
 		<!-- =====================================================
@@ -173,7 +173,7 @@
 
 					<div class="card-details">
 
-						<div class="card-label">Migration Modules</div>
+						<div class="card-label">Migration Templates</div>
 
 
 						<div id="migrationModulesCount" class="card-number">0</div>
@@ -405,7 +405,7 @@
 		
 		
 		                <!-- Administration -->
-		                <a
+		                <%-- <a
 		                    href="<c:url value='/migration/settings'/>"
 		                    class="quick-action-card orange-action">
 		
@@ -420,7 +420,7 @@
 		
 		                    <i class="fa-solid fa-arrow-right action-arrow"></i>
 		
-		                </a>
+		                </a> --%>
 		
 		            </div>
 		
