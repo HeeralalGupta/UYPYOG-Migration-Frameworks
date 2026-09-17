@@ -12,8 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class AuthenticationService {
 
@@ -71,27 +75,48 @@ public class AuthenticationService {
 		body.add("password", password);
 		body.add("grant_type", grantType);
 		body.add("scope", scope);
-		body.add("tenantId", tenantId);
+		body.add("tenantId", "hr.gurugram");
 		body.add("userType", "SYSTEM");
 
 		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-		ResponseEntity<TokenResponse> response = restTemplate.exchange(tokenUrl, HttpMethod.POST, request,
-				TokenResponse.class);
+		try {
 
-		TokenResponse token = response.getBody();
+			ResponseEntity<TokenResponse> response = restTemplate.exchange(
+					tokenUrl,
+					HttpMethod.POST,
+					request,
+					TokenResponse.class
+			);
 
-		if (token == null || token.getAccessToken() == null || token.getAccessToken().trim().isEmpty()) {
+			log.info("Auth Response Status: {}", response.getStatusCode());
 
-			throw new IllegalStateException("Finance authentication failed: access token is missing.");
+			TokenResponse token = response.getBody();
+
+			if (token == null || token.getAccessToken() == null
+					|| token.getAccessToken().trim().isEmpty()) {
+
+				throw new IllegalStateException(
+						"Authentication failed: access token is missing."
+				);
+			}
+
+			accessToken = token.getAccessToken();
+			expiryTime = Instant.now().plusSeconds(token.getExpiresIn());
+
+			log.info("OAuth token generated successfully.");
+
+			return accessToken;
+
+		} catch (HttpClientErrorException e) {
+
+			log.error("Authentication failed. Status: {}, Response: {}",
+					e.getStatusCode(),
+					e.getResponseBodyAsString());
+
+			throw new IllegalStateException(
+					"Authentication failed: Invalid login credentials."
+			);
 		}
-
-		accessToken = token.getAccessToken();
-
-		expiryTime = Instant.now().plusSeconds(token.getExpiresIn());
-
-		System.out.println("Finance OAuth token generated successfully.");
-
-		return accessToken;
 	}
 }
