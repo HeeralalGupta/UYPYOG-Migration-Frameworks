@@ -23,7 +23,6 @@ import org.egov.finance.migration.common.util.DepartmentMapping;
 import org.egov.finance.migration.common.util.FunctionServiceClient;
 import org.egov.finance.migration.common.util.FundServiceClient;
 import org.egov.finance.migration.common.util.SchemeServiceClient;
-import org.egov.finance.migration.exception.ExpenseBillBuildException;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillChecklist;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillDetailsIdDTO;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillPayeedetails;
