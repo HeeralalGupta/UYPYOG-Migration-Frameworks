@@ -1,13 +1,14 @@
 package org.egov.finance.migration.service.validator;
 
-import org.egov.finance.migration.modules.expensebill.dto.EgBillChecklist;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillPayeedetails;
 import org.egov.finance.migration.modules.expensebill.dto.EgBilldetails;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillregister;
 import org.egov.finance.migration.modules.expensebill.dto.EgBillregistermis;
 import org.egov.finance.migration.modules.expensebill.dto.ExpenseBillCreateRequest;
 import org.egov.finance.migration.modules.expensebill.dto.ExpenseBillRequest;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ExpenseBillDataValidator {
 
 	public void validateExpenseBillRequest(ExpenseBillCreateRequest request) {
