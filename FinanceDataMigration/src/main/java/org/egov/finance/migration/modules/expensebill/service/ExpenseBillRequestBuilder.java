@@ -71,16 +71,101 @@ public class ExpenseBillRequestBuilder {
 	/**
 	 * One ExpenseBillRecord = One Expense Bill API Request.
 	 */
+
 	public ExpenseBillCreateRequest build(ExpenseBillRecord record, MigrationRequest migrationRequest) {
 
-		ExpenseBillCreateRequest request = new ExpenseBillCreateRequest();
-		String tenantId = migrationRequest.getTenantId();
-		request.setTenantId(tenantId);
-		RequestInfo requestInfo = requestInfoBuilder.build(tenantId);
-		request.setRequestInfo(requestInfo);
-		request.setExpenseBillRequest(buildExpenseBillRequest(record, requestInfo, tenantId));
+		if (record == null) {
+			throw new IllegalArgumentException("ExpenseBillRecord is null.");
+		}
 
-		return request;
+		if (record.getSerialNumber() == null) {
+			throw new IllegalArgumentException("Serial Number (SN) is missing.");
+		}
+
+		if (migrationRequest == null) {
+			throw new IllegalArgumentException("MigrationRequest is null for SN: " + record.getSerialNumber());
+		}
+
+		String tenantId = migrationRequest.getTenantId();
+
+		if (!hasValue(tenantId)) {
+			throw new IllegalArgumentException("Tenant ID is missing for SN: " + record.getSerialNumber());
+		}
+
+		try {
+
+			ExpenseBillCreateRequest request = new ExpenseBillCreateRequest();
+			request.setTenantId(tenantId);
+			RequestInfo requestInfo = requestInfoBuilder.build(tenantId);
+
+			if (requestInfo == null) {
+				throw new IllegalArgumentException("RequestInfo could not be created for tenant: " + tenantId);
+			}
+
+			request.setRequestInfo(requestInfo);
+			ExpenseBillRequest expenseBillRequest = buildExpenseBillRequest(record, requestInfo, tenantId);
+
+			if (expenseBillRequest == null) {
+				throw new IllegalArgumentException("ExpenseBillRequest could not be created.");
+			}
+
+			if (!hasValue(expenseBillRequest.getWorkFlowAction())) {
+				throw new IllegalArgumentException("Workflow Action is missing.");
+			}
+
+			if (expenseBillRequest.getApprovalPosition() == null) {
+				throw new IllegalArgumentException("Approval Position is missing.");
+			}
+
+			/*
+			 * ===================================================== 7. Validate
+			 * EgBillregister =====================================================
+			 */
+			EgBillregister billRegister = expenseBillRequest.getEgBillregister();
+
+			if (billRegister == null) {
+				throw new IllegalArgumentException("EgBillregister could not be created.");
+			}
+			if (billRegister.getBillamount() == null) {
+				throw new IllegalArgumentException("Bill Amount is missing.");
+			}
+			if (billRegister.getBillamount().compareTo(BigDecimal.ZERO) <= 0) {
+				throw new IllegalArgumentException(
+						"Bill Amount must be greater than zero. " + "Value: " + billRegister.getBillamount());
+			}
+			if (!hasValue(billRegister.getBillnumber())) {
+				throw new IllegalArgumentException("Bill Number is missing.");
+			}
+			if (!hasValue(billRegister.getBilldate())) {
+				throw new IllegalArgumentException("Bill Date is missing.");
+			}
+			if (!hasValue(billRegister.getExpendituretype())) {
+				throw new IllegalArgumentException("Expenditure Type is missing.");
+			}
+			if (billRegister.getEgBillregistermis() == null) {
+				throw new IllegalArgumentException("EgBillregister MIS details are missing.");
+			}
+			if (billRegister.getBillDetails() == null || billRegister.getBillDetails().isEmpty()) {
+				throw new IllegalArgumentException("Bill Details are missing.");
+			}
+			if (billRegister.getBillPayeedetails() == null || billRegister.getBillPayeedetails().isEmpty()) {
+				throw new IllegalArgumentException("Bill Payee Details are missing.");
+			}
+			if (billRegister.getCheckLists() == null || billRegister.getCheckLists().isEmpty()) {
+				throw new IllegalArgumentException("Bill Checklist details are missing.");
+			}
+
+			request.setExpenseBillRequest(expenseBillRequest);
+			return request;
+
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException(
+					"Expense Bill build failed for SN " + record.getSerialNumber() + ": " + e.getMessage(), e);
+
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Unexpected error while building Expense Bill " + "for SN "
+					+ record.getSerialNumber() + ": " + e.getMessage(), e);
+		}
 	}
 
 	/**
@@ -88,9 +173,24 @@ public class ExpenseBillRequestBuilder {
 	 *
 	 * "expenseBillRequest": { "workFlowAction": "Create And Approve",
 	 * "approvalPosition": 0, "approvalComment": "", "approvalDesignation": "" }
+	 * 
+	 * @throws Exception
 	 */
+
 	private ExpenseBillRequest buildExpenseBillRequest(ExpenseBillRecord record, RequestInfo requestInfo,
-			String tenantId) {
+			String tenantId) throws Exception {
+
+		if (record == null) {
+			throw new IllegalArgumentException("ExpenseBillRecord is null.");
+		}
+
+		if (requestInfo == null) {
+			throw new IllegalArgumentException("RequestInfo is null.");
+		}
+
+		if (!hasValue(tenantId)) {
+			throw new IllegalArgumentException("Tenant ID is missing.");
+		}
 
 		ExpenseBillRequest expenseBillRequest = new ExpenseBillRequest();
 
@@ -100,25 +200,15 @@ public class ExpenseBillRequestBuilder {
 		expenseBillRequest.setApprovalDesignation("");
 
 		/*
-		 * egBillregister
+		 * Build Bill Register
 		 */
-		try {
+		EgBillregister billRegister = buildBillRegister(record, requestInfo, tenantId);
 
-			String requestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(expenseBillRequest);
-
-			System.out.println();
-			System.out.println("==========================================================");
-			System.out.println("        EXPENSE BILL REQUEST JSON");
-			System.out.println("==========================================================");
-			System.out.println(requestJson);
-			System.out.println("==========================================================");
-			EgBillregister buildBillRegister = buildBillRegister(record, requestInfo, tenantId);
-			expenseBillRequest.setEgBillregister(buildBillRegister);
-		} catch (Exception e) {
-
-			System.err.println("ERROR WHILE CONVERTING REQUEST TO JSON");
-			e.printStackTrace();
+		if (billRegister == null) {
+			throw new IllegalArgumentException("EgBillregister could not be created.");
 		}
+
+		expenseBillRequest.setEgBillregister(billRegister);
 
 		return expenseBillRequest;
 	}
@@ -129,41 +219,95 @@ public class ExpenseBillRequestBuilder {
 	 * "egBillregister": { "billamount": 30000.00, "billnumber": "EXP-BILL-012",
 	 * "billdate": "2026-08-06", "expendituretype": "Expense" }
 	 */
-	private EgBillregister buildBillRegister(ExpenseBillRecord record, RequestInfo requestInfo, String tenantId)
-			throws Exception {
+
+
+	private EgBillregister buildBillRegister(ExpenseBillRecord record, RequestInfo requestInfo, String tenantId) {
+
+		if (record == null) {
+			throw new IllegalArgumentException("ExpenseBillRecord is null.");
+		}
+		if (requestInfo == null) {
+			throw new IllegalArgumentException("RequestInfo is null.");
+		}
+		if (!hasValue(tenantId)) {
+			throw new IllegalArgumentException("Tenant ID is missing.");
+		}
 
 		EgBillregister billRegister = new EgBillregister();
+		BigDecimal billAmount = calculateBillAmount(record);
+
+		if (billAmount == null) {
+			throw new IllegalArgumentException("Bill Amount could not be calculated.");
+		}
+
+		if (billAmount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException(
+					"Calculated Bill Amount must be greater than zero. " + "Value: " + billAmount);
+		}
+
+		billRegister.setBillamount(billAmount);
+		String billNumber = generateBillNumber(record);
+
+		if (!hasValue(billNumber)) {
+			throw new IllegalArgumentException("Bill Number could not be generated.");
+		}
+
+		billRegister.setBillnumber(billNumber);
+		if (!hasValue(record.getBillDate())) {
+			throw new IllegalArgumentException("Bill Date is missing for SN: " + record.getSerialNumber());
+		}
+
+		String billDate = convertToApiDate(record.getBillDate(), "Bill Date");
+		billRegister.setBilldate(billDate);
+		billRegister.setExpendituretype("Expense");
+
+		if (!hasValue(billRegister.getExpendituretype())) {
+			throw new IllegalArgumentException("Expenditure Type is missing for bill: " + billNumber);
+		}
 
 		/*
-		 * Calculate total amount
+		 * MIS
 		 */
-		BigDecimal billAmount = calculateBillAmount(record);
-		billRegister.setBillamount(billAmount);
-		billRegister.setBillnumber(generateBillNumber(record));
-		String convertToApiDate = convertToApiDate(record.getBillDate());
-		billRegister.setBilldate(convertToApiDate);
-		billRegister.setExpendituretype("Expense");
-		billRegister.setEgBillregistermis(buildMisDetails(record, requestInfo, tenantId));
-		billRegister.setBillDetails(buildBillDetails(record, requestInfo, tenantId));
-		billRegister.setBillPayeedetails(buildPayeeDetails(record, requestInfo, tenantId));
-		billRegister.setCheckLists(buildCheckLists());
+		EgBillregistermis misDetails = buildMisDetails(record, requestInfo, tenantId);
 
-		try {
-
-			String requestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(billRegister);
-
-			System.out.println();
-			System.out.println("==========================================================");
-			System.out.println("        EXPENSE BILL REGISTER JSON");
-			System.out.println("==========================================================");
-			System.out.println(requestJson);
-			System.out.println("==========================================================");
-
-		} catch (Exception e) {
-
-			System.err.println("ERROR WHILE CONVERTING REQUEST TO JSON");
-			e.printStackTrace();
+		if (misDetails == null) {
+			throw new IllegalArgumentException("MIS details could not be created for bill: " + billNumber);
 		}
+
+		billRegister.setEgBillregistermis(misDetails);
+
+		/*
+		 * Bill Details
+		 */
+		List<EgBilldetails> billDetails = buildBillDetails(record, requestInfo, tenantId);
+
+		if (billDetails == null || billDetails.isEmpty()) {
+			throw new IllegalArgumentException("Bill Details could not be created for bill: " + billNumber);
+		}
+
+		billRegister.setBillDetails(billDetails);
+
+		/*
+		 * Payee Details
+		 */
+		List<EgBillPayeedetails> payeeDetails = buildPayeeDetails(record, requestInfo, tenantId);
+
+		if (payeeDetails == null || payeeDetails.isEmpty()) {
+			throw new IllegalArgumentException("Payee Details could not be created for bill: " + billNumber);
+		}
+
+		billRegister.setBillPayeedetails(payeeDetails);
+
+		/*
+		 * Checklist
+		 */
+		List<EgBillChecklist> checkLists = buildCheckLists();
+
+		if (checkLists == null || checkLists.isEmpty()) {
+			throw new IllegalArgumentException("Checklist details could not be created for bill: " + billNumber);
+		}
+
+		billRegister.setCheckLists(checkLists);
 		return billRegister;
 	}
 
@@ -175,119 +319,157 @@ public class ExpenseBillRequestBuilder {
 	 * "narration": "", "partyBillNumber": "", "partyBillDate": null,
 	 * "egBillSubType": {"id": 11}, "payto": "Raju kumar" }
 	 */
+
 	private EgBillregistermis buildMisDetails(ExpenseBillRecord record, RequestInfo requestInfo, String tenantId) {
+
+		if (record == null) {
+			throw new IllegalArgumentException("ExpenseBillRecord is null while building MIS details.");
+		}
+		if (requestInfo == null) {
+			throw new IllegalArgumentException("RequestInfo is null while building MIS details.");
+		}
+		if (!hasValue(tenantId)) {
+			throw new IllegalArgumentException("Tenant ID is missing while building MIS details.");
+		}
 
 		EgBillregistermis mis = new EgBillregistermis();
 		requestInfo.setAction("_search");
 
-		/***
-		 * call fund fetch api client then set id
+		/*
+		 * FUND
 		 */
-
-		if (hasValue(record.getFund())) {
-			Fund fundResponse = fundServiceClient.getFundByName(record.getFund(), requestInfo, tenantId);
-			if (fundResponse == null) {
-				throw new IllegalArgumentException("Fund not found: " + record.getFund());
-			}
-
-			if (!hasValue(fundResponse.getCode())) {
-				throw new IllegalArgumentException("Fund code not found for fund: " + record.getFund());
-			}
-			mis.setFund(createIdReference(fundResponse.getId()));
+		if (!hasValue(record.getFund())) {
+			throw new IllegalArgumentException("Fund is missing for SN: " + record.getSerialNumber());
 		}
 
-		/***
-		 * call Scheme fetch api client then set id
-		 */
+		Fund fundResponse = fundServiceClient.getFundByName(record.getFund(), requestInfo, tenantId);
 
-		if (hasValue(record.getScheme())) {
-			Scheme schemeByName = schemeServiceClient.getSchemeByName(record.getScheme(), record.getFund(), requestInfo,
-					tenantId);
-			if (schemeByName == null) {
-				throw new IllegalArgumentException("Scheme not found: " + record.getScheme());
-			}
-
-			if (!hasValue(schemeByName.getCode())) {
-				throw new IllegalArgumentException("Fund code not found for fund: " + record.getFund());
-			}
-			mis.setSchemeId(schemeByName.getId());
+		if (fundResponse == null) {
+			throw new IllegalArgumentException(
+					"Fund not found: " + record.getFund() + " Please Create or Check active/Inactive.");
+		}
+		if (fundResponse.getId() == null) {
+			throw new IllegalArgumentException("Fund ID is missing from API response for fund: " + record.getFund());
+		}
+		if (!hasValue(fundResponse.getCode())) {
+			throw new IllegalArgumentException("Fund code is missing from API response for fund: " + record.getFund());
 		}
 
-		/***
-		 * call Sub-Scheme fetch api client then set id
-		 */
-//		mis.setSubSchemeId(record.getSubScheme());
-
-		/***
-		 * call Function fetch api client then set id
-		 */
-
-		if (hasValue(record.getFunction())) {
-			Function functionByName = functionServiceClient.getFunctionByName(record.getFunction(), requestInfo,
-					tenantId);
-			if (functionByName == null) {
-				throw new IllegalArgumentException("Function not found: " + record.getScheme());
-			}
-
-			mis.setFunction(new IdDTO(functionByName.getId()));
-		}
-
-		mis.setFundsource(null);
-		String departmentName = record.getDepartment();
-		String departmentCode = DepartmentMapping.getDepartmentCode(departmentName);
-		mis.setDepartmentcode(departmentCode);
-		mis.setNarration(defaultString(record.getNarration()));
-		mis.setPartyBillNumber(defaultString(record.getPartyBillNo()));
-		String convertToApiDate = convertToApiDate(record.getPartyBillDate());
-		mis.setPartyBillDate(convertToApiDate);
+		mis.setFund(createIdReference(fundResponse.getId()));
 
 		/*
-		 * Bill Sub Type
+		 * SCHEME
 		 */
-		if (hasValue(record.getBillSubType())) {
+		if (!hasValue(record.getScheme())) {
+			throw new IllegalArgumentException("Scheme is missing for SN: " + record.getSerialNumber());
+		}
+		Scheme scheme = schemeServiceClient.getSchemeByName(record.getScheme(), record.getFund(), requestInfo,
+				tenantId);
 
-			String billSubType = record.getBillSubType().trim();
-			Integer billSubTypeId = BillSubtypeMapping.getBillSubTypeId(billSubType);
+		if (scheme == null) {
+			throw new IllegalArgumentException(
+					"Scheme not found: " + record.getScheme() + " for Fund: " + record.getFund());
+		}
+		if (scheme.getId() == null) {
+			throw new IllegalArgumentException(
+					"Scheme ID is missing from API response for scheme: " + record.getScheme());
+		}
+		if (!hasValue(scheme.getCode())) {
+			throw new IllegalArgumentException(
+					"Scheme code is missing from API response for scheme: " + record.getScheme());
+		}
+		mis.setSchemeId(scheme.getId());
 
-			if (billSubTypeId == null) {
-				throw new IllegalArgumentException("Invalid Bill Sub Type: " + billSubType
-						+ ". Valid values are: Contingent, Salary, Pension, Works, Supplies, Recovery, Deposit, Advance, GPF, Others, Expense");
-			}
+		/*
+		 * FUNCTION
+		 */
+		if (!hasValue(record.getFunction())) {
+			throw new IllegalArgumentException("Function is missing for SN: " + record.getSerialNumber());
+		}
 
-			mis.setEgBillSubType(new IdDTO(billSubTypeId.longValue()));
+		Function function = functionServiceClient.getFunctionByName(record.getFunction(), requestInfo, tenantId);
+
+		if (function == null) {
+			throw new IllegalArgumentException("Function not found: " + record.getFunction());
+		}
+
+		if (function.getId() == null) {
+			throw new IllegalArgumentException(
+					"Function ID is missing from API response for function: " + record.getFunction());
+		}
+
+		mis.setFunction(new IdDTO(function.getId()));
+
+		/*
+		 * DEPARTMENT
+		 */
+		if (!hasValue(record.getDepartment())) {
+			throw new IllegalArgumentException("Department is missing for SN: " + record.getSerialNumber());
+		}
+
+		String departmentCode = DepartmentMapping.getDepartmentCode(record.getDepartment());
+
+		if (!hasValue(departmentCode)) {
+			throw new IllegalArgumentException(
+					"Department mapping not found for department: " + record.getDepartment());
+		}
+
+		mis.setDepartmentcode(departmentCode);
+
+		/*
+		 * FUND SOURCE
+		 *
+		 * Currently your API payload intentionally sets it to null.
+		 */
+		mis.setFundsource(null);
+
+		/*
+		 * NARRATION
+		 */
+		mis.setNarration(defaultString(record.getNarration()));
+
+		/*
+		 * PARTY BILL NUMBER
+		 */
+		mis.setPartyBillNumber(defaultString(record.getPartyBillNo()));
+
+		/*
+		 * PARTY BILL DATE
+		 */
+		if (hasValue(record.getPartyBillDate())) {
+			mis.setPartyBillDate(convertToApiDate(record.getPartyBillDate(), "Party Bill Date"));
+		} else {
+			mis.setPartyBillDate(null);
+		}
+
+		/*
+		 * BILL SUB TYPE
+		 */
+		if (!hasValue(record.getBillSubType())) {
+			throw new IllegalArgumentException("Bill Sub Type is missing for SN: " + record.getSerialNumber());
+		}
+
+		String billSubType = record.getBillSubType().trim();
+
+		Integer billSubTypeId = BillSubtypeMapping.getBillSubTypeId(billSubType);
+
+		if (billSubTypeId == null) {
+			throw new IllegalArgumentException(
+					"Invalid Bill Sub Type: " + billSubType + ". Valid values are: Contingent, Salary, Pension, "
+							+ "Works, Supplies, Recovery, Deposit, Advance, GPF, " + "Others, Expense");
+		}
+
+		mis.setEgBillSubType(new IdDTO(billSubTypeId.longValue()));
+
+		/*
+		 * SUB LEDGER MASTER / PAY TO
+		 */
+		if (!hasValue(record.getSubLedgerMaster())) {
+			throw new IllegalArgumentException("Sub Ledger Master is missing for SN: " + record.getSerialNumber());
 		}
 
 		mis.setPayto(record.getSubLedgerMaster());
 
-//		System.out.println("====================================");
-//		System.out.println("MIS Detail Build");
-//		System.out.println("Fund : " + mis.getFund().getId());
-//		System.out.println("Scheme : " + mis.getSchemeId());
-//		System.out.println("Function Name : " + mis.getFunction());
-//		System.out.println("Department : " + mis.getDepartmentcode());
-//		System.out.println("Narration : " + mis.getNarration());
-//		System.out.println("Part Bill Date : " + mis.getPartyBillDate());
-//		System.out.println("Part Bill Number : " + mis.getPartyBillNumber());
-//		System.out.println("Bill Sub Type : " + mis.getEgBillSubType());
-//		System.out.println("Sub Ledger Master(Payto) : " + mis.getPayto());
-//		System.out.println("====================================");
-
-		try {
-
-			String requestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(mis);
-
-			System.out.println();
-			System.out.println("==========================================================");
-			System.out.println("        EXPENSE BILL REGISTER JSON");
-			System.out.println("==========================================================");
-			System.out.println(requestJson);
-			System.out.println("==========================================================");
-
-		} catch (Exception e) {
-
-			System.err.println("ERROR WHILE CONVERTING REQUEST TO JSON");
-			e.printStackTrace();
-		}
 		return mis;
 	}
 
@@ -298,108 +480,172 @@ public class ExpenseBillRequestBuilder {
 	 * 1015, "creditamount": 1500.00 } ]
 	 */
 
+	private ChartOfAccountsResponse getChartOfAccount(String glCode, String fieldName, RequestInfo requestInfo,
+			String tenantId) {
+
+		if (!hasValue(glCode)) {
+			throw new IllegalArgumentException(fieldName + " GL Code is missing.");
+		}
+
+		String numericGlCode = extractNumericGlCode(glCode);
+
+		if (!hasValue(numericGlCode)) {
+			throw new IllegalArgumentException("Invalid " + fieldName + " GL Code: " + glCode);
+		}
+
+		ChartOfAccountsResponse response = chartOfAccountsServiceClient.getByGlCode(numericGlCode, requestInfo,
+				tenantId);
+
+		if (response == null) {
+			throw new IllegalArgumentException(
+					"Chart of Account not found for " + fieldName + " GL Code: " + numericGlCode);
+		}
+
+		if (response.getId() == null) {
+			throw new IllegalArgumentException(
+					"Chart of Account ID is missing for " + fieldName + " GL Code: " + numericGlCode);
+		}
+
+		return response;
+	}
+
 	private List<EgBilldetails> buildBillDetails(ExpenseBillRecord record, RequestInfo requestInfo, String tenantId) {
+
+		if (record == null) {
+			throw new IllegalArgumentException("ExpenseBillRecord is null while building Bill Details.");
+		}
+
+		if (requestInfo == null) {
+			throw new IllegalArgumentException("RequestInfo is null while building Bill Details.");
+		}
 
 		List<EgBilldetails> billDetails = new ArrayList<>();
 		requestInfo.setAction("_search");
 
-		if (record.getDebitDetails() == null && record.getDeductionDetails() == null) {
-			return billDetails;
+		/*
+		 * Debit Details
+		 */
+		if (record.getDebitDetails() == null || record.getDebitDetails().isEmpty()) {
+			throw new IllegalArgumentException("Debit Details are missing.");
+		}
+
+		/*
+		 * Deduction Details can be empty, but the list itself should not be null.
+		 */
+		if (record.getDeductionDetails() == null) {
+			throw new IllegalArgumentException("Deduction Details list is null.");
 		}
 
 		BigDecimal totalDebit = BigDecimal.ZERO;
 		BigDecimal totalCredit = BigDecimal.ZERO;
 
-		// ============================================
-		// DEBIT DETAILS
-		// ============================================
-		if (record.getDebitDetails() != null) {
+		/*
+		 * DEBIT
+		 */
+		for (int i = 0; i < record.getDebitDetails().size(); i++) {
 
-			for (ExpenseDebitRecord sourceDetail : record.getDebitDetails()) {
+			ExpenseDebitRecord sourceDetail = record.getDebitDetails().get(i);
 
-				EgBilldetails billDetail = new EgBilldetails();
-				String numericGlCode = extractNumericGlCode(sourceDetail.getGlCode());
-				ChartOfAccountsResponse chartOfAccounts = chartOfAccountsServiceClient.getByGlCode(numericGlCode,
-						requestInfo, tenantId);
-				billDetail.setGlcodeid(chartOfAccounts.getId());
-				billDetail.setDebitamount(sourceDetail.getDebitAmount());
-				totalDebit = totalDebit
-						.add(sourceDetail.getDebitAmount() != null ? sourceDetail.getDebitAmount() : BigDecimal.ZERO);
-				billDetails.add(billDetail);
+			if (sourceDetail == null) {
+				throw new IllegalArgumentException("Debit Detail at index " + i + " is null.");
 			}
-		}
-
-		// ============================================
-		// CREDIT / DEDUCTION DETAILS
-		// ============================================
-		if (record.getDeductionDetails() != null) {
-
-			for (ExpenseDeductionRecord sourceDetail : record.getDeductionDetails()) {
-
-				EgBilldetails billDetail = new EgBilldetails();
-				String numericGlCode = extractNumericGlCode(sourceDetail.getGlCode());
-				ChartOfAccountsResponse chartOfAccounts = chartOfAccountsServiceClient.getByGlCode(numericGlCode,
-						requestInfo, tenantId);
-				billDetail.setGlcodeid(chartOfAccounts.getId());
-				billDetail.setCreditamount(sourceDetail.getCreditAmount());
-				totalCredit = totalCredit
-						.add(sourceDetail.getCreditAmount() != null ? sourceDetail.getCreditAmount() : BigDecimal.ZERO);
-				billDetails.add(billDetail);
+			if (!hasValue(sourceDetail.getGlCode())) {
+				throw new IllegalArgumentException("Debit GL Code is missing at index " + i + ".");
 			}
+			if (sourceDetail.getDebitAmount() == null) {
+				throw new IllegalArgumentException("Debit Amount is missing for GL Code: " + sourceDetail.getGlCode());
+			}
+			if (sourceDetail.getDebitAmount().compareTo(BigDecimal.ZERO) < 0) {
+				throw new IllegalArgumentException("Debit Amount cannot be negative for GL Code: "
+						+ sourceDetail.getGlCode() + ". Value: " + sourceDetail.getDebitAmount());
+			}
+
+			ChartOfAccountsResponse coa = getChartOfAccount(sourceDetail.getGlCode(), "Debit", requestInfo, tenantId);
+			EgBilldetails detail = new EgBilldetails();
+			detail.setGlcodeid(coa.getId());
+			detail.setDebitamount(sourceDetail.getDebitAmount());
+			totalDebit = totalDebit.add(sourceDetail.getDebitAmount());
+			billDetails.add(detail);
 		}
 
-		// ============================================
-		// NET PAYABLE
-		// Net Payable = Total Debit - Total Deduction
-		// ============================================
-		BigDecimal netPayableAmount = totalDebit.subtract(totalCredit);
+		/*
+		 * DEDUCTIONS
+		 */
+		for (int i = 0; i < record.getDeductionDetails().size(); i++) {
 
-		if (netPayableAmount.compareTo(BigDecimal.ZERO) > 0 && record.getNetPayableDetail() != null) {
-			String numericNetPayableGlCode = extractNumericGlCode(record.getNetPayableDetail().getGlCode());
-			ChartOfAccountsResponse netPayableGl = chartOfAccountsServiceClient.getByGlCode(numericNetPayableGlCode,
-					requestInfo, tenantId);
-			EgBilldetails netPayableDetail = new EgBilldetails();
-			netPayableDetail.setGlcodeid(netPayableGl.getId());
-			netPayableDetail.setCreditamount(netPayableAmount);
-			billDetails.add(netPayableDetail);
+			ExpenseDeductionRecord sourceDetail = record.getDeductionDetails().get(i);
+
+			if (sourceDetail == null) {
+				throw new IllegalArgumentException("Deduction Detail at index " + i + " is null.");
+			}
+			if (!hasValue(sourceDetail.getGlCode())) {
+				throw new IllegalArgumentException("Deduction GL Code is missing at index " + i + ".");
+			}
+			if (sourceDetail.getCreditAmount() == null) {
+				throw new IllegalArgumentException(
+						"Deduction Credit Amount is missing for GL Code: " + sourceDetail.getGlCode());
+			}
+			if (sourceDetail.getCreditAmount().compareTo(BigDecimal.ZERO) < 0) {
+				throw new IllegalArgumentException(
+						"Deduction Credit Amount cannot be negative for GL Code: " + sourceDetail.getGlCode());
+			}
+
+			ChartOfAccountsResponse coa = getChartOfAccount(sourceDetail.getGlCode(), "Deduction", requestInfo,
+					tenantId);
+			EgBilldetails detail = new EgBilldetails();
+			detail.setGlcodeid(coa.getId());
+			detail.setCreditamount(sourceDetail.getCreditAmount());
+			totalCredit = totalCredit.add(sourceDetail.getCreditAmount());
+			billDetails.add(detail);
 		}
 
-		// ============================================
-		// DEBUG
-		// ============================================
-		System.out.println("======================================");
-		System.out.println("TOTAL DEBIT       : " + totalDebit);
-		System.out.println("TOTAL DEDUCTION   : " + totalCredit);
-		System.out.println("NET PAYABLE       : " + netPayableAmount);
-		System.out.println("======================================");
+		/*
+		 * NET PAYABLE
+		 */
+		if (record.getNetPayableDetail() == null) {
+			throw new IllegalArgumentException("Net Payable Details are missing.");
+		}
 
+		ExpenseNetPayableRecord netPayable = record.getNetPayableDetail();
+
+		if (!hasValue(netPayable.getGlCode())) {
+			throw new IllegalArgumentException("Net Payable GL Code is missing.");
+		}
+		if (netPayable.getCreditAmount() == null) {
+			throw new IllegalArgumentException("Net Payable Credit Amount is missing.");
+		}
+		if (netPayable.getCreditAmount().compareTo(BigDecimal.ZERO) < 0) {
+			throw new IllegalArgumentException(
+					"Net Payable Credit Amount cannot be negative. " + "Value: " + netPayable.getCreditAmount());
+		}
+
+		/*
+		 * Net Payable = Debit - Deduction
+		 */
+		BigDecimal calculatedNetPayable = totalDebit.subtract(totalCredit);
+
+		if (calculatedNetPayable.compareTo(BigDecimal.ZERO) <= 0) {
+
+			throw new IllegalArgumentException("Calculated Net Payable must be greater than zero. " + "Total Debit: "
+					+ totalDebit + ", Total Deduction: " + totalCredit + ", Calculated Net Payable: "
+					+ calculatedNetPayable);
+		}
+
+		/*
+		 * Compare Excel supplied Net Payable with calculated Net Payable.
+		 */
+		if (netPayable.getCreditAmount().compareTo(calculatedNetPayable) != 0) {
+			throw new IllegalArgumentException("Net Payable amount mismatch. " + "Expected: " + calculatedNetPayable
+					+ ", Input: " + netPayable.getCreditAmount());
+		}
+
+		ChartOfAccountsResponse netPayableCoa = getChartOfAccount(netPayable.getGlCode(), "Net Payable", requestInfo,
+				tenantId);
+		EgBilldetails netPayableDetail = new EgBilldetails();
+		netPayableDetail.setGlcodeid(netPayableCoa.getId());
+		netPayableDetail.setCreditamount(calculatedNetPayable);
+		billDetails.add(netPayableDetail);
 		return billDetails;
-	}
-
-//	private String extractNumericGlCode(String glCodeValue) {
-//
-//		if (glCodeValue == null || glCodeValue.trim().isEmpty()) {
-//			return null;
-//		}
-//
-//		String value = glCodeValue.trim();
-//		return value.replaceFirst("^([0-9]+).*", "$1");
-//	}
-
-	private String extractNumericGlCode(String glCodeValue) {
-
-		if (glCodeValue == null || glCodeValue.trim().isEmpty()) {
-			return null;
-		}
-
-		String value = glCodeValue.trim();
-		java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(\\d+)").matcher(value);
-
-		if (matcher.find()) {
-			return matcher.group(1);
-		}
-
-		throw new IllegalArgumentException("Invalid GL Code format: " + glCodeValue);
 	}
 
 	/**
@@ -409,57 +655,90 @@ public class ExpenseBillRequestBuilder {
 	 * "creditAmount": 27000.00, "isDebit": false, "accountDetailTypeId": 12,
 	 * "accountDetailKeyId": 2 } ]
 	 */
+
+
 	private List<EgBillPayeedetails> buildPayeeDetails(ExpenseBillRecord record, RequestInfo requestInfo,
 			String tenantId) {
 
-		List<EgBillPayeedetails> payeeDetails = new ArrayList<EgBillPayeedetails>();
-		requestInfo.setAction("_search");
-
+		if (record == null) {
+			throw new IllegalArgumentException("ExpenseBillRecord is null while building Payee Details.");
+		}
+		if (requestInfo == null) {
+			throw new IllegalArgumentException("RequestInfo is null while building Payee Details.");
+		}
 		if (record.getNetPayableDetail() == null) {
-			return payeeDetails;
+			throw new IllegalArgumentException("Net Payable Details are missing.");
+		}
+		if (!hasValue(record.getSubLedgerType())) {
+			throw new IllegalArgumentException("Sub Ledger Type is missing.");
+		}
+		if (!hasValue(record.getSubLedgerMaster())) {
+			throw new IllegalArgumentException("Sub Ledger Master is missing.");
+		}
+		ExpenseNetPayableRecord sourcePayee = record.getNetPayableDetail();
+
+		if (!hasValue(sourcePayee.getGlCode())) {
+			throw new IllegalArgumentException("Net Payable GL Code is missing.");
+		}
+		if (sourcePayee.getCreditAmount() == null) {
+			throw new IllegalArgumentException("Net Payable Credit Amount is missing.");
+		}
+		if (sourcePayee.getCreditAmount().compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("Net Payable Credit Amount must be greater than zero.");
 		}
 
-		ExpenseNetPayableRecord sourcePayee = record.getNetPayableDetail();
-		/***
-		 * call glocde api client to fetch data and set the id
+		requestInfo.setAction("_search");
+
+		/*
+		 * GL
 		 */
-		String numericGlCode = extractNumericGlCode(sourcePayee.getGlCode());
-		ChartOfAccountsResponse chartOfAccounts = chartOfAccountsServiceClient.getByGlCode(numericGlCode, requestInfo,
-				tenantId);
-		Accountdetailtype accountdetailtype = accountDetailTypeServiceClient.getByName(record.getSubLedgerType(),
+		ChartOfAccountsResponse coa = getChartOfAccount(sourcePayee.getGlCode(), "Net Payable", requestInfo, tenantId);
+
+		/*
+		 * Account Detail Type
+		 */
+		Accountdetailtype accountDetailType = accountDetailTypeServiceClient.getByName(record.getSubLedgerType(),
 				requestInfo, tenantId);
 
-		EgBillPayeedetails billPayeedetails = new EgBillPayeedetails();
-		EgBillDetailsIdDTO egBillDetailsIdDTO = new EgBillDetailsIdDTO();
-		egBillDetailsIdDTO.setGlcodeid(chartOfAccounts.getId().longValue());
-		billPayeedetails.setEgBilldetailsId(egBillDetailsIdDTO);
-		billPayeedetails.setIsDebit(false);
-		billPayeedetails.setCreditAmount(sourcePayee.getCreditAmount());
-		billPayeedetails.setAccountDetailTypeId(accountdetailtype.getId().longValue());
-		Accountdetailkey accountDetailKey = accountDetailKeyServiceClient.getAccountDetailKey(accountdetailtype.getId(),
-				record.getSubLedgerMaster(), requestInfo, tenantId);
-		billPayeedetails.setAccountDetailKeyId(accountDetailKey.getDetailkey().longValue());
-		payeeDetails.add(billPayeedetails);
+		if (accountDetailType == null) {
+			throw new IllegalArgumentException("Account Detail Type not found: " + record.getSubLedgerType());
+		}
 
-//		try {
-//
-//			String requestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(payeeDetails);
-//
-//			System.out.println();
-//			System.out.println("==========================================================");
-//			System.out.println("        EXPENSE BILL REGISTER JSON");
-//			System.out.println("==========================================================");
-//			System.out.println(requestJson);
-//			System.out.println("==========================================================");
-//
-//		} catch (Exception e) {
-//
-//			System.err.println("ERROR WHILE CONVERTING REQUEST TO JSON");
-//			e.printStackTrace();
-//		}
-//
-//		System.out.println("====================================================");
-		return payeeDetails;
+		if (accountDetailType.getId() == null) {
+			throw new IllegalArgumentException("Account Detail Type ID is missing for: " + record.getSubLedgerType());
+		}
+
+		/*
+		 * Account Detail Key
+		 */
+		Accountdetailkey accountDetailKey = accountDetailKeyServiceClient.getAccountDetailKey(accountDetailType.getId(),
+				record.getSubLedgerMaster(), requestInfo, tenantId);
+
+		if (accountDetailKey == null) {
+			throw new IllegalArgumentException(
+					"Account Detail Key not found for Sub Ledger Master: " + record.getSubLedgerMaster());
+		}
+
+		if (accountDetailKey.getDetailkey() == null) {
+			throw new IllegalArgumentException(
+					"Account Detail Key ID is missing for Sub Ledger Master: " + record.getSubLedgerMaster());
+		}
+
+		/*
+		 * Build Payee
+		 */
+		EgBillPayeedetails payee = new EgBillPayeedetails();
+		EgBillDetailsIdDTO billDetailsId = new EgBillDetailsIdDTO();
+		billDetailsId.setGlcodeid(coa.getId().longValue());
+		payee.setEgBilldetailsId(billDetailsId);
+		payee.setDebitAmount(null);
+		payee.setCreditAmount(sourcePayee.getCreditAmount());
+		payee.setIsDebit(false);
+		payee.setAccountDetailTypeId(accountDetailType.getId().longValue());
+		payee.setAccountDetailKeyId(accountDetailKey.getDetailkey().longValue());
+		List<EgBillPayeedetails> result = new ArrayList<>();
+		result.add(payee);
+		return result;
 	}
 
 	/**
@@ -468,14 +747,44 @@ public class ExpenseBillRequestBuilder {
 	 * "checkLists": [ { "appconfigvalue": { "id": 67 }, "checklistvalue": "na" } ]
 	 */
 
+
 	private List<EgBillChecklist> buildCheckLists() {
 
-		List<EgBillChecklist> checkLists = new ArrayList<EgBillChecklist>();
+		Long[] checklistIds = { 67L, 68L, 69L, 70L };
 
-		checkLists.add(createCheckList(67L));
-		checkLists.add(createCheckList(68L));
-		checkLists.add(createCheckList(69L));
-		checkLists.add(createCheckList(70L));
+		List<EgBillChecklist> checkLists = new ArrayList<>();
+
+		for (Long id : checklistIds) {
+
+			if (id == null) {
+				throw new IllegalArgumentException("Checklist configuration ID is null.");
+			}
+
+			if (id <= 0) {
+				throw new IllegalArgumentException("Invalid checklist configuration ID: " + id);
+			}
+
+			EgBillChecklist checkList = createCheckList(id);
+
+			if (checkList == null) {
+				throw new IllegalArgumentException("Checklist could not be created for ID: " + id);
+			}
+
+			if (checkList.getAppconfigvalue() == null || checkList.getAppconfigvalue().getId() == null) {
+
+				throw new IllegalArgumentException("Checklist AppConfigValue ID is missing for checklist: " + id);
+			}
+
+			if (!hasValue(checkList.getChecklistvalue())) {
+				throw new IllegalArgumentException("Checklist value is missing for checklist: " + id);
+			}
+
+			checkLists.add(checkList);
+		}
+
+		if (checkLists.isEmpty()) {
+			throw new IllegalArgumentException("No checklist details were generated.");
+		}
 
 		return checkLists;
 	}
@@ -483,10 +792,26 @@ public class ExpenseBillRequestBuilder {
 	/**
 	 * Create one checklist item.
 	 */
+
+
 	private EgBillChecklist createCheckList(Long id) {
+
+		if (id == null || id <= 0) {
+			throw new IllegalArgumentException("Invalid checklist ID: " + id);
+		}
+
 		EgBillChecklist checkList = new EgBillChecklist();
-		checkList.setAppconfigvalue(new IdDTO(id));
+
+		IdDTO appConfigValue = new IdDTO(id);
+
+		if (appConfigValue.getId() == null) {
+			throw new IllegalArgumentException("Checklist AppConfigValue ID could not be created for ID: " + id);
+		}
+
+		checkList.setAppconfigvalue(appConfigValue);
+
 		checkList.setChecklistvalue("na");
+
 		return checkList;
 	}
 
@@ -496,25 +821,30 @@ public class ExpenseBillRequestBuilder {
 	 * { "id": value }
 	 */
 
-	private String convertToApiDate(String value) {
 
-		if (value == null || value.trim().isEmpty()) {
-			return null;
+	private String convertToApiDate(String value, String fieldName) {
+
+		if (!hasValue(value)) {
+			throw new IllegalArgumentException(fieldName + " is missing.");
 		}
 
 		value = value.trim();
 		String[] formats = { "dd/MM/yyyy", "dd-MM-yyyy", "yyyy-MM-dd", "dd-MMM-yyyy" };
+
 		for (String format : formats) {
 			try {
+
 				SimpleDateFormat input = new SimpleDateFormat(format);
 				input.setLenient(false);
 				Date date = input.parse(value);
 				SimpleDateFormat output = new SimpleDateFormat("yyyy-MM-dd");
 				return output.format(date);
 			} catch (ParseException ignored) {
+				// Try next format.
 			}
 		}
-		throw new IllegalArgumentException("Invalid date: " + value + ". Expected dd/MM/yyyy or yyyy-MM-dd");
+		throw new IllegalArgumentException(
+				"Invalid " + fieldName + ": '" + value + "'. " + "Expected format: dd/MM/yyyy.");
 	}
 
 	/**
@@ -522,43 +852,141 @@ public class ExpenseBillRequestBuilder {
 	 *
 	 * Total Debit Amount + Total Credit Amount.
 	 */
+
+
 	private BigDecimal calculateBillAmount(ExpenseBillRecord record) {
 
-		BigDecimal totalAmount = BigDecimal.ZERO;
+		if (record == null) {
+			throw new IllegalArgumentException("ExpenseBillRecord is null while calculating Bill Amount.");
+		}
+
+		if (record.getDebitDetails() == null || record.getDebitDetails().isEmpty()) {
+			throw new IllegalArgumentException("Debit Details are required to calculate Bill Amount.");
+		}
+
+		BigDecimal totalDebit = BigDecimal.ZERO;
+		BigDecimal totalDeduction = BigDecimal.ZERO;
 
 		/*
-		 * Add all Net Payable amount amounts
+		 * DEBIT
 		 */
-		if (record.getNetPayableDetail() != null) {
-			ExpenseNetPayableRecord netPayableRecord = record.getNetPayableDetail();
-			if (netPayableRecord.getCreditAmount() != null) {
-				totalAmount = totalAmount.add(netPayableRecord.getCreditAmount());
+		for (ExpenseDebitRecord debit : record.getDebitDetails()) {
+
+			if (debit == null) {
+				throw new IllegalArgumentException("Debit Detail contains a null record.");
 			}
+			if (debit.getDebitAmount() == null) {
+				throw new IllegalArgumentException("Debit Amount is missing for GL Code: " + debit.getGlCode());
+			}
+			if (debit.getDebitAmount().compareTo(BigDecimal.ZERO) < 0) {
+				throw new IllegalArgumentException("Debit Amount cannot be negative for GL Code: " + debit.getGlCode());
+			}
+			totalDebit = totalDebit.add(debit.getDebitAmount());
 		}
 
 		/*
-		 * Add all Deduction amount (credit) amounts
+		 * DEDUCTION
 		 */
-		if (record.getDeductionDetails() != null) {
-			for (ExpenseDeductionRecord creditDetail : record.getDeductionDetails()) {
-				if (creditDetail.getCreditAmount() != null) {
-					totalAmount = totalAmount.add(creditDetail.getCreditAmount());
-				}
-			}
+		if (record.getDeductionDetails() == null) {
+			throw new IllegalArgumentException("Deduction Details list is null.");
 		}
-		return totalAmount;
+
+		for (ExpenseDeductionRecord deduction : record.getDeductionDetails()) {
+
+			if (deduction == null) {
+				throw new IllegalArgumentException("Deduction Detail contains a null record.");
+			}
+			if (deduction.getCreditAmount() == null) {
+				throw new IllegalArgumentException("Deduction Credit Amount is missing for GL Code: " + deduction.getGlCode());
+			}
+			if (deduction.getCreditAmount().compareTo(BigDecimal.ZERO) < 0) {
+				throw new IllegalArgumentException(	"Deduction Credit Amount cannot be negative for GL Code: " + deduction.getGlCode());
+			}
+			totalDeduction = totalDeduction.add(deduction.getCreditAmount());
+		}
+
+		if (totalDebit.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("Total Debit Amount must be greater than zero.");
+		}
+
+		/*
+		 * Calculate Net Payable
+		 */
+		BigDecimal calculatedNetPayable = totalDebit.subtract(totalDeduction);
+
+		if (calculatedNetPayable.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("Calculated Net Payable must be greater than zero. " + "Total Debit: "
+					+ totalDebit + ", Total Deduction: " + totalDeduction + ", Net Payable: " + calculatedNetPayable);
+		}
+
+		/*
+		 * Validate Excel Net Payable
+		 */
+		if (record.getNetPayableDetail() == null) {
+			throw new IllegalArgumentException("Net Payable Details are missing.");
+		}
+
+		BigDecimal inputNetPayable = record.getNetPayableDetail().getCreditAmount();
+
+		if (inputNetPayable == null) {
+			throw new IllegalArgumentException("Net Payable Credit Amount is missing.");
+		}
+		if (inputNetPayable.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("Net Payable Credit Amount must be greater than zero.");
+		}
+		if (inputNetPayable.compareTo(calculatedNetPayable) != 0) {
+			throw new IllegalArgumentException("Net Payable amount mismatch. " + "Expected: " + calculatedNetPayable + ", Input: " + inputNetPayable);
+		}
+
+		/*
+		 * Bill Amount = Total Debit
+		 */
+		return totalDebit;
 	}
+
+
 
 	private String generateBillNumber(ExpenseBillRecord record) {
 
+		if (record == null) {
+			throw new IllegalArgumentException("ExpenseBillRecord is null.");
+		}
+
 		if (record.getSerialNumber() == null) {
-			throw new IllegalArgumentException("Serial number is required to generate bill number");
+			throw new IllegalArgumentException("Serial Number (SN) is required to generate Bill Number.");
+		}
+
+		if (record.getSerialNumber() <= 0) {
+			throw new IllegalArgumentException("Serial Number (SN) must be greater than zero. " + "Value: " + record.getSerialNumber());
 		}
 
 		return String.format("EXP-BILL-%05d", record.getSerialNumber());
 	}
 
+
+	private String extractNumericGlCode(String glCodeValue) {
+
+		if (!hasValue(glCodeValue)) {
+			throw new IllegalArgumentException("GL Code is missing.");
+		}
+
+		String value = glCodeValue.trim();
+		java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(\\d+)").matcher(value);
+
+		if (!matcher.find()) {
+			throw new IllegalArgumentException("Invalid GL Code format: '" + glCodeValue + "'. Expected a numeric GL Code, " + "for example: 3501000003-Expense Payables.");
+		}
+		return matcher.group(1);
+	}
+
 	private IdDTO createIdReference(Long id) {
+
+		if (id == null) {
+			throw new IllegalArgumentException("ID is null while creating ID reference.");
+		}
+		if (id <= 0) {
+			throw new IllegalArgumentException("ID must be greater than zero. Value: " + id);
+		}
 		IdDTO reference = new IdDTO();
 		reference.setId(id);
 		return reference;
