@@ -40,10 +40,10 @@ public class AccountDetailKeyServiceClient {
 	 *
 	 * { "id": 2, "detailname": "Raju Kumar" }
 	 */
-	public Accountdetailkey getAccountDetailKey(Integer accountDetailTypeId, String name, RequestInfo requestInfo,
+	public Accountdetailkey getAccountDetailKey(Accountdetailtype accountDetailType, String name, RequestInfo requestInfo,
 			String tenantId) {
 
-		validate(accountDetailTypeId, name, requestInfo, tenantId);
+		validate(accountDetailType, name, requestInfo, tenantId);
 		
 		String encodedTenantId = URLEncoder.encode(tenantId.trim(), StandardCharsets.UTF_8);
 		String encodedAuthToken = URLEncoder.encode(requestInfo.getAuthToken().trim(), StandardCharsets.UTF_8);
@@ -53,7 +53,7 @@ public class AccountDetailKeyServiceClient {
 
 		request.setRequestInfo(requestInfo);
 		request.setTenantId(tenantId);
-		request.setAccountDetailTypeId(accountDetailTypeId);
+		request.setAccountDetailTypeId(accountDetailType.getId());
 		request.setName(name.trim());
 
 		HttpHeaders headers = new HttpHeaders();
@@ -82,21 +82,21 @@ public class AccountDetailKeyServiceClient {
 
 			if (accountDetailKey == null || accountDetailKey.getId() == null) {
 				throw new IllegalArgumentException("Sub Ledger Master not found: " + name
-						+ " for Sub Ledger Master Type ID: " + accountDetailTypeId);
+						+ " for Sub Ledger Master Type : " + accountDetailType.getName());
 			}
 
 			return accountDetailKey;
 
 		} catch (Exception exception) {
-			throw new RuntimeException("Failed to fetch Sub Ledger Master: " + name + " for Sub Ledger Master Type ID: "
-					+ accountDetailTypeId, exception);
+			throw new RuntimeException("Failed to fetch Sub Ledger Master: " + name + " for Sub Ledger Master Type : "
+					+ accountDetailType.getName(), exception);
 		}
 	}
 
-	private void validate(Integer accountDetailTypeId, String name, RequestInfo requestInfo, String tenantId) {
+	private void validate(Accountdetailtype accountDetailType, String name, RequestInfo requestInfo, String tenantId) {
 
-		if (accountDetailTypeId == null) {
-			throw new IllegalArgumentException("Sub Ledger Master Type ID is required");
+		if (accountDetailType == null) {
+			throw new IllegalArgumentException("Sub Ledger Master Type  is required");
 		}
 
 		if (name == null || name.trim().isEmpty()) {
