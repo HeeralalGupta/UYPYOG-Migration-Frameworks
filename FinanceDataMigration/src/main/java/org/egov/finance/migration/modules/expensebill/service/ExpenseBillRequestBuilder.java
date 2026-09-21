@@ -38,12 +38,9 @@ import org.egov.finance.migration.modules.expensebill.dto.ExpenseNetPayableRecor
 import org.egov.finance.migration.modules.expensebill.dto.IdDTO;
 import org.springframework.stereotype.Service;
 
-import tools.jackson.databind.ObjectMapper;
-
 @Service
 public class ExpenseBillRequestBuilder {
 
-	private final ObjectMapper objectMapper;
 	private final RequestInfoBuilder requestInfoBuilder;
 	private final FundServiceClient fundServiceClient;
 	private final FunctionServiceClient functionServiceClient;
@@ -56,7 +53,7 @@ public class ExpenseBillRequestBuilder {
 			AccountDetailTypeServiceClient accountDetailTypeServiceClient,
 			AccountDetailKeyServiceClient accountDetailKeyServiceClient,
 			ChartOfAccountsServiceClient chartOfAccountsServiceClient, FunctionServiceClient functionServiceClient,
-			SchemeServiceClient schemeServiceClient, ObjectMapper objectMapper) {
+			SchemeServiceClient schemeServiceClient) {
 
 		this.requestInfoBuilder = requestInfoBuilder;
 		this.fundServiceClient = fundServiceClient;
@@ -65,7 +62,6 @@ public class ExpenseBillRequestBuilder {
 		this.chartOfAccountsServiceClient = chartOfAccountsServiceClient;
 		this.functionServiceClient = functionServiceClient;
 		this.schemeServiceClient = schemeServiceClient;
-		this.objectMapper = objectMapper;
 	}
 
 	/**
@@ -711,7 +707,7 @@ public class ExpenseBillRequestBuilder {
 		/*
 		 * Account Detail Key
 		 */
-		Accountdetailkey accountDetailKey = accountDetailKeyServiceClient.getAccountDetailKey(accountDetailType.getId(),
+		Accountdetailkey accountDetailKey = accountDetailKeyServiceClient.getAccountDetailKey(accountDetailType,
 				record.getSubLedgerMaster(), requestInfo, tenantId);
 
 		if (accountDetailKey == null) {
