@@ -3,6 +3,7 @@ package org.egov.finance.migration.modules.expensebill.service;
 import org.egov.finance.migration.config.AuthenticationService;
 import org.egov.finance.migration.modules.expensebill.dto.ExpenseBillCreateRequest;
 import org.egov.finance.migration.modules.expensebill.response.ExpenseBillResponse;
+import org.egov.finance.migration.modules.journalvoucher.response.ExpenseErrorResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -59,7 +60,6 @@ public class ExpenseBillApiClient {
 		return response.getBody();
 	}
 
-
 	private void validateRequest(ExpenseBillCreateRequest request) {
 
 		if (request == null) {
@@ -79,7 +79,6 @@ public class ExpenseBillApiClient {
 		}
 	}
 
-	
 	private void validateRequestInfo(ExpenseBillCreateRequest request) {
 
 		if (request.getRequestInfo() == null) {
@@ -97,7 +96,6 @@ public class ExpenseBillApiClient {
 			throw new IllegalArgumentException("Tenant ID cannot be empty.");
 		}
 	}
-
 
 	private String buildUrl(String tenantId) {
 
@@ -136,7 +134,6 @@ public class ExpenseBillApiClient {
 		return url;
 	}
 
-
 	private String getAuthenticationToken(String tenantId) {
 
 		try {
@@ -148,15 +145,16 @@ public class ExpenseBillApiClient {
 		} catch (IllegalArgumentException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new IllegalArgumentException("Unable to obtain authentication token " + "for tenant '" + tenantId	+ "': " + getExceptionMessage(e), e);
+			throw new IllegalArgumentException("Unable to obtain authentication token " + "for tenant '" + tenantId
+					+ "': " + getExceptionMessage(e), e);
 		}
 	}
-
 
 	private HttpHeaders buildHeaders(String token) {
 
 		if (!hasText(token)) {
-			throw new IllegalArgumentException("Authentication token cannot be empty " + "while building HTTP headers.");
+			throw new IllegalArgumentException(
+					"Authentication token cannot be empty " + "while building HTTP headers.");
 		}
 
 		HttpHeaders headers = new HttpHeaders();
@@ -165,7 +163,6 @@ public class ExpenseBillApiClient {
 		headers.setBearerAuth(token);
 		return headers;
 	}
-
 
 	private void logRequest(ExpenseBillCreateRequest request, String url, String tenantId, String token) {
 
@@ -186,47 +183,96 @@ public class ExpenseBillApiClient {
 		} catch (Exception e) {
 
 			/*
-			 * JSON logging failure should NOT stop the actual API call.
-			 * The request itself is still valid.
+			 * JSON logging failure should NOT stop the actual API call. The request itself
+			 * is still valid.
 			 */
 
 			System.err.println("Unable to serialize Expense Bill request for logging: " + getExceptionMessage(e));
 		}
 	}
 
+//	private ResponseEntity<ExpenseBillResponse> callExpenseBillApi(String url,
+//			HttpEntity<ExpenseBillCreateRequest> entity, String tenantId) {
+//
+//		try {
+//
+//			ResponseEntity<ExpenseBillResponse> response = restTemplate.exchange(url, HttpMethod.POST, entity,
+//					ExpenseBillResponse.class);
+//
+//			if (response == null) {
+//				throw new IllegalArgumentException(
+//						"Expense Bill API returned null ResponseEntity " + "for tenant: " + tenantId);
+//			}
+//
+//			System.out.println("EXPENSE BILL API STATUS : " + response.getStatusCode());
+//			return response;
+//
+//		} catch (HttpStatusCodeException e) {
+//			String responseBody = e.getResponseBodyAsString();
+//			String message = "Expense Bill API returned HTTP " + e.getStatusCode().value() + " for tenant '" + tenantId
+//					+ "'.";
+//			if (hasText(responseBody)) {
+//				message = message + " Response: " + responseBody;
+//			}
+//			throw new IllegalArgumentException(message, e);
+//		} catch (ResourceAccessException e) {
+//			throw new IllegalArgumentException("Unable to connect to Expense Bill API " + "for tenant '" + tenantId
+//					+ "': " + getExceptionMessage(e), e);
+//		} catch (RestClientException e) {
+//			throw new IllegalArgumentException("Expense Bill API communication failed " + "for tenant '" + tenantId
+//					+ "': " + getExceptionMessage(e), e);
+//		} catch (IllegalArgumentException e) {
+//			throw e;
+//		} catch (Exception e) {
+//			throw new IllegalArgumentException("Unexpected error while calling " + "Expense Bill API for tenant '"
+//					+ tenantId + "': " + getExceptionMessage(e), e);
+//		}
+//	}
 
-	private ResponseEntity<ExpenseBillResponse> callExpenseBillApi(String url,
-			HttpEntity<ExpenseBillCreateRequest> entity, String tenantId) {
+	private ResponseEntity<ExpenseBillResponse> callExpenseBillApi(String url,HttpEntity<ExpenseBillCreateRequest> entity, String tenantId) {
 
 		try {
 
-			ResponseEntity<ExpenseBillResponse> response = restTemplate.exchange(url, HttpMethod.POST, entity,ExpenseBillResponse.class);
+			ResponseEntity<ExpenseBillResponse> response = restTemplate.exchange(url, HttpMethod.POST, entity,
+					ExpenseBillResponse.class);
 
 			if (response == null) {
-				throw new IllegalArgumentException("Expense Bill API returned null ResponseEntity " + "for tenant: " + tenantId);
+				throw new IllegalArgumentException(	"Expense Bill API returned null ResponseEntity for tenant: " + tenantId);
 			}
-
 			System.out.println("EXPENSE BILL API STATUS : " + response.getStatusCode());
 			return response;
 
 		} catch (HttpStatusCodeException e) {
 			String responseBody = e.getResponseBodyAsString();
-			String message = "Expense Bill API returned HTTP " + e.getStatusCode().value() + " for tenant '" + tenantId	+ "'.";
-			if (hasText(responseBody)) {
-				message = message + " Response: " + responseBody;
+			String apiMessage = extractApiErrorMessage(responseBody);
+			String message = "Expense Bill API returned HTTP " + e.getStatusCode().value() + " for tenant '" + tenantId	+ "'. ";
+			if (hasText(apiMessage)) {
+				message = message + apiMessage;
 			}
+
+			System.err.println("Expense Bill API validation/error response: " + message);
 			throw new IllegalArgumentException(message, e);
+
 		} catch (ResourceAccessException e) {
-			throw new IllegalArgumentException("Unable to connect to Expense Bill API " + "for tenant '" + tenantId	+ "': " + getExceptionMessage(e), e);
+
+			throw new IllegalArgumentException(	"Unable to connect to Expense Bill API for tenant '" + tenantId + "': " + getExceptionMessage(e),
+					e);
+
 		} catch (RestClientException e) {
-			throw new IllegalArgumentException("Expense Bill API communication failed " + "for tenant '" + tenantId	+ "': " + getExceptionMessage(e), e);
+
+			throw new IllegalArgumentException(	"Expense Bill API communication failed for tenant '" + tenantId + "': " + getExceptionMessage(e),
+					e);
+
 		} catch (IllegalArgumentException e) {
+
 			throw e;
+
 		} catch (Exception e) {
-			throw new IllegalArgumentException("Unexpected error while calling " + "Expense Bill API for tenant '"+ tenantId + "': " + getExceptionMessage(e), e);
+
+			throw new IllegalArgumentException("Unexpected error while calling Expense Bill API for tenant '" + tenantId
+					+ "': " + getExceptionMessage(e), e);
 		}
 	}
-
 
 	private void validateResponse(ResponseEntity<ExpenseBillResponse> response, String tenantId) {
 
@@ -234,16 +280,18 @@ public class ExpenseBillApiClient {
 			throw new IllegalArgumentException("Expense Bill API response is null " + "for tenant: " + tenantId);
 		}
 		if (response.getStatusCode() == null) {
-			throw new IllegalArgumentException("Expense Bill API returned response " + "without HTTP status for tenant: " + tenantId);
+			throw new IllegalArgumentException(
+					"Expense Bill API returned response " + "without HTTP status for tenant: " + tenantId);
 		}
 		if (!response.getStatusCode().is2xxSuccessful()) {
-			throw new IllegalArgumentException("Expense Bill API returned HTTP status "	+ response.getStatusCode().value() + " for tenant: " + tenantId);
+			throw new IllegalArgumentException("Expense Bill API returned HTTP status "
+					+ response.getStatusCode().value() + " for tenant: " + tenantId);
 		}
 		if (response.getBody() == null) {
-			throw new IllegalArgumentException("Expense Bill API returned empty response body " + "for tenant: " + tenantId);
+			throw new IllegalArgumentException(
+					"Expense Bill API returned empty response body " + "for tenant: " + tenantId);
 		}
 	}
-
 
 	private String getExceptionMessage(Throwable exception) {
 
@@ -264,16 +312,65 @@ public class ExpenseBillApiClient {
 		return exception.getClass().getSimpleName();
 	}
 
-
 	private boolean hasText(String value) {
 		return value != null && !value.trim().isEmpty();
 	}
-
 
 	private static <T> T requireObject(T object, String objectName) {
 		if (object == null) {
 			throw new IllegalArgumentException(objectName + " cannot be null.");
 		}
 		return object;
+	}
+
+	private String extractApiErrorMessage(String responseBody) {
+
+		if (!hasText(responseBody)) {
+			return "Expense Bill API returned an empty error response.";
+		}
+
+		try {
+			ExpenseErrorResponse errorResponse = objectMapper.readValue(responseBody, ExpenseErrorResponse.class);
+
+			if (errorResponse != null) {
+
+				StringBuilder message = new StringBuilder();
+
+				if (hasText(errorResponse.getMessage())) {
+					message.append(errorResponse.getMessage());
+				}
+
+				if (errorResponse.getErrors() != null && !errorResponse.getErrors().isEmpty()) {
+
+					if (message.length() > 0) {
+						message.append(" ");
+					}
+
+					message.append("Validation errors: ");
+
+					for (int i = 0; i < errorResponse.getErrors().size(); i++) {
+
+						if (i > 0) {
+							message.append(" | ");
+						}
+
+						message.append(errorResponse.getErrors().get(i));
+					}
+				}
+
+				if (message.length() > 0) {
+					return message.toString();
+				}
+			}
+
+		} catch (Exception parseException) {
+
+			System.err.println("Unable to parse Expense Bill API error response: " + getExceptionMessage(parseException));
+		}
+
+		/*
+		 * Fallback when the response is not in the expected ExpenseBillResponse format.
+		 */
+		return responseBody;
 	}
 }
