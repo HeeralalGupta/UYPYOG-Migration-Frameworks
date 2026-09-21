@@ -19,6 +19,8 @@ import org.egov.finance.migration.modules.bankaccount.reader.BankAccountExcelRea
 import org.egov.finance.migration.modules.bankaccount.response.BankAccountResponse;
 import org.egov.finance.migration.processor.AbstractMigrationProcessor;
 import org.egov.finance.migration.service.DuplicateDetectionService;
+import org.egov.finance.migration.service.MigrationCancellationManager;
+import org.egov.finance.migration.service.MigrationProgressPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,10 +32,12 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 	private final BankAccountApiClient bankAccountApiClient;
 	private final MigrationJobRepository migrationJobRepository;
 	private final MigrationJobDetailRepository migrationJobDetailRepository;
+	private final MigrationCancellationManager cancellationManager;
+	private final MigrationProgressPublisher progressPublisher;
 
 	public BankAccountMigrationProcessor(BankAccountExcelReader excelReader, BankAccountRequestBuilder requestBuilder,
 			DuplicateDetectionService duplicateDetectionService, BankAccountApiClient bankAccountApiClient,
-			MigrationJobRepository migrationJobRepository, MigrationJobDetailRepository migrationJobDetailRepository) {
+			MigrationJobRepository migrationJobRepository, MigrationJobDetailRepository migrationJobDetailRepository, MigrationCancellationManager cancellationManager, MigrationProgressPublisher progressPublisher) {
 
 		this.excelReader = excelReader;
 		this.requestBuilder = requestBuilder;
@@ -41,6 +45,8 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 		this.bankAccountApiClient = bankAccountApiClient;
 		this.migrationJobRepository = migrationJobRepository;
 		this.migrationJobDetailRepository = migrationJobDetailRepository;
+        this.cancellationManager = cancellationManager;
+        this.progressPublisher = progressPublisher;
 	}
 
 	@Override
@@ -61,7 +67,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 		 * EXCEL ============================================================
 		 */
 
-		List<BankAccountRecord> records = excelReader.read(request.getFile());
+		List<BankAccountRecord> records = excelReader.read(request.getFilePath());
 
 		/*
 		 * ============================================================ STEP 2 : GET
@@ -108,6 +114,17 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 		 */
 
 		for (int i = 0; i < records.size(); i++) {
+			
+            if (cancellationManager.isCancelled(request.getJobId())) {
+
+                job.setStatus("CANCELLED");
+                job.setCurrentMessage("Migration cancelled by user.");
+
+                migrationJobRepository.saveAndFlush(job);
+                progressPublisher.publish(job);
+
+                break;
+            }
 
 			BankAccountRecord record = records.get(i);
 
@@ -232,6 +249,26 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 		 * JOB STATUS ============================================================
 		 */
 
+        if ("CANCELLED".equals(job.getStatus())) {
+
+            job.setCompletedTime(LocalDateTime.now());
+            migrationJobRepository.save(job);
+
+            cancellationManager.remove(request.getJobId());
+
+            return MigrationResult.builder()
+                    .success(false)
+                    .message("Migration cancelled by user.")
+                    .totalRecords(records.size())
+                    .successRecords(success)
+                    .failedRecords(failed)
+                    .skippedRecords(skipped)
+                    .recordResults(recordResults)
+                    .totalExecutionTime(
+                            System.currentTimeMillis() - startTime)
+                    .build();
+        }
+        
 		job.setTotalRecords(records.size());
 		job.setSuccessRecords(success);
 		job.setFailedRecords(failed);
@@ -279,6 +316,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 		job.setCompletedTime(LocalDateTime.now());
 
 		migrationJobRepository.save(job);
+		progressPublisher.publish(job);
 
 		/*
 		 * ============================================================ FINAL EXECUTION
@@ -325,6 +363,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 		job.setCurrentMessage(message);
 
 		migrationJobRepository.saveAndFlush(job);
+		progressPublisher.publish(job);
 	}
 
 	/**

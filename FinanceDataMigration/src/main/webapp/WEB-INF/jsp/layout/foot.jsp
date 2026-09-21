@@ -2,6 +2,8 @@
     pageEncoding="UTF-8"%>
 	<%-- <%@ include file="../layout/footer.jsp"%> --%>
 	
+	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.2.0/bundles/stomp.umd.min.js"></script>
 	<script>window.contextPath ="${pageContext.request.contextPath}";</script>
 	<script src="${pageContext.request.contextPath}/js/app.js"></script>
 	<script src="${pageContext.request.contextPath}/js/theme.js"></script>

@@ -21,7 +21,8 @@ import org.egov.finance.migration.modules.supplier.response.SupplierResponse;
 
 import org.egov.finance.migration.processor.AbstractMigrationProcessor;
 import org.egov.finance.migration.service.DuplicateDetectionService;
-
+import org.egov.finance.migration.service.MigrationCancellationManager;
+import org.egov.finance.migration.service.MigrationProgressPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -38,6 +39,9 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
     private final MigrationJobRepository migrationJobRepository;
 
     private final MigrationJobDetailRepository migrationJobDetailRepository;
+    
+	private final MigrationCancellationManager cancellationManager;
+	private final MigrationProgressPublisher progressPublisher;
 
     public SupplierMigrationProcessor(
             SupplierExcelReader excelReader,
@@ -45,7 +49,9 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
             DuplicateDetectionService duplicateDetectionService,
             SupplierApiClient supplierApiClient,
             MigrationJobRepository migrationJobRepository,
-            MigrationJobDetailRepository migrationJobDetailRepository) {
+            MigrationJobDetailRepository migrationJobDetailRepository,
+            MigrationCancellationManager cancellationManager,
+            MigrationProgressPublisher progressPublisher) {
 
         this.excelReader = excelReader;
         this.requestBuilder = requestBuilder;
@@ -53,6 +59,8 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
         this.supplierApiClient = supplierApiClient;
         this.migrationJobRepository = migrationJobRepository;
         this.migrationJobDetailRepository = migrationJobDetailRepository;
+        this.cancellationManager = cancellationManager;
+        this.progressPublisher = progressPublisher;
     }
 
     @Override
@@ -75,7 +83,7 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
          */
 
         List<SupplierRecord> records =
-                excelReader.read(request.getFile());
+                excelReader.read(request.getFilePath());
 
         /*
          * ============================================================
@@ -130,6 +138,17 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
          */
 
         for (int i = 0; i < records.size(); i++) {
+        	
+            if (cancellationManager.isCancelled(request.getJobId())) {
+
+                job.setStatus("CANCELLED");
+                job.setCurrentMessage("Migration cancelled by user.");
+
+                migrationJobRepository.saveAndFlush(job);
+                progressPublisher.publish(job);
+
+                break;
+            }
 
             SupplierRecord record = records.get(i);
 
@@ -311,6 +330,26 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
          * STEP 5 : FINAL JOB STATUS
          * ============================================================
          */
+        
+        if ("CANCELLED".equals(job.getStatus())) {
+
+            job.setCompletedTime(LocalDateTime.now());
+            migrationJobRepository.save(job);
+
+            cancellationManager.remove(request.getJobId());
+
+            return MigrationResult.builder()
+                    .success(false)
+                    .message("Migration cancelled by user.")
+                    .totalRecords(records.size())
+                    .successRecords(success)
+                    .failedRecords(failed)
+                    .skippedRecords(skipped)
+                    .recordResults(recordResults)
+                    .totalExecutionTime(
+                            System.currentTimeMillis() - startTime)
+                    .build();
+        }
 
         job.setTotalRecords(records.size());
 
@@ -374,6 +413,8 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
                 LocalDateTime.now());
 
         migrationJobRepository.save(job);
+        
+        progressPublisher.publish(job);
 
         /*
          * ============================================================
@@ -439,6 +480,8 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
         job.setCurrentMessage(message);
 
         migrationJobRepository.saveAndFlush(job);
+        
+        progressPublisher.publish(job);
     }
 
     /**

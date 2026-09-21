@@ -2,6 +2,8 @@ package org.egov.finance.migration.modules.contractorbill.reader;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,11 +98,11 @@ public class ContractorBillExcelReader {
 	 * =========================================================
 	 */
 
-	public List<ContractorBillRecord> read(MultipartFile file) {
+	public List<ContractorBillRecord> read(String filePath) {
 
 		List<ContractorBillRecord> records = new ArrayList<>();
 
-		try (InputStream inputStream = file.getInputStream();
+		try (InputStream inputStream = Files.newInputStream(Paths.get(filePath));
 				Workbook workbook = WorkbookFactory.create(inputStream)) {
 			
 			Sheet sheet = workbook.getSheetAt(0);

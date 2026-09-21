@@ -19,6 +19,8 @@ import org.egov.finance.migration.modules.contractorbill.reader.ContractorBillEx
 import org.egov.finance.migration.modules.contractorbill.response.ContractorBillResponse;
 import org.egov.finance.migration.processor.AbstractMigrationProcessor;
 import org.egov.finance.migration.service.DuplicateDetectionService;
+import org.egov.finance.migration.service.MigrationCancellationManager;
+import org.egov.finance.migration.service.MigrationProgressPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,11 +32,13 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 	private final ContractorBillApiClient contractorBillApiClient;
 	private final MigrationJobRepository migrationJobRepository;
 	private final MigrationJobDetailRepository migrationJobDetailRepository;
+	private final MigrationCancellationManager cancellationManager;
+	private final MigrationProgressPublisher progressPublisher;
 
 	public ContractorBillMigrationProcessor(ContractorBillExcelReader excelReader,
 			ContractorBillRequestBuilder requestBuilder, DuplicateDetectionService duplicateDetectionService,
 			ContractorBillApiClient contractorBillApiClient, MigrationJobRepository migrationJobRepository,
-			MigrationJobDetailRepository migrationJobDetailRepository) {
+			MigrationJobDetailRepository migrationJobDetailRepository, MigrationCancellationManager cancellationManager, MigrationProgressPublisher progressPublisher) {
 
 		this.excelReader = excelReader;
 		this.requestBuilder = requestBuilder;
@@ -42,6 +46,8 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 		this.contractorBillApiClient = contractorBillApiClient;
 		this.migrationJobRepository = migrationJobRepository;
 		this.migrationJobDetailRepository = migrationJobDetailRepository;
+        this.cancellationManager = cancellationManager;
+        this.progressPublisher = progressPublisher;
 	}
 
 	/*
@@ -72,7 +78,7 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 		 * =====================================================
 		 */
 
-		List<ContractorBillRecord> records = excelReader.read(request.getFile());
+		List<ContractorBillRecord> records = excelReader.read(request.getFilePath());
 
 		/*
 		 * ===================================================== STEP 2 : GET EXISTING
@@ -118,6 +124,17 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 		 */
 
 		for (int i = 0; i < records.size(); i++) {
+			
+            if (cancellationManager.isCancelled(request.getJobId())) {
+
+                job.setStatus("CANCELLED");
+                job.setCurrentMessage("Migration cancelled by user.");
+
+                migrationJobRepository.saveAndFlush(job);
+                progressPublisher.publish(job);
+
+                break;
+            }
 
 			ContractorBillRecord record = records.get(i);
 			long recordStart = System.currentTimeMillis();
@@ -230,6 +247,26 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 		 * STATUS =====================================================
 		 */
 
+        if ("CANCELLED".equals(job.getStatus())) {
+
+            job.setCompletedTime(LocalDateTime.now());
+            migrationJobRepository.save(job);
+
+            cancellationManager.remove(request.getJobId());
+
+            return MigrationResult.builder()
+                    .success(false)
+                    .message("Migration cancelled by user.")
+                    .totalRecords(records.size())
+                    .successRecords(success)
+                    .failedRecords(failed)
+                    .skippedRecords(skipped)
+                    .recordResults(recordResults)
+                    .totalExecutionTime(
+                            System.currentTimeMillis() - startTime)
+                    .build();
+        }
+        
 		job.setTotalRecords(records.size());
 		job.setSuccessRecords(success);
 		job.setFailedRecords(failed);
@@ -270,6 +307,7 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 
 		job.setCompletedTime(LocalDateTime.now());
 		migrationJobRepository.save(job);
+		progressPublisher.publish(job);
 
 		/*
 		 * ===================================================== TOTAL EXECUTION TIME
@@ -318,6 +356,7 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 		job.setSkippedRecords(skipped);
 		job.setCurrentMessage(message);
 		migrationJobRepository.saveAndFlush(job);
+		progressPublisher.publish(job);
 	}
 
 	/*

@@ -31,6 +31,9 @@ public class MigrationJob {
 
     @Column(name = "file_name")
     private String fileName;
+    
+    @Column(name = "created_by", nullable = true)
+    private String createdBy;
 
     @Column(name = "status")
     private String status;

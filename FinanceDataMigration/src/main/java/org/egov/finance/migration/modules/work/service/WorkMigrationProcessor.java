@@ -21,6 +21,8 @@ import org.egov.finance.migration.modules.work.reader.WorkExcelReader;
 import org.egov.finance.migration.processor.AbstractMigrationProcessor;
 import org.egov.finance.migration.service.DuplicateDetectionService;
 import org.springframework.stereotype.Service;
+import org.egov.finance.migration.service.MigrationCancellationManager;
+import org.egov.finance.migration.service.MigrationProgressPublisher;
 
 @Service
 public class WorkMigrationProcessor extends AbstractMigrationProcessor {
@@ -32,6 +34,8 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
     private final MigrationJobRepository migrationJobRepository;
     private final MigrationJobDetailRepository migrationJobDetailRepository;
 	private final RequestInfoBuilder requestInfoBuilder;
+	private final MigrationCancellationManager cancellationManager;
+	private final MigrationProgressPublisher progressPublisher;
 	
 
     public WorkMigrationProcessor(
@@ -41,7 +45,9 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
             WorkApiClient workApiClient,
             MigrationJobRepository migrationJobRepository,
             MigrationJobDetailRepository migrationJobDetailRepository,
-            RequestInfoBuilder requestInfoBuilder) {
+            RequestInfoBuilder requestInfoBuilder,
+            MigrationCancellationManager cancellationManager,
+            MigrationProgressPublisher progressPublisher) {
 
         this.excelReader = excelReader;
         this.requestBuilder = requestBuilder;
@@ -50,6 +56,8 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
         this.migrationJobRepository = migrationJobRepository;
         this.migrationJobDetailRepository = migrationJobDetailRepository;
         this.requestInfoBuilder = requestInfoBuilder;
+        this.cancellationManager = cancellationManager;
+        this.progressPublisher = progressPublisher;
     }
 
     @Override
@@ -70,7 +78,7 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
          * ============================================================
          */
 
-        List<WorkRecord> records = excelReader.read(request.getFile());
+        List<WorkRecord> records = excelReader.read(request.getFilePath());
 
         /*
          * ============================================================
@@ -122,6 +130,17 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
          */
 
         for (int i = 0; i < records.size(); i++) {
+        	
+            if (cancellationManager.isCancelled(request.getJobId())) {
+
+                job.setStatus("CANCELLED");
+                job.setCurrentMessage("Migration cancelled by user.");
+
+                migrationJobRepository.saveAndFlush(job);
+                progressPublisher.publish(job);
+
+                break;
+            }
 
             WorkRecord record = records.get(i);
 
@@ -310,6 +329,26 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
          * STEP 5 : FINAL JOB STATUS
          * ============================================================
          */
+        
+        if ("CANCELLED".equals(job.getStatus())) {
+
+            job.setCompletedTime(LocalDateTime.now());
+            migrationJobRepository.save(job);
+
+            cancellationManager.remove(request.getJobId());
+
+            return MigrationResult.builder()
+                    .success(false)
+                    .message("Migration cancelled by user.")
+                    .totalRecords(records.size())
+                    .successRecords(success)
+                    .failedRecords(failed)
+                    .skippedRecords(skipped)
+                    .recordResults(recordResults)
+                    .totalExecutionTime(
+                            System.currentTimeMillis() - startTime)
+                    .build();
+        }
 
         job.setTotalRecords(records.size());
         job.setSuccessRecords(success);
@@ -366,6 +405,8 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
         job.setCompletedTime(LocalDateTime.now());
 
         migrationJobRepository.save(job);
+        
+        progressPublisher.publish(job);
 
         /*
          * ============================================================
@@ -425,6 +466,8 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
         job.setCurrentMessage(message);
 
         migrationJobRepository.saveAndFlush(job);
+        
+        progressPublisher.publish(job);
     }
 
     /**

@@ -2,6 +2,8 @@ package org.egov.finance.migration.modules.purchaseorder.reader;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -31,9 +33,9 @@ public class PurchaseOrderExcelReader {
 
     private final DataFormatter formatter = new DataFormatter();
 
-    public List<PurchaseOrderRecord> read(MultipartFile file) {
+    public List<PurchaseOrderRecord> read(String filePath) {
 
-        try (InputStream inputStream = file.getInputStream();
+        try (InputStream inputStream = Files.newInputStream(Paths.get(filePath));
              Workbook workbook = WorkbookFactory.create(inputStream)) {
 
             /*

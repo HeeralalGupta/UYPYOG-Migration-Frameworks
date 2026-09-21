@@ -19,6 +19,8 @@ import org.egov.finance.migration.modules.scheme.reader.SchemeExcelReader;
 import org.egov.finance.migration.modules.scheme.response.SchemeResponse;
 import org.egov.finance.migration.processor.AbstractMigrationProcessor;
 import org.egov.finance.migration.service.DuplicateDetectionService;
+import org.egov.finance.migration.service.MigrationCancellationManager;
+import org.egov.finance.migration.service.MigrationProgressPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,6 +32,8 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 	private final SchemeApiClient schemeApiClient;
 	private final MigrationJobRepository migrationJobRepository;
 	private final MigrationJobDetailRepository migrationJobDetailRepository;
+	private final MigrationCancellationManager cancellationManager;
+	private final MigrationProgressPublisher progressPublisher;
 
 	public SchemeMigrationProcessor(
 			SchemeExcelReader excelReader,
@@ -37,7 +41,9 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 			DuplicateDetectionService duplicateDetectionService,
 			SchemeApiClient schemeApiClient,
 			MigrationJobRepository migrationJobRepository,
-			MigrationJobDetailRepository migrationJobDetailRepository) {
+			MigrationJobDetailRepository migrationJobDetailRepository,
+			MigrationCancellationManager cancellationManager,
+			MigrationProgressPublisher progressPublisher) {
 
 		this.excelReader = excelReader;
 		this.requestBuilder = requestBuilder;
@@ -45,6 +51,8 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 		this.schemeApiClient = schemeApiClient;
 		this.migrationJobRepository = migrationJobRepository;
 		this.migrationJobDetailRepository = migrationJobDetailRepository;
+        this.cancellationManager = cancellationManager;
+        this.progressPublisher = progressPublisher;
 	}
 
 	@Override
@@ -66,7 +74,7 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 		 * ============================================================
 		 */
 
-		List<SchemeRecord> records = excelReader.read(request.getFile());
+		List<SchemeRecord> records = excelReader.read(request.getFilePath());
 
 		/*
 		 * ============================================================
@@ -116,6 +124,17 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 		 */
 
 		for (int i = 0; i < records.size(); i++) {
+			
+            if (cancellationManager.isCancelled(request.getJobId())) {
+
+                job.setStatus("CANCELLED");
+                job.setCurrentMessage("Migration cancelled by user.");
+
+                migrationJobRepository.saveAndFlush(job);
+                progressPublisher.publish(job);
+
+                break;
+            }
 
 			SchemeRecord record = records.get(i);
 
@@ -278,6 +297,26 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 		 * ============================================================
 		 */
 
+        if ("CANCELLED".equals(job.getStatus())) {
+
+            job.setCompletedTime(LocalDateTime.now());
+            migrationJobRepository.save(job);
+
+            cancellationManager.remove(request.getJobId());
+
+            return MigrationResult.builder()
+                    .success(false)
+                    .message("Migration cancelled by user.")
+                    .totalRecords(records.size())
+                    .successRecords(success)
+                    .failedRecords(failed)
+                    .skippedRecords(skipped)
+                    .recordResults(recordResults)
+                    .totalExecutionTime(
+                            System.currentTimeMillis() - startTime)
+                    .build();
+        }
+        
 		job.setTotalRecords(records.size());
 		job.setSuccessRecords(success);
 		job.setFailedRecords(failed);
@@ -333,6 +372,8 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 		job.setCompletedTime(LocalDateTime.now());
 
 		migrationJobRepository.save(job);
+		
+		progressPublisher.publish(job);
 
 		/*
 		 * ============================================================
@@ -391,6 +432,8 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 		job.setCurrentMessage(message);
 
 		migrationJobRepository.saveAndFlush(job);
+		
+		progressPublisher.publish(job);
 	}
 
 	/**

@@ -1,6 +1,8 @@
 package org.egov.finance.migration.modules.fund.reader;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,11 +56,11 @@ public class FundExcelReader {
 	/**
 	 * Read Fund Master Excel file.
 	 */
-	public List<FundRecord> read(MultipartFile file) {
+	public List<FundRecord> read(String filePath) {
 
 		List<FundRecord> records = new ArrayList<>();
 
-		try (InputStream inputStream = file.getInputStream(); Workbook workbook = WorkbookFactory.create(inputStream)) {
+		try (InputStream inputStream = Files.newInputStream(Paths.get(filePath)); Workbook workbook = WorkbookFactory.create(inputStream)) {
 
 			Sheet sheet = workbook.getSheetAt(0);
 

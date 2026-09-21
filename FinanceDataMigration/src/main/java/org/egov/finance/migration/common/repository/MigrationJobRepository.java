@@ -24,4 +24,10 @@ public interface MigrationJobRepository extends JpaRepository<MigrationJob, Long
 	        LocalDateTime end
 	);
 	
+	Optional<MigrationJob> findFirstByCreatedByAndTenantIdAndModuleCodeAndStatusInOrderByStartedTimeDesc(
+	        String createdBy,
+	        String tenantId,
+	        String moduleCode,
+	        List<String> statuses);
+	
 }
