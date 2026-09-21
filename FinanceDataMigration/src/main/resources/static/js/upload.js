@@ -13,6 +13,9 @@ document.addEventListener("DOMContentLoaded", function() {
 	// ==========================================
 
 	setUserTenant();
+	
+	// Restore Running migration by user
+	restoreRunningMigration();
 
     /* =====================================================
        ELEMENTS
@@ -968,161 +971,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
                     setMigrationStep("validate");
 
-
-
-
-                    /* ==========================================
-                       PROCESS MIGRATION
-                       ========================================== */
-
-                    const processBtn =
-                        document.getElementById(
-                            "processBtn"
-                        );
-
-                    processBtn.addEventListener("click", async function() {
-
-                        console.log("====================================");
-                        console.log("PROCESS MIGRATION CLICKED");
-                        console.log("====================================");
-                        const tenantId =
-                            document.getElementById("tenantId").value;
-
-                        if (!fileInput.files.length) {
-
-                            console.error("No file selected.");
-                            return;
-                        }
-
-                        const file = fileInput.files[0];
-
-                        const formData = new FormData();
-
-                        formData.append(
-                            "file",
-                            file
-                        );
-
-                        if (!tenantId) {
-                            alert("Please select a ULB before uploading the file.");
-                            return;
-                        }
-
-                        formData.append(
-                            "tenantId",
-                            tenantId
-                        );
-
-                        formData.append(
-                            "migrationType",
-                            moduleCode
-                        );
-
-                        formData.append(
-                            "uploadedBy",
-                            "ADMIN"
-                        );
-
-                        console.log(
-                            "File:",
-                            file.name
-                        );
-
-                        console.log(
-                            "Module:",
-                            moduleCode
-                        );
-
-                        try {
-
-                            processBtn.disabled = true;
-
-                            processBtn.innerHTML = `
-						            <i class="fa-solid fa-spinner fa-spin"></i>
-						            Processing...
-						        `;
-
-
-                            // Move Process step to active
-                            setMigrationStep("process");
-
-
-                            const response = await fetch(
-                                "/migration/process",
-                                {
-                                    method: "POST",
-                                    body: formData
-                                }
-                            );
-
-
-                            console.log(
-                                "HTTP Status:",
-                                response.status
-                            );
-
-
-                            const result =
-                                await response.json();
-
-
-                            console.log(
-                                "Migration Start Response:",
-                                result
-                            );
-
-
-                            if (!response.ok) {
-
-                                throw new Error(
-                                    result.message ||
-                                    "Migration could not be started."
-                                );
-                            }
-
-
-                            /*
-                             * ==========================================
-                             * START REAL-TIME PROGRESS
-                             * ==========================================
-                             */
-
-                            if (result.jobId) {
-
-                                console.log(
-                                    "Starting progress polling for job:",
-                                    result.jobId
-                                );
-
-                                startMigrationProgress(
-                                    result.jobId
-                                );
-
-                            } else {
-
-                                throw new Error(
-                                    "Job ID was not returned by server."
-                                );
-                            }
-
-
-                        } catch (error) {
-
-                            console.error(
-                                "Migration failed:",
-                                error
-                            );
-
-                            processBtn.disabled = false;
-
-                            processBtn.innerHTML = `
-						            <i class="fa-solid fa-play"></i>
-						            Process Migration
-						        `;
-
-                        }
-
-                    });
                     if (processBtn) {
 
                         processBtn.disabled = false;
@@ -1207,484 +1055,232 @@ document.addEventListener("DOMContentLoaded", function() {
 
         }
     );
+	
+	// ===============================
+	// PROCESS BUTTON
+	// ===============================
+
+	if (processBtn) {
+
+	    processBtn.addEventListener(
+	        "click",
+	        async function() {
+
+	            console.log("====================================");
+	            console.log("PROCESS MIGRATION CLICKED");
+	            console.log("====================================");
+
+	            const file = fileInput.files[0];
+
+	            if (!file) {
+	                alert(
+	                    "Please select an Excel file first."
+	                );
+	                return;
+	            }
+
+	            const tenantId =
+	                document.getElementById("tenantId").value;
+
+	            if (!tenantId) {
+	                alert(
+	                    "Please select a ULB before uploading the file."
+	                );
+	                return;
+	            }
+
+	            const formData =
+	                new FormData();
+
+	            formData.append(
+	                "file",
+	                file
+	            );
+
+	            formData.append(
+	                "tenantId",
+	                tenantId
+	            );
+
+	            formData.append(
+	                "migrationType",
+	                moduleCodeElement.value
+	            );
+				
+				const migrationUser = getMigrationUser();
+
+				if (!migrationUser) {
+				    alert("User session not found. Please login again.");
+				    return;
+				}
+
+	            formData.append(
+	                "uploadedBy",
+	                migrationUser.username
+	            );
+
+	            console.log("File:", file.name);
+	            console.log("Tenant ID:", tenantId);
+	            console.log(
+	                "Migration Type:",
+	                moduleCodeElement.value
+	            );
+
+	            processBtn.disabled = true;
+
+	            try {
+
+	                const response =
+	                    await fetch(
+	                        getContextPath() +
+	                        "/migration/process",
+	                        {
+	                            method: "POST",
+	                            body: formData
+	                        }
+	                    );
+
+	                console.log(
+	                    "HTTP Status:",
+	                    response.status
+	                );
+
+	                const result =
+	                    await response.json();
+
+	                console.log(
+	                    "Migration Process Response:",
+	                    result
+	                );
+
+	                if (!response.ok) {
+	                    throw new Error(
+	                        result.message ||
+	                        "Migration could not be started."
+	                    );
+	                }
 
-    function startMigrationProgress(jobId) {
+	                if (result.jobId) {
 
-        console.log("====================================");
-        console.log("STARTING MIGRATION PROGRESS");
-        console.log("Job ID :", jobId);
-        console.log("====================================");
+	                    startMigrationProgress(
+	                        result.jobId
+	                    );
 
-        const progressContainer =
-            document.getElementById("processProgressContainer");
+	                } else {
 
-        const progressBar =
-            document.getElementById("processProgressBar");
+	                    throw new Error(
+	                        "Job ID was not returned by server."
+	                    );
+	                }
 
-        const progressPercent =
-            document.getElementById("processProgressPercent");
+	            } catch (error) {
 
-        const progressMessage =
-            document.getElementById("processProgressMessage");
+	                console.error(
+	                    "Migration process error:",
+	                    error
+	                );
 
-        const progressTotal =
-            document.getElementById("progressTotal");
+	                alert(
+	                    error.message ||
+	                    "Failed to start migration."
+	                );
 
-        const progressSuccess =
-            document.getElementById("progressSuccess");
+	                processBtn.disabled = false;
+	            }
+	        }
+	    );
+	}
 
-        const progressSkipped =
-            document.getElementById("progressSkipped");
+	// ===============================
+	// WEBSOCKET
+	// ===============================
 
-        const progressFailed =
-            document.getElementById("progressFailed");
+	let migrationWebSockets = new Map();
 
-        const processBtn =
-            document.getElementById("processBtn");
 
+	function createMigrationProgressCard(jobId) {
 
-        if (progressContainer) {
-            progressContainer.style.display = "block";
-        }
+	    const container =
+	        document.getElementById("processProgressContainer");
 
+	    if (!container) {
+	        console.error("Progress container not found.");
+	        return;
+	    }
 
-        /*
-         * Process step
-         */
-        setMigrationStep("process");
+	    // ==========================================
+	    // REMOVE ALL PREVIOUS MIGRATION CARDS
+	    // ==========================================
+	    container
+	        .querySelectorAll(".migration-progress-card")
+	        .forEach(function(card) {
+	            card.remove();
+	        });
 
+	    // ==========================================
+	    // CREATE NEW MIGRATION CARD
+	    // ==========================================
+	    const progressCard = `
 
-        /*
-         * Poll every second
-         */
-        const interval = setInterval(function() {
+	        <div class="migration-progress-card"
+	             data-job-id="${jobId}">
 
-            fetch(
-                "/migration/progress/" +
-                encodeURIComponent(jobId)
-            )
-                .then(function(response) {
+	            <div class="progress-header">
 
-                    if (!response.ok) {
+	                <div class="progress-title">
 
-                        throw new Error(
-                            "Progress API returned HTTP " +
-                            response.status
-                        );
-                    }
+	                    <div class="progress-icon">
+	                        <i class="fa-solid fa-gears"></i>
+	                    </div>
 
-                    return response.json();
-                })
-                .then(function(data) {
+	                    <div>
 
-                    console.log(
-                        "Migration Progress :",
-                        data
-                    );
+	                        <h5>Migration in Progress</h5>
 
+	                        <span class="processProgressMessage">
+	                            Preparing migration...
+	                        </span>
 
-                    /*
-                     * ==========================================
-                     * READ VALUES
-                     * ==========================================
-                     */
+	                    </div>
 
-                    const total =
-                        Number(data.totalRecords ?? 0);
+	                </div>
 
-                    const success =
-                        Number(data.successRecords ?? 0);
-
-                    const failed =
-                        Number(data.failedRecords ?? 0);
-
-                    const skipped =
-                        Number(data.skippedRecords ?? 0);
-
-                    const current =
-                        Number(data.currentRecord ?? 0);
-
-                    const percent =
-                        Number(data.progressPercent ?? 0);
-
-                    const status =
-                        String(data.status ?? "")
-                            .trim()
-                            .toUpperCase();
-
-
-                    console.log(
-                        "------------------------------------"
-                    );
-
-                    console.log(
-                        "TOTAL   :", total
-                    );
-
-                    console.log(
-                        "CURRENT :", current
-                    );
-
-                    console.log(
-                        "SUCCESS :", success
-                    );
-
-                    console.log(
-                        "FAILED  :", failed
-                    );
-
-                    console.log(
-                        "SKIPPED :", skipped
-                    );
-
-                    console.log(
-                        "PERCENT :", percent
-                    );
-
-                    console.log(
-                        "STATUS  :", status
-                    );
-
-                    console.log(
-                        "------------------------------------"
-                    );
-
-
-                    /*
-                     * ==========================================
-                     * UPDATE PROGRESS BAR
-                     * ==========================================
-                     */
-
-                    if (progressBar) {
-
-                        progressBar.style.width =
-                            percent + "%";
-                    }
-
-
-                    if (progressPercent) {
-
-                        progressPercent.innerText =
-                            percent + "%";
-                    }
-
-
-                    /*
-                     * ==========================================
-                     * UPDATE MESSAGE
-                     * ==========================================
-                     */
-
-                    if (progressMessage) {
-
-                        progressMessage.innerText =
-                            data.currentMessage ||
-                            "Migration in progress...";
-                    }
-
-
-                    /*
-                     * ==========================================
-                     * UPDATE COUNTERS
-                     * ==========================================
-                     */
-
-                    if (progressTotal) {
-
-                        progressTotal.innerText =
-                            String(total);
-                    }
-
-                    if (progressSuccess) {
-
-                        progressSuccess.innerText =
-                            String(success);
-                    }
-
-                    if (progressSkipped) {
-
-                        progressSkipped.innerText =
-                            String(skipped);
-                    }
-
-                    if (progressFailed) {
-
-                        progressFailed.innerText =
-                            String(failed);
-                    }
-
-
-                    /*
-                     * ==========================================
-                     * FINAL STATUS
-                     * ==========================================
-                     */
-
-                    if (
-                        status === "COMPLETED" ||
-                        status === "COMPLETED_WITH_ERRORS" ||
-                        status === "FAILED"
-                    ) {
-
-                        console.log(
-                            "===================================="
-                        );
-
-                        console.log(
-                            "MIGRATION COMPLETED"
-                        );
-
-                        console.log(
-                            "FINAL STATUS :",
-                            status
-                        );
-
-                        console.log(
-                            "FINAL TOTAL :",
-                            total
-                        );
-
-                        console.log(
-                            "FINAL SUCCESS :",
-                            success
-                        );
-
-                        console.log(
-                            "FINAL FAILED :",
-                            failed
-                        );
-
-                        console.log(
-                            "FINAL SKIPPED :",
-                            skipped
-                        );
-
-                        console.log(
-                            "===================================="
-                        );
-
-
-                        /*
-                         * STOP POLLING
-                         */
-
-                        clearInterval(interval);
-
-
-                        /*
-                         * ======================================
-                         * FORCE FINAL VALUES
-                         * ======================================
-                         */
-
-                        if (progressBar) {
-
-                            progressBar.style.width =
-                                "100%";
-
-                            progressBar.classList.remove(
-                                "progress-bar-striped"
-                            );
-
-                            progressBar.classList.remove(
-                                "progress-bar-animated"
-                            );
-                        }
-
-
-                        if (progressPercent) {
-
-                            progressPercent.innerText =
-                                "100%";
-                        }
-
-
-                        /*
-                         * IMPORTANT:
-                         * Set counters AGAIN after final status.
-                         */
-
-                        if (progressTotal) {
-
-                            progressTotal.innerText =
-                                String(total);
-                        }
-
-                        if (progressSuccess) {
-
-                            progressSuccess.innerText =
-                                String(success);
-                        }
-
-                        if (progressSkipped) {
-
-                            progressSkipped.innerText =
-                                String(skipped);
-                        }
-
-                        if (progressFailed) {
-
-                            progressFailed.innerText =
-                                String(failed);
-                        }
-
-
-                        /*
-                         * ======================================
-                         * FINAL MESSAGE
-                         * ======================================
-                         */
-
-                        if (progressMessage) {
-
-                            if (
-                                status ===
-                                "COMPLETED_WITH_ERRORS"
-                            ) {
-
-                                progressMessage.innerText =
-                                    "Migration completed with " +
-                                    failed +
-                                    " failed record(s).";
-
-                            } else if (
-                                status === "COMPLETED"
-                            ) {
-
-                                progressMessage.innerText =
-                                    "Migration completed successfully.";
-
-                            } else {
-
-                                progressMessage.innerText =
-                                    "Migration failed.";
-                            }
-                        }
-
-
-                        /*
-                         * ======================================
-                         * MOVE PROCESS → RESULT
-                         * ======================================
-                         */
-
-                        console.log(
-                            "Moving Process step to Result..."
-                        );
-
-                        setMigrationStep("result");
-
-                        loadMigrationResult(jobId);
-                        /*
-                         * ======================================
-                         * UPDATE PROCESS BUTTON
-                         * ======================================
-                         */
-
-                        if (processBtn) {
-
-                            processBtn.disabled = false;
-
-                            processBtn.classList.remove(
-                                "disabled"
-                            );
-
-                            processBtn.removeAttribute(
-                                "disabled"
-                            );
-
-
-                            if (
-                                status ===
-                                "COMPLETED"
-                            ) {
-
-                                processBtn.innerHTML =
-                                    '<i class="fa-solid fa-check"></i> ' +
-                                    'Migration Completed';
-
-                            } else if (
-                                status ===
-                                "COMPLETED_WITH_ERRORS"
-                            ) {
-
-                                processBtn.innerHTML =
-                                    '<i class="fa-solid fa-triangle-exclamation"></i> ' +
-                                    'Completed With Errors';
-
-                            } else {
-
-                                processBtn.innerHTML =
-                                    '<i class="fa-solid fa-xmark"></i> ' +
-                                    'Migration Failed';
-                            }
-                        }
-
-
-                        /*
-                         * ======================================
-                         * RESULT TABLE
-                         * ======================================
-                         *
-                         * Do NOT call showMigrationResult()
-                         * here yet.
-                         *
-                         * It may be overwriting the progress UI.
-                         *
-                         */
-
-                    }
-
-                })
-                .catch(function(error) {
-
-                    console.error(
-                        "Migration progress error:",
-                        error
-                    );
-
-                });
-
-        }, 1000);
-    }
-
-    /* =====================================================
-       VALIDATION SUCCESS
-    ===================================================== */
-
-    function showValidationSuccess(result) {
-
-        const container =
-            document.getElementById(
-                "validationResult"
-            );
-
-        if (!container) {
-            return;
-        }
-
-        container.innerHTML = `
-
-	        <div class="validation-success">
-
-	            <div class="validation-icon">
-
-	                <i class="fa-solid fa-circle-check"></i>
+	                <div class="progress-percentage processProgressPercent">
+	                    0%
+	                </div>
 
 	            </div>
 
-	            <div class="validation-content">
 
-	                <strong>
-	                    File validation successful
-	                </strong>
+	            <div class="progress-wrapper">
 
-	                <span>
-	                    ${result.totalRows}
-	                    data row(s) found.
-	                    Your file is ready for migration.
-	                </span>
+	                <div class="progress"
+	                     style="height:10px;">
+
+	                    <div class="processProgressBar
+	                                progress-bar
+	                                progress-bar-striped
+	                                progress-bar-animated"
+	                         role="progressbar"
+	                         style="width:0%;">
+
+	                    </div>
+
+	                </div>
+
+	            </div>
+
+
+	            <div class="migration-cancel-wrapper">
+
+	                <button type="button"
+	                        class="cancel-migration-btn"
+	                        data-job-id="${jobId}">
+
+	                    <i class="fa-solid fa-stop"></i>
+	                    Cancel Migration
+
+	                </button>
 
 	            </div>
 
@@ -1692,12 +1288,749 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	    `;
 
-        container.style.display =
-            "block";
-    }
+	    container.insertAdjacentHTML(
+	        "beforeend",
+	        progressCard
+	    );
+
+	    container.style.display = "block";
+	}
 
 
-    /* =====================================================
+
+	function updateMigrationProgress(jobId, data) {
+
+	    const card =
+	        document.querySelector(
+	            '.migration-progress-card[data-job-id="' +
+	            jobId +
+	            '"]'
+	        );
+
+	    if (!card) {
+
+	        console.error(
+	            "Progress card not found for job:",
+	            jobId
+	        );
+
+	        return;
+	    }
+
+
+	    const progressBar =
+	        card.querySelector(
+	            ".processProgressBar"
+	        );
+
+
+	    const progressPercent =
+	        card.querySelector(
+	            ".processProgressPercent"
+	        );
+
+
+	    const progressMessage =
+	        card.querySelector(
+	            ".processProgressMessage"
+	        );
+
+
+	    const percent =
+	        Number(
+	            data.progressPercent ?? 0
+	        );
+
+
+	    // ==============================
+	    // UPDATE PROGRESS BAR
+	    // ==============================
+
+	    if (progressBar) {
+
+	        progressBar.style.width =
+	            percent + "%";
+
+	    }
+
+
+	    if (progressPercent) {
+
+	        progressPercent.innerText =
+	            percent + "%";
+
+	    }
+
+
+	    // ==============================
+	    // UPDATE PROGRESS MESSAGE
+	    // ==============================
+
+	    if (progressMessage) {
+
+	        progressMessage.innerText =
+	            data.currentMessage ||
+	            "Migration in progress...";
+
+	    }
+
+
+	    // ==============================
+	    // UPDATE SUMMARY CARDS REALTIME
+	    // ==============================
+
+	    const resultTotal =
+	        document.getElementById(
+	            "resultTotal"
+	        );
+
+	    const resultSuccess =
+	        document.getElementById(
+	            "resultSuccess"
+	        );
+
+	    const resultFailed =
+	        document.getElementById(
+	            "resultFailed"
+	        );
+
+	    const resultSkipped =
+	        document.getElementById(
+	            "resultSkipped"
+	        );
+
+
+	    if (resultTotal) {
+
+	        resultTotal.innerText =
+	            data.totalRecords ?? 0;
+
+	    }
+
+
+	    if (resultSuccess) {
+
+	        resultSuccess.innerText =
+	            data.successRecords ?? 0;
+
+	    }
+
+
+	    if (resultFailed) {
+
+	        resultFailed.innerText =
+	            data.failedRecords ?? 0;
+
+	    }
+
+
+	    if (resultSkipped) {
+
+	        resultSkipped.innerText =
+	            data.skippedRecords ?? 0;
+
+	    }
+
+
+	    // ==============================
+	    // NORMALIZE STATUS
+	    // ==============================
+
+	    const status =
+	        String(
+	            data.status ?? ""
+	        )
+	        .trim()
+	        .toUpperCase();
+
+
+	    // ==============================
+	    // CANCELLED
+	    // ==============================
+
+	    if (status === "CANCELLED") {
+
+	        const title =
+	            card.querySelector(
+	                ".progress-title h5"
+	            );
+
+
+	        if (title) {
+
+	            title.innerText =
+	                "Migration Cancelled";
+
+	        }
+
+
+	        if (progressMessage) {
+
+	            progressMessage.innerText =
+	                "Migration cancelled by user.";
+
+	        }
+
+
+	        // Stop progress animation
+
+	        if (progressBar) {
+
+	            progressBar.classList.remove(
+	                "progress-bar-animated"
+	            );
+
+	        }
+
+
+	        const cancelButton =
+	            card.querySelector(
+	                ".cancel-migration-btn"
+	            );
+
+
+	        if (cancelButton) {
+
+	            cancelButton.disabled = true;
+
+	            cancelButton.innerHTML =
+	                '<i class="fa-solid fa-circle-check"></i> Migration Cancelled';
+
+	        }
+
+
+	        // Disconnect WebSocket
+
+	        const client =
+	            migrationWebSockets.get(
+	                jobId
+	            );
+
+
+	        if (client) {
+
+	            client.disconnect();
+
+	            migrationWebSockets.delete(
+	                jobId
+	            );
+
+	        }
+
+
+	        // Load final migration result
+
+	        loadMigrationResult(
+	            jobId
+	        );
+
+
+	        return;
+	    }
+
+
+	    // ==============================
+	    // COMPLETED / FAILED
+	    // ==============================
+
+	    if (
+	        status === "COMPLETED" ||
+	        status === "COMPLETED_WITH_ERRORS" ||
+	        status === "FAILED"
+	    ) {
+
+	        const title =
+	            card.querySelector(
+	                ".progress-title h5"
+	            );
+
+
+	        if (title) {
+
+	            title.innerText =
+	                status === "FAILED"
+	                    ? "Migration Failed"
+	                    : "Migration Completed";
+
+	        }
+
+
+	        // Stop progress animation
+
+	        if (progressBar) {
+
+	            progressBar.classList.remove(
+	                "progress-bar-animated"
+	            );
+
+	        }
+
+
+	        // Remove cancel button
+
+	        const cancelButton =
+	            card.querySelector(
+	                ".cancel-migration-btn"
+	            );
+
+
+	        if (cancelButton) {
+
+	            cancelButton.remove();
+
+	        }
+
+
+	        // Disconnect WebSocket
+
+	        const client =
+	            migrationWebSockets.get(
+	                jobId
+	            );
+
+
+	        if (client) {
+
+	            client.disconnect();
+
+	            migrationWebSockets.delete(
+	                jobId
+	            );
+
+	        }
+
+
+	        // Load final migration result
+
+	        loadMigrationResult(
+	            jobId
+	        );
+
+	    }
+
+	}
+
+
+	function connectMigrationWebSocket(jobId) {
+
+	    const socket =
+	        new SockJS(
+	            getContextPath() + "/ws"
+	        );
+
+
+	    const client =
+	        StompJs.Stomp.over(socket);
+
+
+	    client.debug = function() {};
+
+
+	    client.connect(
+	        {},
+	        function() {
+
+	            console.log(
+	                "WebSocket connected for job:",
+	                jobId
+	            );
+
+
+	            // Store WebSocket against this jobId
+	            migrationWebSockets.set(
+	                jobId,
+	                client
+	            );
+
+
+	            client.subscribe(
+	                "/topic/migration/" + jobId,
+	                function(message) {
+
+	                    const progress =
+	                        JSON.parse(
+	                            message.body
+	                        );
+
+
+	                    updateMigrationProgress(
+	                        jobId,
+	                        progress
+	                    );
+
+	                }
+	            );
+
+	        },
+	        function(error) {
+
+	            console.error(
+	                "WebSocket connection error for job:",
+	                jobId,
+	                error
+	            );
+
+	        }
+	    );
+
+	}
+
+
+
+	async function cancelMigration(jobId) {
+
+	    if (!jobId) {
+
+	        console.error(
+	            "No migration job ID."
+	        );
+
+	        return;
+	    }
+
+
+	    console.log(
+	        "Cancelling migration:",
+	        jobId
+	    );
+
+
+	    const confirmed =
+	        confirm(
+	            "Are you sure you want to cancel this migration?"
+	        );
+
+
+	    if (!confirmed) {
+	        return;
+	    }
+
+
+	    const cancelButton =
+	        document.querySelector(
+	            '.cancel-migration-btn[data-job-id="' +
+	            jobId +
+	            '"]'
+	        );
+
+
+	    if (cancelButton) {
+
+	        cancelButton.disabled = true;
+
+	        cancelButton.innerHTML =
+	            '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
+
+	    }
+
+
+	    const url =
+	        getContextPath() +
+	        "/migration/cancel/" +
+	        encodeURIComponent(jobId);
+
+
+	    try {
+
+	        const response =
+	            await fetch(
+	                url,
+	                {
+	                    method: "POST",
+	                    headers: {
+	                        "Content-Type":
+	                            "application/json"
+	                    }
+	                }
+	            );
+
+
+	        const result =
+	            await response.json();
+
+
+	        console.log(
+	            "Cancellation response for job:",
+	            jobId,
+	            result
+	        );
+
+
+	        if (!response.ok) {
+
+	            throw new Error(
+	                result.message ||
+	                "Failed to cancel migration."
+	            );
+
+	        }
+
+
+	        if (cancelButton) {
+
+	            cancelButton.innerHTML =
+	                '<i class="fa-solid fa-spinner fa-spin"></i> Cancellation Requested...';
+
+	        }
+
+	    }
+	    catch (error) {
+
+	        console.error(
+	            "Failed to cancel migration:",
+	            jobId,
+	            error
+	        );
+
+
+	        if (cancelButton) {
+
+	            cancelButton.disabled = false;
+
+	            cancelButton.innerHTML =
+	                '<i class="fa-solid fa-stop"></i> Cancel Migration';
+
+	        }
+
+
+	        alert(
+	            "Failed to request migration cancellation."
+	        );
+
+	    }
+
+	}
+
+
+	// Optional global access
+	window.cancelMigration =
+	    cancelMigration;
+
+
+	// Cancel button click
+	// Works for dynamically-created cards
+	document.addEventListener(
+	    "click",
+	    function(event) {
+
+	        const button =
+	            event.target.closest(
+	                ".cancel-migration-btn"
+	            );
+
+
+	        if (!button) {
+	            return;
+	        }
+
+
+	        const jobId =
+	            button.getAttribute(
+	                "data-job-id"
+	            );
+
+
+	        cancelMigration(jobId);
+
+	    }
+	);
+
+
+
+	function startMigrationProgress(jobId) {
+
+	    console.log(
+	        "===================================="
+	    );
+
+	    console.log(
+	        "STARTING MIGRATION PROGRESS"
+	    );
+
+	    console.log(
+	        "Job ID :",
+	        jobId
+	    );
+
+	    console.log(
+	        "===================================="
+	    );
+
+
+	    // Create progress card for THIS job
+	    createMigrationProgressCard(
+	        jobId
+	    );
+
+
+	    setMigrationStep(
+	        "process"
+	    );
+
+
+	    connectMigrationWebSocket(
+	        jobId
+	    );
+		
+		setTimeout(function() {
+
+		    const card = document.querySelector(
+		        '.migration-progress-card[data-job-id="' + jobId + '"]'
+		    );
+
+		    if (!card) {
+		        return;
+		    }
+
+		    const progressPercent = card.querySelector(
+		        ".processProgressPercent"
+		    );
+
+		    const progressMessage = card.querySelector(
+		        ".processProgressMessage"
+		    );
+
+		    if (
+		        progressPercent &&
+		        progressMessage &&
+		        progressPercent.innerText.trim() === "0%"
+		    ) {
+
+		        progressMessage.innerText =
+		            "Please wait. Another migration is currently being processed. " +
+		            "Your migration will start automatically once it is completed.";
+		    }
+
+		}, 5000);
+
+	}
+
+
+
+   
+	/* =====================================================
+	   RESTORE RUNNING MIGRATION BY USER, TENANT AND MODULE
+	===================================================== */
+
+	async function restoreRunningMigration() {
+
+	    const migrationUser = getMigrationUser();
+
+	    if (!migrationUser ||
+	        !migrationUser.username ||
+	        !migrationUser.tenantId) {
+
+	        console.log("No migration user found.");
+	        return;
+	    }
+
+	    const moduleCodeElement =
+	        document.getElementById("moduleCode");
+
+	    if (!moduleCodeElement || !moduleCodeElement.value) {
+
+	        console.log("Module code not found.");
+	        return;
+	    }
+
+	    const moduleCode =
+	        moduleCodeElement.value;
+
+	    try {
+
+	        const url =
+	            getContextPath() +
+	            "/migration/running?username=" +
+	            encodeURIComponent(migrationUser.username) +
+	            "&tenantId=" +
+	            encodeURIComponent(migrationUser.tenantId) +
+	            "&moduleCode=" +
+	            encodeURIComponent(moduleCode);
+
+	        console.log("Checking running migration:", url);
+
+	        const response =
+	            await fetch(url);
+
+	        if (!response.ok) {
+
+	            console.error(
+	                "Unable to find running migration. HTTP:",
+	                response.status
+	            );
+
+	            return;
+	        }
+
+	        const text =
+	            await response.text();
+
+	        // Backend returned empty response
+	        if (!text || !text.trim()) {
+
+	            console.log(
+	                "No running migration found."
+	            );
+
+	            return;
+	        }
+
+	        const job =
+	            JSON.parse(text);
+
+	        // No running job
+	        if (!job || !job.jobId) {
+
+	            console.log(
+	                "No running migration found."
+	            );
+
+	            return;
+	        }
+
+	        console.log(
+	            "Restoring running job:",
+	            job.jobId
+	        );
+
+	        console.log(
+	            "Migration status:",
+	            job.status
+	        );
+
+	        console.log(
+	            "Migration module:",
+	            moduleCode
+	        );
+
+	        // 1. CREATE PROGRESS CARD
+
+	        createMigrationProgressCard(
+	            job.jobId
+	        );
+
+	        // 2. SHOW CURRENT DB PROGRESS IMMEDIATELY
+
+	        updateMigrationProgress(
+	            job.jobId,
+	            job
+	        );
+
+	        // 3. CONNECT WEBSOCKET FOR REALTIME UPDATES
+
+	        startMigrationProgress(
+	            job.jobId
+	        );
+
+	    } catch (error) {
+
+	        console.error(
+	            "Failed to restore migration:",
+	            error
+	        );
+	    }
+	}
+	 /* =====================================================
        VALIDATION ERRORS
     ===================================================== */
 
@@ -1976,6 +2309,10 @@ document.addEventListener("DOMContentLoaded", function() {
         container.style.display =
             "block";
     }
+	
+	/* =====================================================
+	   VALIDATION SUCCESS
+	===================================================== */
     function showValidationSuccess(result) {
 
 
@@ -2310,6 +2647,7 @@ document.addEventListener("DOMContentLoaded", function() {
         );
 
         fetch(
+			getContextPath() +
             "/migration/result/" +
             encodeURIComponent(jobId)
         )

@@ -2,6 +2,8 @@ package org.egov.finance.migration.modules.expensebill.reader;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -95,15 +97,15 @@ public class ExpenseBillExcelReader {
 	 * Any invalid Excel data results in a descriptive exception containing: - Excel
 	 * row number - column name - value where applicable
 	 */
-	public List<ExpenseBillRecord> read(MultipartFile file) throws Exception {
+	public List<ExpenseBillRecord> read(String filePath) throws Exception {
 
-		validateFile(file);
+		//validateFile(file);
 		List<ExpenseBillRecord> expenseRecords = new ArrayList<>();
 		Set<Integer> serialNumbers = new HashSet<>();
 
-		log.info("Reading Expense Bill Excel file. FileName={}, Size={} bytes, ContentType={}",file.getOriginalFilename(), file.getSize(), file.getContentType());
+		//log.info("Reading Expense Bill Excel file. FileName={}, Size={} bytes, ContentType={}",file.getOriginalFilename(), file.getSize(), file.getContentType());
 
-		try (InputStream inputStream = file.getInputStream(); Workbook workbook = WorkbookFactory.create(inputStream)) {
+		try (InputStream inputStream = Files.newInputStream(Paths.get(filePath)); Workbook workbook = WorkbookFactory.create(inputStream)) {
 			validateWorkbook(workbook);
 			Sheet sheet = workbook.getSheetAt(0);
 			validateSheet(sheet);
@@ -177,7 +179,7 @@ public class ExpenseBillExcelReader {
 			throw exception;
 		} catch (Exception exception) {
 			log.error("Unexpected error while reading Expense Bill Excel file.", exception);
-			throw new RuntimeException("Unable to read Expense Bill Excel file '" + file.getOriginalFilename()
+			throw new RuntimeException("Unable to read Expense Bill Excel file '" + filePath
 					+ "'. Reason: " + getExceptionMessage(exception), exception);
 		}
 

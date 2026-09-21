@@ -1,6 +1,8 @@
 package org.egov.finance.migration.modules.supplier.reader;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -115,11 +117,11 @@ public class SupplierExcelReader {
     /**
      * Read Supplier Excel file.
      */
-    public List<SupplierRecord> read(MultipartFile file) {
+    public List<SupplierRecord> read(String filePath) {
 
         List<SupplierRecord> records = new ArrayList<>();
 
-        try (InputStream inputStream = file.getInputStream();
+        try (InputStream inputStream = Files.newInputStream(Paths.get(filePath));
              Workbook workbook = WorkbookFactory.create(inputStream)) {
 
             Sheet sheet = workbook.getSheetAt(0);

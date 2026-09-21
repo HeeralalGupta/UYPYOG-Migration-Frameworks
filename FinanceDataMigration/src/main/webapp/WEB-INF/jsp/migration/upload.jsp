@@ -12,6 +12,28 @@
 <link
 	href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
 	rel="stylesheet" />
+	
+<style type="text/css">
+.migration-cancel-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.cancel-migration-btn {
+    border: none;
+    border-radius: 6px;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cancel-migration-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+</style>
 </head>
 
 <body>
@@ -164,45 +186,9 @@
 
 		</section>
 
-		<div id="processProgressContainer" class="migration-progress-card"
-			style="display: none;">
-
-			<div class="progress-header">
-
-				<div class="progress-title">
-
-					<div class="progress-icon">
-						<i class="fa-solid fa-gears"></i>
-					</div>
-
-					<div>
-						<h5>Migration in Progress</h5>
-
-						<span id="processProgressMessage"> Preparing migration... </span>
-					</div>
-
-				</div>
-
-
-				<div class="progress-percentage" id="processProgressPercent">
-
-					0%</div>
-
-			</div>
-
-
-			<div class="progress-wrapper">
-
-				<div class="progress" style="height: 10px;">
-
-					<div id="processProgressBar"
-						class="progress-bar progress-bar-striped progress-bar-animated"
-						role="progressbar" style="width: 0%;"></div>
-
-				</div>
-
-			</div>
-
+		<div id="processProgressContainer"
+		     class="migration-progress-container"
+		     style="display:none;">
 		</div>
 
 		<div class="upload-content-grid">

@@ -19,4 +19,5 @@ public class MigrationRequest {
     private MigrationType migrationType;
     private String uploadedBy;
     private String jobId;
+    private String filePath;
 }

@@ -19,6 +19,8 @@ import org.egov.finance.migration.modules.journalvoucher.reader.JournalVoucherEx
 import org.egov.finance.migration.modules.journalvoucher.response.VoucherResponse;
 import org.egov.finance.migration.processor.AbstractMigrationProcessor;
 import org.egov.finance.migration.service.DuplicateDetectionService;
+import org.egov.finance.migration.service.MigrationCancellationManager;
+import org.egov.finance.migration.service.MigrationProgressPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,10 +32,12 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 	private final JournalVoucherApiClient journalVoucherApiClient;
 	private final MigrationJobRepository migrationJobRepository;
 	private final MigrationJobDetailRepository migrationJobDetailRepository;
+	private final MigrationCancellationManager cancellationManager;
+	private final MigrationProgressPublisher progressPublisher;
 
 	public JVMigrationProcessor(JournalVoucherExcelReader excelReader, JournalVoucherRequestBuilder requestBuilder,
 			DuplicateDetectionService duplicateDetectionService, JournalVoucherApiClient journalVoucherApiClient,
-			MigrationJobRepository migrationJobRepository, MigrationJobDetailRepository migrationJobDetailRepository) {
+			MigrationJobRepository migrationJobRepository, MigrationJobDetailRepository migrationJobDetailRepository, MigrationCancellationManager cancellationManager, MigrationProgressPublisher progressPublisher) {
 
 		this.excelReader = excelReader;
 		this.requestBuilder = requestBuilder;
@@ -41,6 +45,8 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 		this.journalVoucherApiClient = journalVoucherApiClient;
 		this.migrationJobRepository = migrationJobRepository;
 		this.migrationJobDetailRepository = migrationJobDetailRepository;
+        this.cancellationManager = cancellationManager;
+        this.progressPublisher = progressPublisher;
 	}
 
 	@Override
@@ -61,7 +67,7 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 		 * EXCEL ============================================================
 		 */
 
-		List<JournalVoucherRecord> records = excelReader.read(request.getFile());
+		List<JournalVoucherRecord> records = excelReader.read(request.getFilePath());
 
 		/*
 		 * ============================================================ STEP 2 : GET
@@ -116,6 +122,17 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 		 */
 
 		for (int i = 0; i < records.size(); i++) {
+			
+            if (cancellationManager.isCancelled(request.getJobId())) {
+
+                job.setStatus("CANCELLED");
+                job.setCurrentMessage("Migration cancelled by user.");
+
+                migrationJobRepository.saveAndFlush(job);
+                progressPublisher.publish(job);
+
+                break;
+            }
 
 			JournalVoucherRecord record = records.get(i);
 
@@ -216,6 +233,26 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 		 * JOB STATUS ============================================================
 		 */
 
+        if ("CANCELLED".equals(job.getStatus())) {
+
+            job.setCompletedTime(LocalDateTime.now());
+            migrationJobRepository.save(job);
+
+            cancellationManager.remove(request.getJobId());
+
+            return MigrationResult.builder()
+                    .success(false)
+                    .message("Migration cancelled by user.")
+                    .totalRecords(records.size())
+                    .successRecords(success)
+                    .failedRecords(failed)
+                    .skippedRecords(skipped)
+                    .recordResults(recordResults)
+                    .totalExecutionTime(
+                            System.currentTimeMillis() - startTime)
+                    .build();
+        }
+        
 		job.setTotalRecords(records.size());
 		job.setSuccessRecords(success);
 		job.setFailedRecords(failed);
@@ -256,6 +293,7 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 
 		job.setCompletedTime(LocalDateTime.now());
 		migrationJobRepository.save(job);
+		progressPublisher.publish(job);
 
 		/*
 		 * ============================================================ FINAL EXECUTION
@@ -290,6 +328,7 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 		job.setSkippedRecords(skipped);
 		job.setCurrentMessage(message);
 		migrationJobRepository.saveAndFlush(job);
+		progressPublisher.publish(job);
 
 	}
 

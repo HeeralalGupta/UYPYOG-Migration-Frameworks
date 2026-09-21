@@ -2,6 +2,8 @@ package org.egov.finance.migration.modules.work.reader;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -28,11 +30,11 @@ public class WorkExcelReader {
 
     private final DataFormatter formatter = new DataFormatter();
 
-    public List<WorkRecord> read(MultipartFile file) {
+    public List<WorkRecord> read(String filePath) {
 
         List<WorkRecord> records = new ArrayList<>();
 
-        try (InputStream inputStream = file.getInputStream();
+        try (InputStream inputStream = Files.newInputStream(Paths.get(filePath));
              Workbook workbook = WorkbookFactory.create(inputStream)) {
 
         	Sheet sheet = null;

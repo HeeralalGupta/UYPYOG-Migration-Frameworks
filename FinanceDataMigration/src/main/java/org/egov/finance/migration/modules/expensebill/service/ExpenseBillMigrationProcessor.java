@@ -19,6 +19,8 @@ import org.egov.finance.migration.modules.expensebill.reader.ExpenseBillExcelRea
 import org.egov.finance.migration.modules.expensebill.response.ExpenseBillResponse;
 import org.egov.finance.migration.processor.AbstractMigrationProcessor;
 import org.egov.finance.migration.service.DuplicateDetectionService;
+import org.egov.finance.migration.service.MigrationCancellationManager;
+import org.egov.finance.migration.service.MigrationProgressPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,10 +32,12 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 	private final ExpenseBillApiClient expenseBillApiClient;
 	private final MigrationJobRepository migrationJobRepository;
 	private final MigrationJobDetailRepository migrationJobDetailRepository;
+	private final MigrationCancellationManager cancellationManager;
+	private final MigrationProgressPublisher progressPublisher;
 
 	public ExpenseBillMigrationProcessor(ExpenseBillExcelReader excelReader, ExpenseBillRequestBuilder requestBuilder,
 			DuplicateDetectionService duplicateDetectionService, ExpenseBillApiClient expenseBillApiClient,
-			MigrationJobRepository migrationJobRepository, MigrationJobDetailRepository migrationJobDetailRepository) {
+			MigrationJobRepository migrationJobRepository, MigrationJobDetailRepository migrationJobDetailRepository, MigrationCancellationManager cancellationManager, MigrationProgressPublisher progressPublisher) {
 
 		this.excelReader = requireObject(excelReader, "ExpenseBillExcelReader");
 		this.requestBuilder = requireObject(requestBuilder, "ExpenseBillRequestBuilder");
@@ -41,6 +45,8 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 		this.expenseBillApiClient = requireObject(expenseBillApiClient, "ExpenseBillApiClient");
 		this.migrationJobRepository = requireObject(migrationJobRepository, "MigrationJobRepository");
 		this.migrationJobDetailRepository = requireObject(migrationJobDetailRepository, "MigrationJobDetailRepository");
+        this.cancellationManager = cancellationManager;
+        this.progressPublisher = progressPublisher;
 	}
 
 	@Override
@@ -91,6 +97,17 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 		 */
 
 		for (int i = 0; i < records.size(); i++) {
+			
+            if (cancellationManager.isCancelled(request.getJobId())) {
+
+                job.setStatus("CANCELLED");
+                job.setCurrentMessage("Migration cancelled by user.");
+
+                migrationJobRepository.saveAndFlush(job);
+                progressPublisher.publish(job);
+
+                break;
+            }
 
 			ExpenseBillRecord record = records.get(i);
 			long recordStart = System.currentTimeMillis();
@@ -212,6 +229,26 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 		 */
 
 		String finalMessage = buildFinalMessage(success, failed, skipped);
+		
+        if ("CANCELLED".equals(job.getStatus())) {
+
+            job.setCompletedTime(LocalDateTime.now());
+            migrationJobRepository.save(job);
+
+            cancellationManager.remove(request.getJobId());
+
+            return MigrationResult.builder()
+                    .success(false)
+                    .message("Migration cancelled by user.")
+                    .totalRecords(records.size())
+                    .successRecords(success)
+                    .failedRecords(failed)
+                    .skippedRecords(skipped)
+                    .recordResults(recordResults)
+                    .totalExecutionTime(
+                            System.currentTimeMillis() - startTime)
+                    .build();
+        }
 
 		job.setTotalRecords(records.size());
 		job.setSuccessRecords(success);
@@ -229,6 +266,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 
 		job.setCompletedTime(LocalDateTime.now());
 		saveFinalJob(job);
+		progressPublisher.publish(job);
 
 		/*
 		 * ============================================================ STEP 7 : RETURN
@@ -285,7 +323,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 
 		try {
 
-			List<ExpenseBillRecord> records = excelReader.read(request.getFile());
+			List<ExpenseBillRecord> records = excelReader.read(request.getFilePath());
 
 			if (records == null) {
 				throw new IllegalArgumentException("ExpenseBillExcelReader returned null.");
@@ -573,6 +611,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 
 		try {
 			migrationJobRepository.saveAndFlush(job);
+			progressPublisher.publish(job);
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Unable to update migration job progress: " + getExceptionMessage(e), e);
 		}
