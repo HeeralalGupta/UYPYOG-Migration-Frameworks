@@ -85,7 +85,7 @@
 				<div>
 
 					<strong id="moduleCount"> 0 </strong> <span> Migration
-						Modules </span>
+						Templates </span>
 
 				</div>
 

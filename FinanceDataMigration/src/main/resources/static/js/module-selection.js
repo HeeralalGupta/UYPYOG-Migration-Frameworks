@@ -6,6 +6,30 @@ const moduleData = [
         category: "Finance Masters",
         modules: [
             {
+                code: "FUND",
+                name: "Fund",
+                icon: "fa-sack-dollar",
+                description: "Import Funds",
+                version: "1.0",
+                color: "secondary",
+                moduleType: "FUND",
+                status: "ACTIVE",
+                route: "/migration/upload/FUND",
+                template: "Fund_Template.xlsx"
+            },
+            {
+                code: "SCHEME",
+                name: "Scheme",
+                icon: "fa-diagram-project",
+                description: "Import Scheme",
+                version: "1.0",
+                color: "secondary",
+                moduleType: "SCHEME",
+                status: "ACTIVE",
+                route: "/migration/upload/SCHEME",
+                template: "Scheme_Template.xlsx"
+            },
+            {
                 code: "BANK",
                 name: "Bank",
                 icon: "fa-building-columns",
@@ -41,30 +65,7 @@ const moduleData = [
                 route: "/migration/upload/BANK_ACCOUNT",
                 template: "Bank_Account_Template.xlsx"
             },
-            {
-                code: "FUND",
-                name: "Fund",
-                icon: "fa-sack-dollar",
-                description: "Import Funds",
-                version: "1.0",
-                color: "secondary",
-                moduleType: "FUND",
-                status: "ACTIVE",
-                route: "/migration/upload/FUND",
-                template: "Fund_Template.xlsx"
-            },
-            {
-                code: "SCHEME",
-                name: "Scheme",
-                icon: "fa-diagram-project",
-                description: "Import Scheme",
-                version: "1.0",
-                color: "secondary",
-                moduleType: "SCHEME",
-                status: "ACTIVE",
-                route: "/migration/upload/SCHEME",
-                template: "Scheme_Template.xlsx"
-            },
+
             {
                 code: "CONTRACTOR",
                 name: "Contractor",
@@ -174,7 +175,7 @@ const moduleData = [
         ]
     },
     {
-        category: "Financial Transaction",
+        category: "Book Adjustment Entry",
         modules: [
             {
                 code: "JOURNAL_VOUCHER",
