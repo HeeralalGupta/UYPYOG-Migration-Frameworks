@@ -382,4 +382,24 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 
 		return root.getMessage();
 	}
+	
+	@Override
+	protected String getRecordKey(Object record) {
+
+	    if (!(record instanceof FundRecord fund)) {
+
+	        throw new IllegalArgumentException(
+	                "Invalid record type for FundMigrationProcessor");
+	    }
+
+	    String fundName = normalize(fund.getFundName());
+
+	    if (!fundName.isEmpty()) {
+	        return "FUND:" + fundName;
+	    }
+
+	    throw new IllegalArgumentException(
+	            "Unable to generate unique record key for fund. "
+	            + "Fund name is missing.");
+	}
 }
