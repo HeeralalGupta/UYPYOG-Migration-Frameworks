@@ -165,10 +165,20 @@ public class MigrationController {
 	                "Migration is already finished.");
 	    }
 
-	    cancellationManager.cancel(jobId);
+	    boolean cancellationRequested = cancellationManager.cancel(jobId);
 
-	    job.setStatus("CANCEL_REQUESTED");
-	    job.setCurrentMessage("Cancellation requested by user.");
+	    if (cancellationRequested) {
+
+	        job.setStatus("CANCEL_REQUESTED");
+	        job.setCurrentMessage(
+	                "Cancellation requested by user.");
+
+	    } else {
+
+	        job.setStatus("CANCELLED");
+	        job.setCurrentMessage(
+	                "Migration was not running.");
+	    }
 
 	    migrationJobRepository.saveAndFlush(job);
 
