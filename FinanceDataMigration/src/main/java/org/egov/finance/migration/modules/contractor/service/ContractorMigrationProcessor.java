@@ -149,9 +149,10 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 			 * ======================================================== DUPLICATE CHECK
 			 * ========================================================
 			 */
+			String recordKey = getRecordKey(record);
 
 			boolean alreadyMigrated = duplicateDetectionService.isAlreadyMigrated(request.getTenantId(),
-					request.getMigrationType().name(), record.getStartRow(), record.getEndRow());
+					request.getMigrationType().name(), recordKey);
 
 			if (alreadyMigrated) {
 
@@ -169,7 +170,7 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 				 * Save skipped record
 				 */
 
-				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name());
+				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKey);
 
 				/*
 				 * Update progress
@@ -246,7 +247,7 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 
 			recordResults.add(result);
 
-			saveMigrationDetail(job, request, result, result.getStatus().name());
+			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKey);
 
 			/*
 			 * ======================================================== UPDATE REALTIME
@@ -387,7 +388,7 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 	/**
 	 * Save migration detail record.
 	 */
-	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status) {
+	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, String recordKey) {
 
 		MigrationJobDetail detail = new MigrationJobDetail();
 
@@ -409,7 +410,7 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 
 		detail.setExecutionTime(result.getExecutionTime());
 
-		detail.setRecordKey(request.getMigrationType().name() + ":" + result.getStartRow() + "-" + result.getEndRow());
+		detail.setRecordKey(recordKey);
 
 		detail.setCreatedTime(LocalDateTime.now());
 
@@ -434,5 +435,47 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 		}
 
 		return root.getMessage();
+	}
+	
+	@Override
+	protected String getRecordKey(Object record) {
+
+		if (!(record instanceof ContractorRecord contractor)) {
+			throw new IllegalArgumentException("Invalid record type for ContractorMigrationProcessor");
+		}
+
+		String pan = normalize(contractor.getPanNumber());
+
+		String ifsc = normalize(contractor.getIfscCode());
+
+		String account = normalize(contractor.getBankAccount());
+
+		String mobile = normalize(contractor.getMobileNumber());
+
+		String name = normalize(contractor.getName());
+
+		// Strong unique identifier
+		if (!pan.isEmpty()) {
+			return "PAN:" + pan;
+		}
+
+		// Bank identity
+		if (!ifsc.isEmpty() && !account.isEmpty()) {
+			return "BANK:" + ifsc + "|" + account;
+		}
+
+		// Mobile number
+		if (!mobile.isEmpty()) {
+			return "MOBILE:" + mobile;
+		}
+
+		// Name
+		if (!name.isEmpty()) {
+			return "NAME:" + name;
+		}
+
+		// No reliable identity available
+		throw new IllegalArgumentException("Unable to generate unique record key for contractor. "
+				+ "PAN, bank details, mobile number " + "and contractor name are all missing.");
 	}
 }

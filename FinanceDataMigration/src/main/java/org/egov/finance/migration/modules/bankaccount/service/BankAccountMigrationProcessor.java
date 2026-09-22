@@ -140,9 +140,11 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 			 * ======================================================== DUPLICATE CHECK
 			 * ========================================================
 			 */
+			
+			String recordKey = getRecordKey(record);
 
 			boolean alreadyMigrated = duplicateDetectionService.isAlreadyMigrated(request.getTenantId(),
-					request.getMigrationType().name(), record.getStartRow(), record.getEndRow());
+					request.getMigrationType().name(), recordKey);
 
 			if (alreadyMigrated) {
 
@@ -159,7 +161,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 				/*
 				 * Save skipped record
 				 */
-				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name());
+				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKey);
 
 				/*
 				 * Update progress
@@ -233,7 +235,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 
 			recordResults.add(result);
 
-			saveMigrationDetail(job, request, result, result.getStatus().name());
+			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKey);
 
 			/*
 			 * ======================================================== UPDATE REALTIME
@@ -369,7 +371,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 	/**
 	 * Save migration detail record.
 	 */
-	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status) {
+	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, String recordKey) {
 
 		MigrationJobDetail detail = new MigrationJobDetail();
 
@@ -391,7 +393,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 
 		detail.setExecutionTime(result.getExecutionTime());
 
-		detail.setRecordKey(request.getMigrationType().name() + ":" + result.getStartRow() + "-" + result.getEndRow());
+		detail.setRecordKey(recordKey);
 
 		detail.setCreatedTime(LocalDateTime.now());
 
@@ -416,5 +418,31 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 		}
 
 		return root.getMessage();
+	}
+	
+	@Override
+	protected String getRecordKey(Object record) {
+
+	    if (!(record instanceof BankAccountRecord account)) {
+	        throw new IllegalArgumentException(
+	                "Invalid record type for BankAccountMigrationProcessor");
+	    }
+
+	    String branchName = normalize(account.getBranchName());
+	    String ifscCode = normalize(account.getIfscCode());
+	    String accountNumber = normalize(account.getAccountNumber());
+
+	    if (!branchName.isEmpty()
+	            && !ifscCode.isEmpty()
+	            && !accountNumber.isEmpty()) {
+
+	        return "BRANCH:" + branchName
+	                + "|IFSC:" + ifscCode
+	                + "|ACCOUNT:" + accountNumber;
+	    }
+
+	    throw new IllegalArgumentException(
+	            "Unable to generate unique record key for bank account. "
+	            + "Branch name, IFSC code and account number are required.");
 	}
 }

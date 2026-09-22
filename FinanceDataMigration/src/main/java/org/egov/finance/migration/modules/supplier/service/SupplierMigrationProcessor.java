@@ -168,12 +168,13 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
              * ========================================================
              */
 
+            String recordKey = getRecordKey(record);
+            
             boolean alreadyMigrated =
                     duplicateDetectionService.isAlreadyMigrated(
                             request.getTenantId(),
                             request.getMigrationType().name(),
-                            record.getStartRow(),
-                            record.getEndRow());
+                            recordKey);
 
             if (alreadyMigrated) {
 
@@ -196,7 +197,8 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
                         job,
                         request,
                         result,
-                        RecordStatus.SKIPPED.name());
+                        RecordStatus.SKIPPED.name(),
+                        recordKey);
 
                 /*
                  * Update progress
@@ -304,7 +306,8 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
                     job,
                     request,
                     result,
-                    result.getStatus().name());
+                    result.getStatus().name(),
+                    recordKey);
 
             /*
              * ========================================================
@@ -491,7 +494,8 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
             MigrationJob job,
             MigrationRequest request,
             RecordResult result,
-            String status) {
+            String status,
+            String recordKey) {
 
         MigrationJobDetail detail =
                 new MigrationJobDetail();
@@ -521,12 +525,7 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
         detail.setExecutionTime(
                 result.getExecutionTime());
 
-        detail.setRecordKey(
-                request.getMigrationType().name()
-                        + ":"
-                        + result.getStartRow()
-                        + "-"
-                        + result.getEndRow());
+        detail.setRecordKey(recordKey);
 
         detail.setCreatedTime(
                 LocalDateTime.now());
@@ -554,5 +553,46 @@ public class SupplierMigrationProcessor extends AbstractMigrationProcessor {
         }
 
         return root.getMessage();
+    }
+    
+    @Override
+    protected String getRecordKey(Object record) {
+
+        if (!(record instanceof SupplierRecord supplier)) {
+            throw new IllegalArgumentException(
+                    "Invalid record type for SupplierMigrationProcessor");
+        }
+
+        String pan = normalize(supplier.getPanNumber());
+        String ifsc = normalize(supplier.getIfscCode());
+        String account = normalize(supplier.getBankAccount());
+        String mobile = normalize(supplier.getMobileNumber());
+        String name = normalize(supplier.getName());
+
+        // Strong unique identifier
+        if (!pan.isEmpty()) {
+            return "PAN:" + pan;
+        }
+
+        // Bank identity
+        if (!ifsc.isEmpty() && !account.isEmpty()) {
+            return "BANK:" + ifsc + "|" + account;
+        }
+
+        // Mobile number
+        if (!mobile.isEmpty()) {
+            return "MOBILE:" + mobile;
+        }
+
+        // Name
+        if (!name.isEmpty()) {
+            return "NAME:" + name;
+        }
+
+        // No reliable identity available
+        throw new IllegalArgumentException(
+                "Unable to generate unique record key for supplier. "
+                + "PAN, bank details, mobile number "
+                + "and supplier name are all missing.");
     }
 }

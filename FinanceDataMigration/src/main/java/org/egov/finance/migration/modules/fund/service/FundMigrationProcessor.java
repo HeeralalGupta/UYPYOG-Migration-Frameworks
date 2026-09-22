@@ -143,9 +143,11 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 			 * ======================================================== DUPLICATE CHECK
 			 * ========================================================
 			 */
+			
+			String recordKey = getRecordKey(record);
 
 			boolean alreadyMigrated = duplicateDetectionService.isAlreadyMigrated(request.getTenantId(),
-					request.getMigrationType().name(), record.getStartRow(), record.getEndRow());
+					request.getMigrationType().name(), recordKey);
 
 			if (alreadyMigrated) {
 
@@ -160,7 +162,7 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 				/*
 				 * Save skipped record
 				 */
-				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name());
+				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKey);
 
 				/*
 				 * Update progress
@@ -221,7 +223,7 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 
 			recordResults.add(result);
 
-			saveMigrationDetail(job, request, result, result.getStatus().name());
+			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKey);
 
 			/*
 			 * ======================================================== UPDATE REALTIME
@@ -343,7 +345,7 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 	/**
 	 * Save migration detail record.
 	 */
-	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status) {
+	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, String recordKey) {
 
 		MigrationJobDetail detail = new MigrationJobDetail();
 
@@ -356,7 +358,7 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 		detail.setStatus(status);
 		detail.setMessage(result.getMessage());
 		detail.setExecutionTime(result.getExecutionTime());
-		detail.setRecordKey(request.getMigrationType().name() + ":" + result.getStartRow() + "-" + result.getEndRow());
+		detail.setRecordKey(recordKey);
 		detail.setCreatedTime(LocalDateTime.now());
 
 		migrationJobDetailRepository.save(detail);

@@ -162,12 +162,13 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
              * ========================================================
              */
 
+            String recordKey = getRecordKey(record);
+            
             boolean alreadyMigrated =
                     duplicateDetectionService.isAlreadyMigrated(
                             request.getTenantId(),
                             request.getMigrationType().name(),
-                            record.getRowNumber(),
-                            record.getRowNumber());
+                            recordKey);
 
             if (alreadyMigrated) {
 
@@ -189,7 +190,8 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
                         job,
                         request,
                         result,
-                        RecordStatus.SKIPPED.name());
+                        RecordStatus.SKIPPED.name(),
+                        recordKey);
 
                 /*
                  * Update progress
@@ -303,7 +305,8 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
                     job,
                     request,
                     result,
-                    result.getStatus().name());
+                    result.getStatus().name(),
+                    recordKey);
 
             /*
              * ========================================================
@@ -477,7 +480,8 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
             MigrationJob job,
             MigrationRequest request,
             RecordResult result,
-            String status) {
+            String status,
+            String recordKey) {
 
         MigrationJobDetail detail =
                 new MigrationJobDetail();
@@ -507,12 +511,7 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
         detail.setExecutionTime(
                 result.getExecutionTime());
 
-        detail.setRecordKey(
-                request.getMigrationType().name()
-                        + ":"
-                        + result.getStartRow()
-                        + "-"
-                        + result.getEndRow());
+        detail.setRecordKey(recordKey);
 
         detail.setCreatedTime(
                 LocalDateTime.now());

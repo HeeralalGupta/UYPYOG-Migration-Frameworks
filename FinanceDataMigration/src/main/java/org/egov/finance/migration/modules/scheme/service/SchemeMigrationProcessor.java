@@ -151,13 +151,14 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 			 * DUPLICATE CHECK
 			 * ========================================================
 			 */
+			
+			String recordKey = getRecordKey(record);
 
 			boolean alreadyMigrated =
 					duplicateDetectionService.isAlreadyMigrated(
 							request.getTenantId(),
 							request.getMigrationType().name(),
-							record.getStartRow(),
-							record.getEndRow());
+							recordKey);
 
 			if (alreadyMigrated) {
 
@@ -176,7 +177,8 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 						job,
 						request,
 						result,
-						RecordStatus.SKIPPED.name());
+						RecordStatus.SKIPPED.name(),
+						recordKey);
 
 				/*
 				 * Update progress
@@ -270,7 +272,8 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 					job,
 					request,
 					result,
-					result.getStatus().name());
+					result.getStatus().name(),
+					recordKey);
 
 			/*
 			 * ========================================================
@@ -443,7 +446,8 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 			MigrationJob job,
 			MigrationRequest request,
 			RecordResult result,
-			String status) {
+			String status,
+			String recordKey) {
 
 		MigrationJobDetail detail =
 				new MigrationJobDetail();
@@ -464,12 +468,7 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 		detail.setExecutionTime(
 				result.getExecutionTime());
 
-		detail.setRecordKey(
-				request.getMigrationType().name()
-						+ ":"
-						+ result.getStartRow()
-						+ "-"
-						+ result.getEndRow());
+		detail.setRecordKey(recordKey);
 
 		detail.setCreatedTime(
 				LocalDateTime.now());
@@ -496,5 +495,26 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 		}
 
 		return root.getMessage();
+	}
+	
+	@Override
+	protected String getRecordKey(Object record) {
+
+	    if (!(record instanceof SchemeRecord scheme)) {
+	        throw new IllegalArgumentException(
+	                "Invalid record type for SchemeMigrationProcessor");
+	    }
+
+	    String schemeName = normalize(scheme.getSchemeName());
+
+	    // Unique identifier
+	    if (!schemeName.isEmpty()) {
+	        return "SCHEME_NAME:" + schemeName;
+	    }
+
+	    // No reliable identity available
+	    throw new IllegalArgumentException(
+	            "Unable to generate unique record key for scheme. "
+	            + "Scheme name is missing.");
 	}
 }

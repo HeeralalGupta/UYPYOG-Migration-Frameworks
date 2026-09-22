@@ -188,13 +188,14 @@ public class WorkOrderMigrationProcessor
              * ========================================================
              */
 
+            String recordKey = getRecordKey(record);
+            
             boolean alreadyMigrated =
                     duplicateDetectionService
                             .isAlreadyMigrated(
                                     request.getTenantId(),
                                     request.getMigrationType().name(),
-                                    record.getRowNumber(),
-                                    record.getRowNumber());
+                                    recordKey);
 
             if (alreadyMigrated) {
 
@@ -217,7 +218,8 @@ public class WorkOrderMigrationProcessor
                         job,
                         request,
                         result,
-                        RecordStatus.SKIPPED.name());
+                        RecordStatus.SKIPPED.name(),
+                        recordKey);
 
                 /*
                  * Update progress.
@@ -349,7 +351,8 @@ public class WorkOrderMigrationProcessor
                     job,
                     request,
                     result,
-                    result.getStatus().name());
+                    result.getStatus().name(),
+                    recordKey);
 
             /*
              * ========================================================
@@ -544,7 +547,8 @@ public class WorkOrderMigrationProcessor
             MigrationJob job,
             MigrationRequest request,
             RecordResult result,
-            String status) {
+            String status,
+            String recordKey) {
 
         MigrationJobDetail detail =
                 new MigrationJobDetail();
@@ -575,12 +579,7 @@ public class WorkOrderMigrationProcessor
         detail.setExecutionTime(
                 result.getExecutionTime());
 
-        detail.setRecordKey(
-                request.getMigrationType().name()
-                        + ":"
-                        + result.getStartRow()
-                        + "-"
-                        + result.getEndRow());
+        detail.setRecordKey(recordKey);
 
         detail.setCreatedTime(
                 LocalDateTime.now());

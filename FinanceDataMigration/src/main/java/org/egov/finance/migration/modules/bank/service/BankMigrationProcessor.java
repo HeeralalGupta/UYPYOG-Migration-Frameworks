@@ -152,12 +152,13 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 			 * ========================================================
 			 */
 
+			String recordKey = getRecordKey(record);
+			
 			boolean alreadyMigrated =
 					duplicateDetectionService.isAlreadyMigrated(
 							request.getTenantId(),
 							request.getMigrationType().name(),
-							record.getStartRow(),
-							record.getEndRow());
+							recordKey);
 
 			if (alreadyMigrated) {
 
@@ -176,7 +177,8 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 						job,
 						request,
 						result,
-						RecordStatus.SKIPPED.name());
+						RecordStatus.SKIPPED.name(),
+						recordKey);
 
 				/*
 				 * Update progress
@@ -271,7 +273,8 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 					job,
 					request,
 					result,
-					result.getStatus().name());
+					result.getStatus().name(),
+					recordKey);
 
 			/*
 			 * ========================================================
@@ -442,7 +445,8 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 			MigrationJob job,
 			MigrationRequest request,
 			RecordResult result,
-			String status) {
+			String status,
+			String recordKey) {
 
 		MigrationJobDetail detail =
 				new MigrationJobDetail();
@@ -463,12 +467,7 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 		detail.setExecutionTime(
 				result.getExecutionTime());
 
-		detail.setRecordKey(
-				request.getMigrationType().name()
-						+ ":"
-						+ result.getStartRow()
-						+ "-"
-						+ result.getEndRow());
+		detail.setRecordKey(recordKey);
 
 		detail.setCreatedTime(
 				LocalDateTime.now());
@@ -494,5 +493,24 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 		}
 
 		return root.getMessage();
+	}
+	
+	@Override
+	protected String getRecordKey(Object record) {
+
+	    if (!(record instanceof BankRecord bank)) {
+	        throw new IllegalArgumentException(
+	                "Invalid record type for BankMigrationProcessor");
+	    }
+
+	    String bankName = normalize(bank.getBankName());
+
+	    if (!bankName.isEmpty()) {
+	        return "BANK_NAME:" + bankName;
+	    }
+
+	    throw new IllegalArgumentException(
+	            "Unable to generate unique record key for bank. "
+	            + "Bank name is missing.");
 	}
 }
