@@ -1772,6 +1772,12 @@ document.addEventListener("DOMContentLoaded", function() {
 	                '<i class="fa-solid fa-spinner fa-spin"></i> Cancellation Requested...';
 
 	        }
+			
+			if (result.status === "CANCELLED") {
+			    setTimeout(() => {
+			        cancelButton.closest(".migration-progress-card")?.remove();
+			    }, 3000);
+			}
 
 	    }
 	    catch (error) {

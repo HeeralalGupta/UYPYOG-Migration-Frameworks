@@ -25,13 +25,16 @@ public class MigrationCancellationManager {
     /**
      * Request cancellation for a running migration job.
      */
-    public void cancel(String jobId) {
+    public boolean cancel(String jobId) {
 
         AtomicBoolean flag = cancellationFlags.get(jobId);
 
         if (flag != null) {
             flag.set(true);
+            return true;
         }
+        
+        return false;
     }
 
     /**
