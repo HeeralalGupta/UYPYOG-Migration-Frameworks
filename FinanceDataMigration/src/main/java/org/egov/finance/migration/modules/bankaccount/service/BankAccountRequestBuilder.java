@@ -44,6 +44,7 @@ public class BankAccountRequestBuilder {
 		 */
 		BankAccount bankAccount = buildBankAccount(record);
 		request.setBranchName(record.getBranchName());
+		request.setIfscCode(record.getIfscCode());
 		request.setFundName(record.getFundName());
 		request.setBankaccount(bankAccount);
 
