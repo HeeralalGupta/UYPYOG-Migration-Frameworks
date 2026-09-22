@@ -45,7 +45,7 @@ public class BankBranchRequestBuilder {
                 requestInfoBuilder.build(tenantId);
 
         request.setRequestInfo(requestInfo);
-
+        request.setBankName(record.getBankName());
         /*
          * Build one Finance Bank Branch
          */
