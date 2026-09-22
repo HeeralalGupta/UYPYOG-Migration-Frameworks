@@ -12,9 +12,23 @@ public class DuplicateDetectionService {
 		this.repository = repository;
 	}
 
-	public boolean isAlreadyMigrated(String tenantId, String moduleCode, int startRow, int endRow) {
+	
+    public boolean isAlreadyMigrated(
+            String tenantId,
+            String moduleCode,
+            String recordKey) {
+    	
+        if (recordKey == null || recordKey.isBlank()) {
+            return false;
+        }
 
-		return repository.findFirstByTenantIdAndModuleCodeAndStartRowAndEndRowAndStatus(tenantId, moduleCode, startRow,
-				endRow, "SUCCESS").isPresent();
-	}
+        return repository
+                .findFirstByTenantIdAndModuleCodeAndRecordKeyAndStatus(
+                        tenantId,
+                        moduleCode,
+                        recordKey,
+                        "SUCCESS")
+                .isPresent();
+    }
 }
+

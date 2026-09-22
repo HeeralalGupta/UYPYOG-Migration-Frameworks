@@ -25,5 +25,26 @@ public abstract class AbstractMigrationProcessor implements MigrationProcessor {
 		// Common post-processing
 
 	}
+	
+    /**
+     * Unique value for duplicate detection.
+     */
+	protected String getRecordKey(Object record) {
+		return null;
+	}
+	
+    /**
+     * Normalize value for duplicate detection.
+     */
+    protected String normalize(String value) {
+
+        if (value == null) {
+            return "";
+        }
+
+        return value.trim()
+                .toUpperCase()
+                .replaceAll("\\s+", " ");
+    }
 
 }

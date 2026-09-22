@@ -10,4 +10,11 @@ public interface MigrationJobDetailRepository extends JpaRepository<MigrationJob
 	Optional<MigrationJobDetail> findFirstByTenantIdAndModuleCodeAndStartRowAndEndRowAndStatus(String tenantId,
 			String moduleCode, Integer startRow, Integer endRow, String status);
 	List<MigrationJobDetail> findByJobJobIdOrderByRecordNumberAsc(String jobId);
+	
+	Optional<MigrationJobDetail>
+	findFirstByTenantIdAndModuleCodeAndRecordKeyAndStatus(
+	        String tenantId,
+	        String moduleCode,
+	        String recordKey,
+	        String status);
 }

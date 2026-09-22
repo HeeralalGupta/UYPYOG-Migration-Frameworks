@@ -154,13 +154,14 @@ public class BankBranchMigrationProcessor
 			 * DUPLICATE CHECK
 			 * ========================================================
 			 */
+			
+			String recordKey = getRecordKey(record);
 
 			boolean alreadyMigrated =
 					duplicateDetectionService.isAlreadyMigrated(
 							request.getTenantId(),
 							request.getMigrationType().name(),
-							record.getStartRow(),
-							record.getEndRow());
+							recordKey);
 
 			if (alreadyMigrated) {
 
@@ -180,7 +181,8 @@ public class BankBranchMigrationProcessor
 						job,
 						request,
 						result,
-						RecordStatus.SKIPPED.name());
+						RecordStatus.SKIPPED.name(),
+						recordKey);
 
 				/*
 				 * Update progress
@@ -276,7 +278,8 @@ public class BankBranchMigrationProcessor
 					job,
 					request,
 					result,
-					result.getStatus().name());
+					result.getStatus().name(),
+					recordKey);
 
 			/*
 			 * ========================================================
@@ -447,7 +450,8 @@ public class BankBranchMigrationProcessor
 			MigrationJob job,
 			MigrationRequest request,
 			RecordResult result,
-			String status) {
+			String status,
+			String recordKey) {
 
 		MigrationJobDetail detail =
 				new MigrationJobDetail();
@@ -468,12 +472,7 @@ public class BankBranchMigrationProcessor
 		detail.setExecutionTime(
 				result.getExecutionTime());
 
-		detail.setRecordKey(
-				request.getMigrationType().name()
-						+ ":"
-						+ result.getStartRow()
-						+ "-"
-						+ result.getEndRow());
+		detail.setRecordKey(recordKey);
 
 		detail.setCreatedTime(
 				LocalDateTime.now());
@@ -499,5 +498,35 @@ public class BankBranchMigrationProcessor
 		}
 
 		return root.getMessage();
+	}
+	
+	@Override
+	protected String getRecordKey(Object record) {
+
+	    if (!(record instanceof BankBranchRecord branch)) {
+	        throw new IllegalArgumentException(
+	                "Invalid record type for BankBranchMigrationProcessor");
+	    }
+
+	    String bankName = normalize(branch.getBankName());
+	    String branchName = normalize(branch.getBranchName());
+	    String ifscCode = normalize(branch.getIfscCode());
+	    String branchCode = normalize(branch.getBranchCode());
+
+	    if (!bankName.isEmpty()
+	            && !branchName.isEmpty()
+	            && !ifscCode.isEmpty()
+	            && !branchCode.isEmpty()) {
+
+	        return "BANK:" + bankName
+	                + "|BRANCH:" + branchName
+	                + "|IFSC:" + ifscCode
+	                + "|BRANCH_CODE:" + branchCode;
+	    }
+
+	    throw new IllegalArgumentException(
+	            "Unable to generate unique record key for bank branch. "
+	            + "Bank name, branch name, IFSC code and branch code "
+	            + "are required.");
 	}
 }

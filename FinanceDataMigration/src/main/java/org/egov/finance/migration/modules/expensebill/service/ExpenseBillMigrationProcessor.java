@@ -118,6 +118,8 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 				result.setStartRow(record.getStartRow());
 				result.setEndRow(record.getEndRow());
 			}
+			
+			 String recordKey = getRecordKey(record);
 
 			try {
 
@@ -130,6 +132,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 				/*
 				 * ==================================================== 4.2 DUPLICATE CHECK ====================================================
 				 */
+				
 
 				boolean alreadyMigrated = checkDuplicate(request, record);
 
@@ -204,7 +207,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 			 */
 
 			recordResults.add(result);
-			saveMigrationDetail(job, request, result);
+			saveMigrationDetail(job, request, result, recordKey);
 
 			/*
 			 * ======================================================== UPDATE JOB PROGRESS
@@ -435,10 +438,11 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 	 */
 
 	private boolean checkDuplicate(MigrationRequest request, ExpenseBillRecord record) {
+		
+		 String recordKey = getRecordKey(record);
 
 		try {
-			return duplicateDetectionService.isAlreadyMigrated(request.getTenantId(), request.getMigrationType().name(),
-					record.getStartRow(), record.getEndRow());
+			return duplicateDetectionService.isAlreadyMigrated(request.getTenantId(), request.getMigrationType().name(), recordKey);
 
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Duplicate check failed for Expense Bill SN " + record.getSerialNumber()
@@ -623,7 +627,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 	 * ================================================================
 	 */
 
-	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result) {
+	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String recordKey) {
 
 		if (job == null) {
 			throw new IllegalArgumentException("Migration job cannot be null " + "while saving migration detail.");
@@ -659,7 +663,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 		detail.setStatus(result.getStatus().name());
 		detail.setMessage(result.getMessage());
 		detail.setExecutionTime(result.getExecutionTime());
-		detail.setRecordKey(request.getMigrationType().name() + ":" + result.getStartRow() + "-" + result.getEndRow());
+		detail.setRecordKey(recordKey);
 		detail.setCreatedTime(LocalDateTime.now());
 
 		try {
