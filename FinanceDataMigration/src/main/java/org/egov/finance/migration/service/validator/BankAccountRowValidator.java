@@ -67,11 +67,15 @@ public class BankAccountRowValidator implements MigrationRowValidator {
          * =====================================================
          */
 
-        validateRequired(
+//        validateRequired(
+//                row,
+//                headerMap,
+//                "accountnumber",
+//                "Account Number",
+//                validationError);
+        validateAccountNumber(
                 row,
                 headerMap,
-                "accountnumber",
-                "Account Number",
                 validationError);
 
         /*
@@ -181,7 +185,31 @@ public class BankAccountRowValidator implements MigrationRowValidator {
      * REQUIRED FIELD VALIDATION
      * =========================================================
      */
+    private void validateAccountNumber(
+            Row row,
+            Map<String, Integer> headerMap,
+            RowValidationError result) {
 
+        String accountNumber =
+                getValue(
+                        row,
+                        headerMap,
+                        "accountnumber");
+
+        // Required validation
+        if (accountNumber.isEmpty()) {
+            result.getErrors().add(
+                    "Account Number is required");
+            return;
+        }
+
+        // Only digits and length must be 8 to 16
+        if (!accountNumber.matches("\\d{8,16}")) {
+            result.getErrors().add(
+                    "Account Number must contain only digits "
+                    + "and must be between 8 and 16 digits");
+        }
+    }
     private void validateRequired(
             Row row,
             Map<String, Integer> headerMap,
