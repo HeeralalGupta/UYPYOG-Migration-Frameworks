@@ -59,7 +59,7 @@ public abstract class AbstractFileValidationService {
                 result.setValid(false);
 
                 result.getErrors().add(
-                        "Header row not found in the Excel sheet.");
+                        "Header row & column not found in the Excel sheet. Please update the Excel sheet with proper headers and mandatory columns and Try again.");
 
                 return result;
             }
