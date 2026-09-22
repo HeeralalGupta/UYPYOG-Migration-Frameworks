@@ -19,6 +19,9 @@ public class CreateBankAccountRequest {
 	@JsonProperty("branchName")
 	private String branchName;
 	
+	@JsonProperty("ifscCode")
+	private String ifscCode;
+	
 	@JsonProperty("fundName")
 	private String fundName;
 	
