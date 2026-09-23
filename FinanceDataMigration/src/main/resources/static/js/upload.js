@@ -1497,6 +1497,12 @@ document.addEventListener("DOMContentLoaded", function() {
 	                '<i class="fa-solid fa-circle-check"></i> Migration Cancelled';
 
 	        }
+			
+			if (status === "CANCELLED") {
+			    setTimeout(() => {
+			        cancelButton.closest(".migration-progress-card")?.remove();
+			    }, 3000);
+			}
 
 
 	        // Disconnect WebSocket
