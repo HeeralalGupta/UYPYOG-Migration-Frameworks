@@ -356,25 +356,23 @@ public class ExpenseBillRequestBuilder {
 		/*
 		 * SCHEME
 		 */
-		if (!hasValue(record.getScheme())) {
-			throw new IllegalArgumentException("Scheme is missing for SN: " + record.getSerialNumber());
-		}
-		Scheme scheme = schemeServiceClient.getSchemeByName(record.getScheme(), record.getFund(), requestInfo,
-				tenantId);
+		if (hasValue(record.getScheme())) {
+			
+			Scheme scheme = schemeServiceClient.getSchemeByName(record.getScheme(), record.getFund(), requestInfo,
+					tenantId);
 
-		if (scheme == null) {
-			throw new IllegalArgumentException(
-					"Scheme not found: " + record.getScheme() + " for Fund: " + record.getFund());
+			if (scheme == null) {
+				throw new IllegalArgumentException("Scheme not found: " + record.getScheme() + " for Fund: " + record.getFund());
+			}
+			if (scheme.getId() == null) {
+				throw new IllegalArgumentException("Scheme ID is missing from API response for scheme: " + record.getScheme());
+			}
+			if (!hasValue(scheme.getCode())) {
+				throw new IllegalArgumentException("Scheme code is missing from API response for scheme: " + record.getScheme());
+			}
+			mis.setSchemeId(scheme.getId());
 		}
-		if (scheme.getId() == null) {
-			throw new IllegalArgumentException(
-					"Scheme ID is missing from API response for scheme: " + record.getScheme());
-		}
-		if (!hasValue(scheme.getCode())) {
-			throw new IllegalArgumentException(
-					"Scheme code is missing from API response for scheme: " + record.getScheme());
-		}
-		mis.setSchemeId(scheme.getId());
+		
 
 		/*
 		 * FUNCTION
@@ -390,8 +388,7 @@ public class ExpenseBillRequestBuilder {
 		}
 
 		if (function.getId() == null) {
-			throw new IllegalArgumentException(
-					"Function ID is missing from API response for function: " + record.getFunction());
+			throw new IllegalArgumentException("Function ID is missing from API response for function: " + record.getFunction());
 		}
 
 		mis.setFunction(new IdDTO(function.getId()));
