@@ -1229,6 +1229,25 @@ function getStatusBadge(
 
 
     switch (normalized) {
+		
+		case "CANCEL_REQUESTED":
+
+		    return `
+		        <span class="history-status running">
+		            <i class="fa-solid fa-ban"></i>
+		            Cancellation Requested
+		        </span>
+		    `;
+
+
+		case "CANCELLED":
+
+		    return `
+		        <span class="history-status failed">
+		            <i class="fa-solid fa-ban"></i>
+		            Cancelled
+		        </span>
+		    `;
 
         case "COMPLETED":
 
