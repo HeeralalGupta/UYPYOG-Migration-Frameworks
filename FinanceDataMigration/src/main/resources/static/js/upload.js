@@ -1609,6 +1609,36 @@ document.addEventListener("DOMContentLoaded", function() {
 	    }
 
 	}
+	
+	async function loadMigrationStatus(jobId) {
+
+	    try {
+
+	        const response = await fetch(
+	            getContextPath() +
+	            "/migration/progress/" +
+	            encodeURIComponent(jobId)
+	        );
+
+	        if (!response.ok) {
+	            return;
+	        }
+
+	        const data = await response.json();
+
+	        updateMigrationProgress(
+	            jobId,
+	            data
+	        );
+
+	    } catch (error) {
+
+	        console.error(
+	            "Failed to load migration status:",
+	            error
+	        );
+	    }
+	}
 
 
 	function connectMigrationWebSocket(jobId) {
@@ -1660,6 +1690,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	                }
 	            );
+				
+				loadMigrationStatus(jobId);
 
 	        },
 	        function(error) {
