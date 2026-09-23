@@ -52,6 +52,7 @@ public class ContractorRequestBuilder {
 		 */
 		request.setBankName(record.getBankName());
 		request.setBranchName(record.getBranchName());
+		request.setIfscCode(record.getIfscCode());
 		request.setStatusId(106);
 		request.setContractor(contractor);
 

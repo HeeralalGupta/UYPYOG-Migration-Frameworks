@@ -21,6 +21,9 @@ public class CreateSupplierRequest {
 
     @JsonProperty("branchName")
     private String branchName;
+    
+    @JsonProperty("ifscCode")
+	private String ifscCode;
 
     @JsonProperty("statusId")
     private Integer statusId;

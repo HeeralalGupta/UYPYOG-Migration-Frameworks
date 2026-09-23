@@ -58,7 +58,7 @@ public class SupplierRequestBuilder {
          */
         request.setBankName(record.getBankName());
         request.setBranchName(record.getBranchName());
-
+        request.setIfscCode(record.getIfscCode());
         /*
          * Status ID
          */
