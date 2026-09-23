@@ -311,6 +311,10 @@
                     <option value="FAILED">
                         Failed
                     </option>
+                    
+                    <option value="CANCELLED">
+                        Cancelled
+                    </option>                    
 
                     <option value="RUNNING">
                         Running

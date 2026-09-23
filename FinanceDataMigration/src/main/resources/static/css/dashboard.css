@@ -1702,8 +1702,26 @@ body {
 }
 
 
+/* migration status  */
+.status-badge.success {
+    background: #ecfdf5;
+    color: #15803d;
+}
 
+.status-badge.warning {
+    background: #fff7ed;
+    color: #c2410c;
+}
 
+.status-badge.failed {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.status-badge.running {
+    background: #eff6ff;
+    color: #2563eb;
+}
 
 
 

@@ -675,6 +675,26 @@ function getStatusBadge(status) {
 
 
     switch (normalized) {
+		
+		
+		case "CANCEL_REQUESTED":
+	
+		    return `
+		        <span class="status-badge pending">
+		            <i class="fa-solid fa-ban"></i>
+		            Cancellation Requested
+		        </span>
+		    `;
+	
+	
+		case "CANCELLED":
+	
+		    return `
+		        <span class="status-badge failed">
+		            <i class="fa-solid fa-ban"></i>
+		            Cancelled
+		        </span>
+		    `;
 
 
         case "COMPLETED":
