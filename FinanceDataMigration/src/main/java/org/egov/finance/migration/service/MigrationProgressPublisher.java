@@ -5,6 +5,9 @@ import org.egov.finance.migration.common.entity.MigrationJob;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j(topic = "MIGRATION_PROGRESS")
 @Service
 public class MigrationProgressPublisher {
 
@@ -32,6 +35,15 @@ public class MigrationProgressPublisher {
                 .skippedRecords(job.getSkippedRecords())
                 .currentMessage(job.getCurrentMessage())
                 .build();
+        
+        log.debug(
+                "WS publish: jobId={}, destination=/topic/migration/{}, progress={}%, currentRecord={}, status={}",
+                job.getJobId(),
+                job.getJobId(),
+                job.getProgressPercent(),
+                job.getCurrentRecord(),
+                job.getStatus()
+        );
 
         messagingTemplate.convertAndSend(
                 "/topic/migration/" + job.getJobId(),
