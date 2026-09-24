@@ -27,6 +27,7 @@ public class PurchaseOrderRecord {
      * Supplier information
      */
     private String supplierName;
+    private String supplierNumber;
 
     /*
      * Accounting classification

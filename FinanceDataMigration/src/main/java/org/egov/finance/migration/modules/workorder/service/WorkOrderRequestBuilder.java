@@ -33,6 +33,7 @@ public class WorkOrderRequestBuilder {
          * Contractor and Work information
          */
         request.setContractorName(record.getContractorName());
+        request.setMobileNumber(record.getContractorNumber());
         request.setWorkName(record.getWorkName());
         request.setWorkCode(record.getWorkCode());
 

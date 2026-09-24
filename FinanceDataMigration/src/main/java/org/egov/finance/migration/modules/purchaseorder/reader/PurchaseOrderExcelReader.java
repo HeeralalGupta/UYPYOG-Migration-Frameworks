@@ -151,15 +151,16 @@ public class PurchaseOrderExcelReader {
          * D -> Order Date
          * E -> Order Name
          * F -> Description
-         * G -> Supplier Name
-         * H -> Fund
-         * I -> Department
-         * J -> Scheme
-         * K -> Sub Scheme
-         * L -> Sanction No.
-         * M -> Sanction Date
-         * N -> Advance Payable
-         * O -> Total Order Value
+		 * G -> Supplier Name
+		 * H -> Supplier Number
+		 * I -> Fund
+		 * J -> Department
+		 * K -> Scheme
+		 * L -> Sub Scheme
+		 * M -> Sanction No.
+		 * N -> Sanction Date
+		 * O -> Advance Payable
+		 * P -> Total Order Value
          */
 
         record.setUlbName(
@@ -198,6 +199,12 @@ public class PurchaseOrderExcelReader {
                         row,
                         headerMap,
                         "suppliername"));
+        
+        record.setSupplierNumber(                
+                getCellValue(                      
+                        row,                      
+                        headerMap,                   
+                        "supplierphonenumber"));      
 
         record.setFund(
                 getCellValue(

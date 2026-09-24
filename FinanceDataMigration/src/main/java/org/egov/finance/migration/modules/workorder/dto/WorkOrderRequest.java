@@ -20,6 +20,8 @@ public class WorkOrderRequest {
     private Date orderDate;
 
     private String contractorName;
+    
+    private String mobileNumber;
 
     private BigDecimal advancePayable;
 
