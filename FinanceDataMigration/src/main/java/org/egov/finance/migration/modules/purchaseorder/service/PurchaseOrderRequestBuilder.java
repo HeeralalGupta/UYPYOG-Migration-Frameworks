@@ -31,6 +31,7 @@ public class PurchaseOrderRequestBuilder {
          * Supplier information
          */
         request.setSupplierName(record.getSupplierName());
+        request.setMobileNumber(record.getSupplierNumber());
 
         /*
          * Financial information

@@ -3,6 +3,7 @@ package org.egov.finance.migration.service.validator;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -176,10 +177,37 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
                 "contractorname",
                 "Contractor Name",
                 validationError);
+        
+        /*
+         * =================================================
+         * 9. CONTRACTOR PHONE NUMBER
+         * =================================================
+         */
+        
+        String contractorPhoneNumber =            
+                getValue(                            
+                        row,                          
+                        headerMap,                   
+                        "contractorphonenumber");   
+        
+        if (contractorPhoneNumber.isEmpty()) {
+
+            validationError.getErrors().add(
+                    "Contractor Phone Number is required");    
+
+        } else if (!Pattern.matches(          
+                "\\d{10}",                          
+                contractorPhoneNumber)) {             
+
+            validationError.getErrors().add(
+                    "Contractor Phone Number must be exactly 10 digits");
+        }
+       
+
 
         /*
          * =================================================
-         * 9. WORK NAME
+         * 10. WORK NAME
          * =================================================
          */
         validateRequired(
@@ -191,7 +219,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 10. WORK CODE
+         * 11. WORK CODE
          * =================================================
          */
         validateRequired(
@@ -203,7 +231,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 11. TOTAL ORDER AMT
+         * 12. TOTAL ORDER AMT
          * =================================================
          */
         validateNumeric(
@@ -216,7 +244,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 12. ADVANCE PAYABLE
+         * 13. ADVANCE PAYABLE
          * =================================================
          */
         validateNumeric(
@@ -229,7 +257,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 13. FUND
+         * 14. FUND
          * =================================================
          */
         validateRequired(
@@ -241,7 +269,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 14. DEPARTMENT
+         * 15. DEPARTMENT
          * =================================================
          */
         validateRequired(
@@ -253,7 +281,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 15. SCHEME
+         * 16. SCHEME
          * =================================================
          */
         validateRequired(
@@ -265,7 +293,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 16. SANCTION DATE
+         * 17. SANCTION DATE
          * =================================================
          */
         String sanctionDate =
@@ -285,7 +313,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 17. EMD AMOUNT
+         * 18. EMD AMOUNT
          * =================================================
          */
         validateNumeric(
@@ -298,7 +326,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 18. BG AMOUNT
+         * 19. BG AMOUNT
          * =================================================
          */
         validateNumeric(
@@ -311,7 +339,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 19. APBG AMOUNT
+         * 20. APBG AMOUNT
          * =================================================
          */
         validateNumeric(

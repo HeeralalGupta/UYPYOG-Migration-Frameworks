@@ -30,6 +30,7 @@ public class WorkOrderRecord {
      * Contractor and Work information
      */
     private String contractorName;
+    private String contractorNumber;
     private String workName;
     private String workCode;
 

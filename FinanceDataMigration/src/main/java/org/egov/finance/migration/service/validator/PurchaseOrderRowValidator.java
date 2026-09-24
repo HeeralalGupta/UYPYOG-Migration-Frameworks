@@ -3,6 +3,7 @@ package org.egov.finance.migration.service.validator;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -147,10 +148,35 @@ public class PurchaseOrderRowValidator implements MigrationRowValidator {
                 "suppliername",
                 "Supplier Name",
                 validationError);
+        
+        /*
+         * =================================================
+         * 7. SUPPLIER PHONE NUMBER
+         * =================================================
+         */
+        String supplierPhoneNumber =                        
+                getValue(
+                        row,
+                        headerMap,
+                        "supplierphonenumber");             
+
+        if (supplierPhoneNumber.isEmpty()) {
+
+            validationError.getErrors().add(
+                    "Supplier Phone Number is required");    
+
+        } else if (!Pattern.matches(
+                "^[6-9]\\d{9}$",                            
+                supplierPhoneNumber)) {
+
+            validationError.getErrors().add(
+                    "Supplier Phone Number must be exactly 10 digits"
+            );                                               
+        }
 
         /*
          * =================================================
-         * 7. SOURCE OF FUND
+         * 8. SOURCE OF FUND
          * =================================================
          */
         validateRequired(
@@ -162,7 +188,7 @@ public class PurchaseOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 8. DEPARTMENT
+         * 9. DEPARTMENT
          * =================================================
          */
         validateRequired(
@@ -174,7 +200,7 @@ public class PurchaseOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 9. SCHEME
+         * 10. SCHEME
          * =================================================
          *
          * Optional
@@ -182,7 +208,7 @@ public class PurchaseOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 10. SUB SCHEME
+         * 11. SUB SCHEME
          * =================================================
          *
          * Optional
@@ -190,7 +216,7 @@ public class PurchaseOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 11. SANCTION NO.
+         * 12. SANCTION NO.
          * =================================================
          *
          * Optional
@@ -198,7 +224,7 @@ public class PurchaseOrderRowValidator implements MigrationRowValidator {
 
         /*
          * =================================================
-         * 12. SANCTION DATE
+         * 13. SANCTION DATE
          * =================================================
          *
          * Optional, but if provided must be valid.

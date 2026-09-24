@@ -1094,6 +1094,7 @@ public class PurchaseOrderFileValidationService
                 "orderdate",
                 "ordername",
                 "suppliername",
+                "supplierphonenumber",
                 "sourceoffund",
                 "department",
                 "totalordervalue"
@@ -1146,6 +1147,7 @@ public class PurchaseOrderFileValidationService
                             "orderdate",
                             "ordername",
                             "suppliername",
+                            "supplierphonenumber",
                             "sourceoffund",
                             "department",
                             "totalordervalue"

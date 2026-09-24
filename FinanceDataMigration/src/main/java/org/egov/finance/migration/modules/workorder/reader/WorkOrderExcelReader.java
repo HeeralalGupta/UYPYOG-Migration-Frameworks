@@ -192,6 +192,9 @@ public class WorkOrderExcelReader {
 
         record.setContractorName(
                 getCellValue(row, headerMap, "contractorname"));
+        
+        record.setContractorNumber(      
+                getCellValue(row, headerMap, "contractorphonenumber"));
 
         record.setWorkName(
                 getCellValue(row, headerMap, "workname"));
@@ -316,16 +319,29 @@ public class WorkOrderExcelReader {
          * Excel columns:
          *
          * A -> Sl. No.
-         * B -> Tender Number
-         * C -> Work Order No.
-         * D -> Item Name
-         * E -> GL Code
-         * F -> Unit
-         * G -> Unit Rate
-         * H -> GST %
-         * I -> Unit Value with GST
-         * J -> Quantity
-         * K -> Amount
+         * B -> ULB Name
+         * C -> Tender Number
+         * D -> Work Order No.
+         * E -> Work Order Date
+         * F -> Work Order Name
+         * G -> Work Order Type
+         * H -> Description
+         * I -> Active
+         * J -> Contractor Name
+         * K -> Contractor Phone Number
+         * L -> Work Name
+         * M -> Work Code
+         * N -> Total Order Amt
+         * O -> Advance Payable
+         * P -> Fund
+         * Q -> Department
+         * R -> Scheme
+         * S -> Sub Scheme
+         * T -> Work Order Issuing Authority
+         * U -> Sanction Date
+         * V -> EMD Amount
+         * W -> BG Amount
+         * X -> APBG Amount
          */
 
         record.setTenderNumber(

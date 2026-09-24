@@ -20,6 +20,8 @@ public class PurchaseOrderRequest {
     private Date orderDate;
 
     private String supplierName;
+    
+    private String mobileNumber;
 
     private BigDecimal orderValue;
 
