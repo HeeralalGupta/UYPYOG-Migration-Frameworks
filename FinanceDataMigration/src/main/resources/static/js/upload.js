@@ -3806,7 +3806,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	                    <i class="fa-solid fa-circle-exclamation"></i>
 
 	                    <span>
-	                        ${escapeHtml(displayError)}
+	                        ${escapeHtml(getDisplayError(displayError, "Please check the Bank and try again."))}
 	                    </span>
 
 	                </td>
@@ -3819,7 +3819,23 @@ document.addEventListener("DOMContentLoaded", function() {
 	        `;
 
         }
+		function getDisplayError(displayError, bankName) {
 
+		    if (!displayError) {
+		        return "";
+		    }
+
+		    var error = displayError.toLowerCase();
+
+		    if (error.includes("arjuna016053")
+		            || error.includes("jta transaction unexpectedly rolled back")
+		            || error.includes("could not commit transaction")) {
+
+		        return "Bank already exists: " + bankName;
+		    }
+
+		    return displayError;
+		}
 
         /*
          * =====================================================
