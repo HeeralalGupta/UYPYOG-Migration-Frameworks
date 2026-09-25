@@ -28,6 +28,10 @@ WORKDIR /app
 # Create non-root user
 RUN addgroup -S appgroup && \
     adduser -S appuser -G appgroup
+	
+# Application version passed from GitHub Actions
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION}	
 
 # Copy JAR
 COPY --from=builder /app/target/*.war app.war

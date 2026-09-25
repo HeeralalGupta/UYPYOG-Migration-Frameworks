@@ -697,7 +697,7 @@
 </script>
 
 <script
-    src="${pageContext.request.contextPath}/js/reports.js">
+    src="${pageContext.request.contextPath}/js/reports.js?v=${appVersion}">
 </script>
 
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

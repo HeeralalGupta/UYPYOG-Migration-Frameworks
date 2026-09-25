@@ -13,7 +13,7 @@
 	href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
 	rel="stylesheet" />
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/history.css">
+	href="${pageContext.request.contextPath}/css/history.css?v=${appVersion}">
 </head>
 
 <body>
@@ -613,7 +613,7 @@
 </script>
 	<!-- FOOTER -->
 	<%@ include file="../layout/foot.jsp"%>
-	<script src="${pageContext.request.contextPath}/js/history.js"></script>
+	<script src="${pageContext.request.contextPath}/js/history.js?v=${appVersion}"></script>
 </body>
 
 </html>

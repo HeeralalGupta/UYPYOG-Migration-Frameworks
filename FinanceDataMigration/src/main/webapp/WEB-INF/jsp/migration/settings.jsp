@@ -694,7 +694,7 @@
         "${pageContext.request.contextPath}";
 </script>
 <script
-    src="${pageContext.request.contextPath}/js/settings.js">
+    src="${pageContext.request.contextPath}/js/settings.js?v=${appVersion}">
 </script>
 
 <%@ include file="../layout/foot.jsp"%>

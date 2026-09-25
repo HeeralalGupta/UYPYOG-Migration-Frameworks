@@ -1697,7 +1697,13 @@ document.addEventListener("DOMContentLoaded", function() {
 	                }
 	            );
 				
+				// First check immediately
 				loadMigrationStatus(jobId);
+
+				// Second check after 1 second
+				setTimeout(function() {
+				    loadMigrationStatus(jobId);
+				}, 1000);
 
 	        },
 	        function(error) {
