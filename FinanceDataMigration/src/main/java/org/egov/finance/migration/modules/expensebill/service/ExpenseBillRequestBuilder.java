@@ -3,9 +3,11 @@ package org.egov.finance.migration.modules.expensebill.service;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import org.egov.finance.migration.common.dto.ChartOfAccountsResponse;
 import org.egov.finance.migration.common.dto.Function;
@@ -216,7 +218,6 @@ public class ExpenseBillRequestBuilder {
 	 * "billdate": "2026-08-06", "expendituretype": "Expense" }
 	 */
 
-
 	private EgBillregister buildBillRegister(ExpenseBillRecord record, RequestInfo requestInfo, String tenantId) {
 
 		if (record == null) {
@@ -249,6 +250,7 @@ public class ExpenseBillRequestBuilder {
 		}
 
 		billRegister.setBillnumber(billNumber);
+
 		if (!hasValue(record.getBillDate())) {
 			throw new IllegalArgumentException("Bill Date is missing for SN: " + record.getSerialNumber());
 		}
@@ -357,22 +359,24 @@ public class ExpenseBillRequestBuilder {
 		 * SCHEME
 		 */
 		if (hasValue(record.getScheme())) {
-			
+
 			Scheme scheme = schemeServiceClient.getSchemeByName(record.getScheme(), record.getFund(), requestInfo,
 					tenantId);
 
 			if (scheme == null) {
-				throw new IllegalArgumentException("Scheme not found: " + record.getScheme() + " for Fund: " + record.getFund());
+				throw new IllegalArgumentException(
+						"Scheme not found: " + record.getScheme() + " for Fund: " + record.getFund());
 			}
 			if (scheme.getId() == null) {
-				throw new IllegalArgumentException("Scheme ID is missing from API response for scheme: " + record.getScheme());
+				throw new IllegalArgumentException(
+						"Scheme ID is missing from API response for scheme: " + record.getScheme());
 			}
 			if (!hasValue(scheme.getCode())) {
-				throw new IllegalArgumentException("Scheme code is missing from API response for scheme: " + record.getScheme());
+				throw new IllegalArgumentException(
+						"Scheme code is missing from API response for scheme: " + record.getScheme());
 			}
 			mis.setSchemeId(scheme.getId());
 		}
-		
 
 		/*
 		 * FUNCTION
@@ -388,7 +392,8 @@ public class ExpenseBillRequestBuilder {
 		}
 
 		if (function.getId() == null) {
-			throw new IllegalArgumentException("Function ID is missing from API response for function: " + record.getFunction());
+			throw new IllegalArgumentException(
+					"Function ID is missing from API response for function: " + record.getFunction());
 		}
 
 		mis.setFunction(new IdDTO(function.getId()));
@@ -649,7 +654,6 @@ public class ExpenseBillRequestBuilder {
 	 * "accountDetailKeyId": 2 } ]
 	 */
 
-
 	private List<EgBillPayeedetails> buildPayeeDetails(ExpenseBillRecord record, RequestInfo requestInfo,
 			String tenantId) {
 
@@ -740,7 +744,6 @@ public class ExpenseBillRequestBuilder {
 	 * "checkLists": [ { "appconfigvalue": { "id": 67 }, "checklistvalue": "na" } ]
 	 */
 
-
 	private List<EgBillChecklist> buildCheckLists() {
 
 		Long[] checklistIds = { 67L, 68L, 69L, 70L };
@@ -786,7 +789,6 @@ public class ExpenseBillRequestBuilder {
 	 * Create one checklist item.
 	 */
 
-
 	private EgBillChecklist createCheckList(Long id) {
 
 		if (id == null || id <= 0) {
@@ -814,7 +816,6 @@ public class ExpenseBillRequestBuilder {
 	 * { "id": value }
 	 */
 
-
 	private String convertToApiDate(String value, String fieldName) {
 
 		if (!hasValue(value)) {
@@ -822,22 +823,26 @@ public class ExpenseBillRequestBuilder {
 		}
 
 		value = value.trim();
-		String[] formats = { "dd/MM/yyyy", "dd-MM-yyyy", "yyyy-MM-dd", "dd-MMM-yyyy" };
+
+		String[] formats = { "dd/MM/yyyy", "dd-MM-yyyy", "MMM-dd-yyyy", "MMM/dd/yyyy" };
 
 		for (String format : formats) {
 			try {
-
-				SimpleDateFormat input = new SimpleDateFormat(format);
+				SimpleDateFormat input = new SimpleDateFormat(format, Locale.ENGLISH);
 				input.setLenient(false);
+
 				Date date = input.parse(value);
+
 				SimpleDateFormat output = new SimpleDateFormat("yyyy-MM-dd");
 				return output.format(date);
+
 			} catch (ParseException ignored) {
 				// Try next format.
 			}
 		}
-		throw new IllegalArgumentException(
-				"Invalid " + fieldName + ": '" + value + "'. " + "Expected format: dd/MM/yyyy.");
+
+		throw new IllegalArgumentException("Invalid " + fieldName + ": '" + value
+				+ "'. Expected format: dd/MM/yyyy, dd-MM-yyyy, " + "MMM-dd-yyyy or MMM/dd/yyyy.");
 	}
 
 	/**
@@ -845,7 +850,6 @@ public class ExpenseBillRequestBuilder {
 	 *
 	 * Total Debit Amount + Total Credit Amount.
 	 */
-
 
 	private BigDecimal calculateBillAmount(ExpenseBillRecord record) {
 
@@ -890,10 +894,12 @@ public class ExpenseBillRequestBuilder {
 				throw new IllegalArgumentException("Deduction Detail contains a null record.");
 			}
 			if (deduction.getCreditAmount() == null) {
-				throw new IllegalArgumentException("Deduction Credit Amount is missing for GL Code: " + deduction.getGlCode());
+				throw new IllegalArgumentException(
+						"Deduction Credit Amount is missing for GL Code: " + deduction.getGlCode());
 			}
 			if (deduction.getCreditAmount().compareTo(BigDecimal.ZERO) < 0) {
-				throw new IllegalArgumentException(	"Deduction Credit Amount cannot be negative for GL Code: " + deduction.getGlCode());
+				throw new IllegalArgumentException(
+						"Deduction Credit Amount cannot be negative for GL Code: " + deduction.getGlCode());
 			}
 			totalDeduction = totalDeduction.add(deduction.getCreditAmount());
 		}
@@ -928,7 +934,8 @@ public class ExpenseBillRequestBuilder {
 			throw new IllegalArgumentException("Net Payable Credit Amount must be greater than zero.");
 		}
 		if (inputNetPayable.compareTo(calculatedNetPayable) != 0) {
-			throw new IllegalArgumentException("Net Payable amount mismatch. " + "Expected: " + calculatedNetPayable + ", Input: " + inputNetPayable);
+			throw new IllegalArgumentException("Net Payable amount mismatch. " + "Expected: " + calculatedNetPayable
+					+ ", Input: " + inputNetPayable);
 		}
 
 		/*
@@ -936,7 +943,6 @@ public class ExpenseBillRequestBuilder {
 		 */
 		return totalDebit;
 	}
-
 
 
 	private String generateBillNumber(ExpenseBillRecord record) {
@@ -950,12 +956,19 @@ public class ExpenseBillRequestBuilder {
 		}
 
 		if (record.getSerialNumber() <= 0) {
-			throw new IllegalArgumentException("Serial Number (SN) must be greater than zero. " + "Value: " + record.getSerialNumber());
+			throw new IllegalArgumentException("Serial Number (SN) must be greater than zero. Value: " + record.getSerialNumber());
 		}
 
-		return String.format("EXP-BILL-%05d", record.getSerialNumber());
-	}
+		if (!hasValue(record.getBillDate())) {
+			throw new IllegalArgumentException("Bill Date is required to generate Bill Number.");
+		}
 
+		String apiDate = convertToApiDate(record.getBillDate(), "Bill Date");
+		LocalDate billDate = LocalDate.parse(apiDate);
+		int startYear = billDate.getMonthValue() >= 4 ? billDate.getYear() : billDate.getYear() - 1;
+		String financialYear = String.format("%02d-%02d", startYear % 100, (startYear + 1) % 100);
+		return String.format("EXP-BILL/%s/%05d", financialYear, record.getSerialNumber());
+	}
 
 	private String extractNumericGlCode(String glCodeValue) {
 
@@ -967,7 +980,8 @@ public class ExpenseBillRequestBuilder {
 		java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(\\d+)").matcher(value);
 
 		if (!matcher.find()) {
-			throw new IllegalArgumentException("Invalid GL Code format: '" + glCodeValue + "'. Expected a numeric GL Code, " + "for example: 3501000003-Expense Payables.");
+			throw new IllegalArgumentException("Invalid GL Code format: '" + glCodeValue
+					+ "'. Expected a numeric GL Code, " + "for example: 3501000003-Expense Payables.");
 		}
 		return matcher.group(1);
 	}

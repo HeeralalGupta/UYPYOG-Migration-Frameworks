@@ -244,31 +244,27 @@ public class ExpenseBillApiClient {
 
 		} catch (HttpStatusCodeException e) {
 			String responseBody = e.getResponseBodyAsString();
-			String apiMessage = extractApiErrorMessage(responseBody);
-			String message = "Expense Bill API returned HTTP " + e.getStatusCode().value() + " for tenant '" + tenantId	+ "'. ";
-			if (hasText(apiMessage)) {
-				message = message + apiMessage;
-			}
+//			String apiMessage = extractApiErrorMessage(responseBody);
+//			String message = "Expense Bill API returned HTTP " + e.getStatusCode().value() + " for tenant '" + tenantId	+ "'. ";
+//			if (hasText(apiMessage)) {
+//				message = message + apiMessage;
+//			}
 
-			System.err.println("Expense Bill API validation/error response: " + message);
-			throw new IllegalArgumentException(message, e);
+			System.err.println("Expense Bill API validation/error response: " + responseBody);
+			throw new IllegalArgumentException(responseBody, e);
 
 		} catch (ResourceAccessException e) {
-
 			throw new IllegalArgumentException(	"Unable to connect to Expense Bill API for tenant '" + tenantId + "': " + getExceptionMessage(e),
 					e);
 
 		} catch (RestClientException e) {
-
 			throw new IllegalArgumentException(	"Expense Bill API communication failed for tenant '" + tenantId + "': " + getExceptionMessage(e),
 					e);
 
 		} catch (IllegalArgumentException e) {
-
 			throw e;
 
 		} catch (Exception e) {
-
 			throw new IllegalArgumentException("Unexpected error while calling Expense Bill API for tenant '" + tenantId
 					+ "': " + getExceptionMessage(e), e);
 		}
@@ -280,8 +276,7 @@ public class ExpenseBillApiClient {
 			throw new IllegalArgumentException("Expense Bill API response is null " + "for tenant: " + tenantId);
 		}
 		if (response.getStatusCode() == null) {
-			throw new IllegalArgumentException(
-					"Expense Bill API returned response " + "without HTTP status for tenant: " + tenantId);
+			throw new IllegalArgumentException("Expense Bill API returned response " + "without HTTP status for tenant: " + tenantId);
 		}
 		if (!response.getStatusCode().is2xxSuccessful()) {
 			throw new IllegalArgumentException("Expense Bill API returned HTTP status "
@@ -323,54 +318,54 @@ public class ExpenseBillApiClient {
 		return object;
 	}
 
-	private String extractApiErrorMessage(String responseBody) {
-
-		if (!hasText(responseBody)) {
-			return "Expense Bill API returned an empty error response.";
-		}
-
-		try {
-			ExpenseErrorResponse errorResponse = objectMapper.readValue(responseBody, ExpenseErrorResponse.class);
-
-			if (errorResponse != null) {
-
-				StringBuilder message = new StringBuilder();
-
-				if (hasText(errorResponse.getMessage())) {
-					message.append(errorResponse.getMessage());
-				}
-
-				if (errorResponse.getErrors() != null && !errorResponse.getErrors().isEmpty()) {
-
-					if (message.length() > 0) {
-						message.append(" ");
-					}
-
-					message.append("Validation errors: ");
-
-					for (int i = 0; i < errorResponse.getErrors().size(); i++) {
-
-						if (i > 0) {
-							message.append(" | ");
-						}
-
-						message.append(errorResponse.getErrors().get(i));
-					}
-				}
-
-				if (message.length() > 0) {
-					return message.toString();
-				}
-			}
-
-		} catch (Exception parseException) {
-
-			System.err.println("Unable to parse Expense Bill API error response: " + getExceptionMessage(parseException));
-		}
-
-		/*
-		 * Fallback when the response is not in the expected ExpenseBillResponse format.
-		 */
-		return responseBody;
-	}
+//	private String extractApiErrorMessage(String responseBody) {
+//
+//		if (!hasText(responseBody)) {
+//			return "Expense Bill API returned an empty error response.";
+//		}
+//
+//		try {
+//			ExpenseErrorResponse errorResponse = objectMapper.readValue(responseBody, ExpenseErrorResponse.class);
+//
+//			if (errorResponse != null) {
+//
+//				StringBuilder message = new StringBuilder();
+//
+//				if (hasText(errorResponse.getMessage())) {
+//					message.append(errorResponse.getMessage());
+//				}
+//
+//				if (errorResponse.getErrors() != null && !errorResponse.getErrors().isEmpty()) {
+//
+//					if (message.length() > 0) {
+//						message.append(" ");
+//					}
+//
+//					message.append("Validation errors: ");
+//
+//					for (int i = 0; i < errorResponse.getErrors().size(); i++) {
+//
+//						if (i > 0) {
+//							message.append(" | ");
+//						}
+//
+//						message.append(errorResponse.getErrors().get(i));
+//					}
+//				}
+//
+//				if (message.length() > 0) {
+//					return message.toString();
+//				}
+//			}
+//
+//		} catch (Exception parseException) {
+//
+//			System.err.println("Unable to parse Expense Bill API error response: " + getExceptionMessage(parseException));
+//		}
+//
+//		/*
+//		 * Fallback when the response is not in the expected ExpenseBillResponse format.
+//		 */
+//		return responseBody;
+//	}
 }
