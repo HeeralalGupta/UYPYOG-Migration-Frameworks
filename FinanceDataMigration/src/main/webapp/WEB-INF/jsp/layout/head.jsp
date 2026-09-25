@@ -4,29 +4,29 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <link rel="icon" type="images/png" href="images/favicon.png">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/base.css">
+	href="${pageContext.request.contextPath}/css/base.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/layout.css">
+	href="${pageContext.request.contextPath}/css/layout.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/header.css">
+	href="${pageContext.request.contextPath}/css/header.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/navbar.css">
+	href="${pageContext.request.contextPath}/css/navbar.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/footer.css">
+	href="${pageContext.request.contextPath}/css/footer.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/dashboard.css">
+	href="${pageContext.request.contextPath}/css/dashboard.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/theme.css">
+	href="${pageContext.request.contextPath}/css/theme.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/upload.css">
+	href="${pageContext.request.contextPath}/css/upload.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/module-selection.css">
+	href="${pageContext.request.contextPath}/css/module-selection.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/reports.css">
+	href="${pageContext.request.contextPath}/css/reports.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/settings.css">
+	href="${pageContext.request.contextPath}/css/settings.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/common.css">
+	href="${pageContext.request.contextPath}/css/common.css?v=${appVersion}">
 
 <link rel="stylesheet"
 	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">

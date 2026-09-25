@@ -5,13 +5,13 @@
 	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.2.0/bundles/stomp.umd.min.js"></script>
 	<script>window.contextPath ="${pageContext.request.contextPath}";</script>
-	<script src="${pageContext.request.contextPath}/js/app.js"></script>
-	<script src="${pageContext.request.contextPath}/js/theme.js"></script>
-	<script src="${pageContext.request.contextPath}/js/navigation.js"></script>
+	<script src="${pageContext.request.contextPath}/js/app.js?v=${appVersion}"></script>
+	<script src="${pageContext.request.contextPath}/js/theme.js?v=${appVersion}"></script>
+	<script src="${pageContext.request.contextPath}/js/navigation.js?v=${appVersion}"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-	<script src="${pageContext.request.contextPath}/js/module-selection.js"></script>
-	<script src="${pageContext.request.contextPath}/js/upload.js"></script>
-	<script src="${pageContext.request.contextPath}/js/common.js"></script>
+	<script src="${pageContext.request.contextPath}/js/module-selection.js?v=${appVersion}"></script>
+	<script src="${pageContext.request.contextPath}/js/upload.js?v=${appVersion}"></script>
+	<script src="${pageContext.request.contextPath}/js/common.js?v=${appVersion}"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 	<script>
 	    window.migrationUser = {

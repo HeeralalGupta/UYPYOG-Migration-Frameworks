@@ -19,27 +19,27 @@
          ========================================================= -->
 
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/base.css">
+	href="${pageContext.request.contextPath}/css/base.css?v=${appVersion}">
 
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/layout.css">
+	href="${pageContext.request.contextPath}/css/layout.css?v=${appVersion}">
 
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/header.css">
+	href="${pageContext.request.contextPath}/css/header.css?v=${appVersion}">
 
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/navbar.css">
+	href="${pageContext.request.contextPath}/css/navbar.css?v=${appVersion}">
 
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/footer.css">
+	href="${pageContext.request.contextPath}/css/footer.css?v=${appVersion}">
 
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/dashboard.css">
+	href="${pageContext.request.contextPath}/css/dashboard.css?v=${appVersion}">
 
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/theme.css">
+	href="${pageContext.request.contextPath}/css/theme.css?v=${appVersion}">
 <link rel="stylesheet"
-	href="${pageContext.request.contextPath}/css/common.css">
+	href="${pageContext.request.contextPath}/css/common.css?v=${appVersion}">
 <link rel="icon" type="images/png" href="images/favicon.png">
 
 <!-- =========================================================
@@ -644,15 +644,15 @@
 		window.contextPath = "${pageContext.request.contextPath}";
 	</script>
 
-	<script src="${pageContext.request.contextPath}/js/app.js">
+	<script src="${pageContext.request.contextPath}/js/app.js?v=${appVersion}">
 		
 	</script>
 
-	<script src="${pageContext.request.contextPath}/js/theme.js">
+	<script src="${pageContext.request.contextPath}/js/theme.js?v=${appVersion}">
 		
 	</script>
 
-	<script src="${pageContext.request.contextPath}/js/navigation.js">
+	<script src="${pageContext.request.contextPath}/js/navigation.js?v=${appVersion}">
 		
 	</script>
 
@@ -661,10 +661,10 @@
 		
 	</script>
 
-	<script src="${pageContext.request.contextPath}/js/home.js">
+	<script src="${pageContext.request.contextPath}/js/home.js?v=${appVersion}">
 		
 	</script>
-	<script src="${pageContext.request.contextPath}/js/common.js"></script>
+	<script src="${pageContext.request.contextPath}/js/common.js?v=${appVersion}"></script>
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
 	
