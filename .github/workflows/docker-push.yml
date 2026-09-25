@@ -34,6 +34,10 @@ jobs:
           context: ./FinanceDataMigration
           file: ./FinanceDataMigration/Dockerfile
           push: true
+          
+          build-args: |
+               APP_VERSION=${{ steps.version.outputs.tag }}
+               
           tags: |
             heeralalgupta/finance-data-migration:latest
             heeralalgupta/finance-data-migration:${{ steps.version.outputs.tag }}
