@@ -22,7 +22,6 @@ import org.egov.finance.migration.modules.expensebill.dto.ExpenseNetPayableRecor
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 @Component
 public class ExpenseBillExcelReader {
@@ -32,6 +31,7 @@ public class ExpenseBillExcelReader {
 	/*
 	 * Excel column indexes
 	 */
+	
 	private static final int COL_SN = 0;
 	private static final int COL_ULB_NAME = 1;
 	private static final int COL_BILL_DATE = 2;
@@ -201,33 +201,6 @@ public class ExpenseBillExcelReader {
 		log.info("==============================================");
 
 		return expenseRecords;
-	}
-
-	/**
-	 * Validates uploaded file.
-	 */
-	private void validateFile(MultipartFile file) {
-
-		if (file == null) {
-			throw new IllegalArgumentException("Expense Bill Excel file is required.");
-		}
-
-		if (file.isEmpty()) {
-			throw new IllegalArgumentException("Expense Bill Excel file is empty.");
-		}
-
-		String fileName = file.getOriginalFilename();
-
-		if (isBlank(fileName)) {
-			throw new IllegalArgumentException("Expense Bill Excel file name is missing.");
-		}
-
-		String lowerFileName = fileName.toLowerCase();
-
-		if (!lowerFileName.endsWith(".xls") && !lowerFileName.endsWith(".xlsx")) {
-
-			throw new IllegalArgumentException("Invalid Expense Bill Excel file '" + fileName + "'. Only .xls and .xlsx files are supported.");
-		}
 	}
 
 	/**
