@@ -149,10 +149,10 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 			 * ========================================================
 			 */
 			
-			String recordKey = getRecordKey(record);
+			List<String> recordKeys = getRecordKeys(record);
 
 			boolean alreadyMigrated = duplicateDetectionService.isAlreadyMigrated(request.getTenantId(),
-					request.getMigrationType().name(), recordKey);
+					request.getMigrationType().name(), recordKeys);
 
 			if (alreadyMigrated) {
 
@@ -166,7 +166,7 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 				/*
 				 * Save skipped record in detail table
 				 */
-				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKey);
+				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKeys);
 
 				/*
 				 * Update progress
@@ -221,7 +221,7 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 			 * Save result exactly once
 			 */
 			recordResults.add(result);
-			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKey);
+			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKeys);
 
 			/*
 			 * Update realtime progress
@@ -334,7 +334,7 @@ public class JVMigrationProcessor extends AbstractMigrationProcessor {
 
 	}
 
-	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, String recordKey) {
+	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, List<String> recordKey) {
 
 		MigrationJobDetail detail = new MigrationJobDetail();
 		detail.setJob(job);

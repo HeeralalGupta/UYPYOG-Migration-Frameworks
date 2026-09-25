@@ -149,10 +149,10 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 			 * ======================================================== DUPLICATE CHECK
 			 * ========================================================
 			 */
-			String recordKey = getRecordKey(record);
+			List<String> recordKeys = getRecordKeys(record);
 
 			boolean alreadyMigrated = duplicateDetectionService.isAlreadyMigrated(request.getTenantId(),
-					request.getMigrationType().name(), recordKey);
+					request.getMigrationType().name(), recordKeys);
 
 			if (alreadyMigrated) {
 
@@ -170,7 +170,7 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 				 * Save skipped record
 				 */
 
-				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKey);
+				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKeys);
 
 				/*
 				 * Update progress
@@ -247,7 +247,7 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 
 			recordResults.add(result);
 
-			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKey);
+			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKeys);
 
 			/*
 			 * ======================================================== UPDATE REALTIME
@@ -388,7 +388,7 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 	/**
 	 * Save migration detail record.
 	 */
-	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, String recordKey) {
+	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, List<String> recordKey) {
 
 		MigrationJobDetail detail = new MigrationJobDetail();
 
@@ -438,44 +438,43 @@ public class ContractorMigrationProcessor extends AbstractMigrationProcessor {
 	}
 	
 	@Override
-	protected String getRecordKey(Object record) {
+	protected List<String> getRecordKeys(Object record) {
 
-		if (!(record instanceof ContractorRecord contractor)) {
-			throw new IllegalArgumentException("Invalid record type for ContractorMigrationProcessor");
-		}
+	    if (!(record instanceof ContractorRecord contractor)) {
+	        throw new IllegalArgumentException(
+	                "Invalid record type for ContractorMigrationProcessor");
+	    }
 
-		String pan = normalize(contractor.getPanNumber());
+	    String pan = normalize(contractor.getPanNumber());
+	    String ifsc = normalize(contractor.getIfscCode());
+	    String account = normalize(contractor.getBankAccount());
+	    String mobile = normalize(contractor.getMobileNumber());
 
-		String ifsc = normalize(contractor.getIfscCode());
+	    List<String> recordKeys = new ArrayList<>();
 
-		String account = normalize(contractor.getBankAccount());
+	    // PAN identity
+	    if (!pan.isEmpty()) {
+	        recordKeys.add("PAN:" + pan);
+	    }
 
-		String mobile = normalize(contractor.getMobileNumber());
+	    // Bank identity
+	    if (!ifsc.isEmpty() && !account.isEmpty()) {
+	        recordKeys.add("BANK:" + ifsc + "|" + account);
+	    }
 
-		String name = normalize(contractor.getName());
+	    // Mobile identity
+	    if (!mobile.isEmpty()) {
+	        recordKeys.add("MOBILE:" + mobile);
+	    }
 
-		// Strong unique identifier
-		if (!pan.isEmpty()) {
-			return "PAN:" + pan;
-		}
+	    // No identity available
+	    if (recordKeys.isEmpty()) {
+	        throw new IllegalArgumentException(
+	                "Unable to generate unique record keys for contractor. "
+	                + "PAN, bank details and  mobile number "
+	                + "are all missing.");
+	    }
 
-		// Bank identity
-		if (!ifsc.isEmpty() && !account.isEmpty()) {
-			return "BANK:" + ifsc + "|" + account;
-		}
-
-		// Mobile number
-		if (!mobile.isEmpty()) {
-			return "MOBILE:" + mobile;
-		}
-
-		// Name
-		if (!name.isEmpty()) {
-			return "NAME:" + name;
-		}
-
-		// No reliable identity available
-		throw new IllegalArgumentException("Unable to generate unique record key for contractor. "
-				+ "PAN, bank details, mobile number " + "and contractor name are all missing.");
+	    return recordKeys;
 	}
 }

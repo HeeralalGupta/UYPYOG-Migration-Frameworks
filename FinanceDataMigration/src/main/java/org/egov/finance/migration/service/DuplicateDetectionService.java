@@ -1,5 +1,7 @@
 package org.egov.finance.migration.service;
 
+import java.util.List;
+
 import org.egov.finance.migration.common.repository.MigrationJobDetailRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,19 +18,27 @@ public class DuplicateDetectionService {
     public boolean isAlreadyMigrated(
             String tenantId,
             String moduleCode,
-            String recordKey) {
-    	
-        if (recordKey == null || recordKey.isBlank()) {
+            List<String> recordKeys) {
+
+        if (recordKeys == null || recordKeys.isEmpty()) {
             return false;
         }
 
-        return repository
-                .findFirstByTenantIdAndModuleCodeAndRecordKeyAndStatus(
-                        tenantId,
-                        moduleCode,
-                        recordKey,
-                        "SUCCESS")
-                .isPresent();
+        String[] keys = recordKeys.stream()
+                .filter(key -> key != null && !key.isBlank())
+                .distinct()
+                .toArray(String[]::new);
+
+        if (keys.length == 0) {
+            return false;
+        }
+
+        return repository.findDuplicate(
+                tenantId,
+                moduleCode,
+                keys,
+                "SUCCESS"
+        ).isPresent();
     }
 }
 

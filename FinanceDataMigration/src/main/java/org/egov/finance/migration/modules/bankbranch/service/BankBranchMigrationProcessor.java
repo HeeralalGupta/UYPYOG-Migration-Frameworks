@@ -155,13 +155,13 @@ public class BankBranchMigrationProcessor
 			 * ========================================================
 			 */
 			
-			String recordKey = getRecordKey(record);
+			List<String> recordKeys = getRecordKeys(record);
 
 			boolean alreadyMigrated =
 					duplicateDetectionService.isAlreadyMigrated(
 							request.getTenantId(),
 							request.getMigrationType().name(),
-							recordKey);
+							recordKeys);
 
 			if (alreadyMigrated) {
 
@@ -182,7 +182,7 @@ public class BankBranchMigrationProcessor
 						request,
 						result,
 						RecordStatus.SKIPPED.name(),
-						recordKey);
+						recordKeys);
 
 				/*
 				 * Update progress
@@ -279,7 +279,7 @@ public class BankBranchMigrationProcessor
 					request,
 					result,
 					result.getStatus().name(),
-					recordKey);
+					recordKeys);
 
 			/*
 			 * ========================================================
@@ -451,7 +451,7 @@ public class BankBranchMigrationProcessor
 			MigrationRequest request,
 			RecordResult result,
 			String status,
-			String recordKey) {
+			List<String> recordKey) {
 
 		MigrationJobDetail detail =
 				new MigrationJobDetail();
@@ -501,7 +501,7 @@ public class BankBranchMigrationProcessor
 	}
 	
 	@Override
-	protected String getRecordKey(Object record) {
+	protected List<String> getRecordKeys(Object record) {
 
 	    if (!(record instanceof BankBranchRecord branch)) {
 	        throw new IllegalArgumentException(
@@ -513,20 +513,41 @@ public class BankBranchMigrationProcessor
 	    String ifscCode = normalize(branch.getIfscCode());
 	    String branchCode = normalize(branch.getBranchCode());
 
-	    if (!bankName.isEmpty()
-	            && !branchName.isEmpty()
-	            && !ifscCode.isEmpty()
-	            && !branchCode.isEmpty()) {
+	    List<String> recordKeys = new ArrayList<>();
 
-	        return "BANK:" + bankName
-	                + "|BRANCH:" + branchName
-	                + "|IFSC:" + ifscCode
-	                + "|BRANCH_CODE:" + branchCode;
+	    // IFSC identity - strongest identifier
+	    if (!ifscCode.isEmpty()) {
+	        recordKeys.add("IFSC:" + ifscCode);
 	    }
 
-	    throw new IllegalArgumentException(
-	            "Unable to generate unique record key for bank branch. "
-	            + "Bank name, branch name, IFSC code and branch code "
-	            + "are required.");
+	    // Bank + Branch identity
+	    if (!bankName.isEmpty() && !branchName.isEmpty()) {
+	        recordKeys.add(
+	                "BANK_BRANCH:" + bankName + "|" + branchName
+	        );
+	    }
+
+	    // Bank + Branch Code identity
+	    if (!bankName.isEmpty() && !branchCode.isEmpty()) {
+	        recordKeys.add(
+	                "BANK_BRANCH_CODE:" + bankName + "|" + branchCode
+	        );
+	    }
+
+	    // Branch name + branch code identity
+	    if (!branchName.isEmpty() && !branchCode.isEmpty()) {
+	        recordKeys.add(
+	                "BRANCH_CODE:" + branchName + "|" + branchCode
+	        );
+	    }
+
+	    if (recordKeys.isEmpty()) {
+	        throw new IllegalArgumentException(
+	                "Unable to generate unique record keys for bank branch. "
+	                + "Bank name, branch name, IFSC code and branch code "
+	                + "are all missing.");
+	    }
+
+	    return recordKeys;
 	}
 }

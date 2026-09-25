@@ -144,10 +144,10 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 			 * ========================================================
 			 */
 			
-			String recordKey = getRecordKey(record);
+			List<String> recordKeys = getRecordKeys(record);
 
 			boolean alreadyMigrated = duplicateDetectionService.isAlreadyMigrated(request.getTenantId(),
-					request.getMigrationType().name(), recordKey);
+					request.getMigrationType().name(), recordKeys);
 
 			if (alreadyMigrated) {
 
@@ -162,7 +162,7 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 				/*
 				 * Save skipped record
 				 */
-				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKey);
+				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKeys);
 
 				/*
 				 * Update progress
@@ -223,7 +223,7 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 
 			recordResults.add(result);
 
-			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKey);
+			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKeys);
 
 			/*
 			 * ======================================================== UPDATE REALTIME
@@ -345,7 +345,7 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 	/**
 	 * Save migration detail record.
 	 */
-	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, String recordKey) {
+	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, List<String> recordKey) {
 
 		MigrationJobDetail detail = new MigrationJobDetail();
 
@@ -384,7 +384,7 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 	}
 	
 	@Override
-	protected String getRecordKey(Object record) {
+	protected List<String> getRecordKeys(Object record) {
 
 	    if (!(record instanceof FundRecord fund)) {
 
@@ -393,13 +393,20 @@ public class FundMigrationProcessor extends AbstractMigrationProcessor {
 	    }
 
 	    String fundName = normalize(fund.getFundName());
+	    
+	    List<String> recordKeys = new ArrayList<>();
+
 
 	    if (!fundName.isEmpty()) {
-	        return "FUND:" + fundName;
+	    	recordKeys.add("FUND:" + fundName);
 	    }
 
-	    throw new IllegalArgumentException(
-	            "Unable to generate unique record key for fund. "
-	            + "Fund name is missing.");
+	    if (recordKeys.isEmpty()) {
+		    throw new IllegalArgumentException(
+		            "Unable to generate unique record key for fund. "
+		            + "Fund name is missing.");
+	    }
+	    
+	    return recordKeys;
 	}
 }

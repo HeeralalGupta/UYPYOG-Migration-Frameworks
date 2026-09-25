@@ -1,5 +1,7 @@
 package org.egov.finance.migration.processor;
 
+import java.util.List;
+
 import org.egov.finance.migration.common.dto.MigrationRequest;
 import org.egov.finance.migration.common.dto.MigrationResult;
 
@@ -29,7 +31,7 @@ public abstract class AbstractMigrationProcessor implements MigrationProcessor {
     /**
      * Unique value for duplicate detection.
      */
-	protected String getRecordKey(Object record) {
+	protected List<String> getRecordKeys(Object record) {
 		return null;
 	}
 	
