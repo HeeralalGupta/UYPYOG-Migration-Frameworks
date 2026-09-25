@@ -141,10 +141,10 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 			 * ========================================================
 			 */
 			
-			String recordKey = getRecordKey(record);
+			List<String> recordKeys = getRecordKeys(record);
 
 			boolean alreadyMigrated = duplicateDetectionService.isAlreadyMigrated(request.getTenantId(),
-					request.getMigrationType().name(), recordKey);
+					request.getMigrationType().name(), recordKeys);
 
 			if (alreadyMigrated) {
 
@@ -161,7 +161,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 				/*
 				 * Save skipped record
 				 */
-				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKey);
+				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKeys);
 
 				/*
 				 * Update progress
@@ -235,7 +235,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 
 			recordResults.add(result);
 
-			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKey);
+			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKeys);
 
 			/*
 			 * ======================================================== UPDATE REALTIME
@@ -371,7 +371,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 	/**
 	 * Save migration detail record.
 	 */
-	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, String recordKey) {
+	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, List<String> recordKey) {
 
 		MigrationJobDetail detail = new MigrationJobDetail();
 
@@ -421,7 +421,7 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 	}
 	
 	@Override
-	protected String getRecordKey(Object record) {
+	protected List<String> getRecordKeys(Object record) {
 
 	    if (!(record instanceof BankAccountRecord account)) {
 	        throw new IllegalArgumentException(
@@ -432,17 +432,35 @@ public class BankAccountMigrationProcessor extends AbstractMigrationProcessor {
 	    String ifscCode = normalize(account.getIfscCode());
 	    String accountNumber = normalize(account.getAccountNumber());
 
-	    if (!branchName.isEmpty()
-	            && !ifscCode.isEmpty()
-	            && !accountNumber.isEmpty()) {
+	    List<String> recordKeys = new ArrayList<>();
 
-	        return "BRANCH:" + branchName
-	                + "|IFSC:" + ifscCode
-	                + "|ACCOUNT:" + accountNumber;
+	    // Strong bank account identity
+	    if (!ifscCode.isEmpty() && !accountNumber.isEmpty()) {
+	        recordKeys.add(
+	                "BANK_ACCOUNT:" + ifscCode + "|" + accountNumber
+	        );
 	    }
 
-	    throw new IllegalArgumentException(
-	            "Unable to generate unique record key for bank account. "
-	            + "Branch name, IFSC code and account number are required.");
+	    // Branch + account identity
+	    if (!branchName.isEmpty() && !accountNumber.isEmpty()) {
+	        recordKeys.add(
+	                "BRANCH_ACCOUNT:" + branchName + "|" + accountNumber
+	        );
+	    }
+
+	    // Branch + IFSC identity
+	    if (!branchName.isEmpty() && !ifscCode.isEmpty()) {
+	        recordKeys.add(
+	                "BRANCH_IFSC:" + branchName + "|" + ifscCode
+	        );
+	    }
+
+	    if (recordKeys.isEmpty()) {
+	        throw new IllegalArgumentException(
+	                "Unable to generate unique record keys for bank account. "
+	                + "IFSC code and account number are required.");
+	    }
+
+	    return recordKeys;
 	}
 }

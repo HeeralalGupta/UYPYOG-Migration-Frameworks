@@ -152,13 +152,13 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 			 * ========================================================
 			 */
 			
-			String recordKey = getRecordKey(record);
+			List<String> recordKeys = getRecordKeys(record);
 
 			boolean alreadyMigrated =
 					duplicateDetectionService.isAlreadyMigrated(
 							request.getTenantId(),
 							request.getMigrationType().name(),
-							recordKey);
+							recordKeys);
 
 			if (alreadyMigrated) {
 
@@ -178,7 +178,7 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 						request,
 						result,
 						RecordStatus.SKIPPED.name(),
-						recordKey);
+						recordKeys);
 
 				/*
 				 * Update progress
@@ -273,7 +273,7 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 					request,
 					result,
 					result.getStatus().name(),
-					recordKey);
+					recordKeys);
 
 			/*
 			 * ========================================================
@@ -447,7 +447,7 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 			MigrationRequest request,
 			RecordResult result,
 			String status,
-			String recordKey) {
+			List<String> recordKey) {
 
 		MigrationJobDetail detail =
 				new MigrationJobDetail();
@@ -498,7 +498,7 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 	}
 	
 	@Override
-	protected String getRecordKey(Object record) {
+	protected List<String> getRecordKeys(Object record) {
 
 	    if (!(record instanceof SchemeRecord scheme)) {
 	        throw new IllegalArgumentException(
@@ -506,15 +506,20 @@ public class SchemeMigrationProcessor extends AbstractMigrationProcessor {
 	    }
 
 	    String schemeName = normalize(scheme.getSchemeName());
+	    
+	    List<String> recordKeys = new ArrayList<>();
 
 	    // Unique identifier
 	    if (!schemeName.isEmpty()) {
-	        return "SCHEME_NAME:" + schemeName;
+	    	recordKeys.add("SCHEME_NAME:" + schemeName);
 	    }
 
 	    // No reliable identity available
-	    throw new IllegalArgumentException(
-	            "Unable to generate unique record key for scheme. "
-	            + "Scheme name is missing.");
+	    if (recordKeys.isEmpty()) {
+		    throw new IllegalArgumentException(
+		            "Unable to generate unique record key for scheme. "
+		            + "Scheme name is missing.");
+	    }
+	    return recordKeys;
 	}
 }

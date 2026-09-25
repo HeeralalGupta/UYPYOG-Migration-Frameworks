@@ -149,10 +149,10 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 			 * =================================================
 			 */
 			
-			String recordKey = getRecordKey(record);
+			List<String> recordKeys = getRecordKeys(record);
 
 			boolean alreadyMigrated = duplicateDetectionService.isAlreadyMigrated(request.getTenantId(),
-					request.getMigrationType().name(), recordKey);
+					request.getMigrationType().name(), recordKeys);
 
 			if (alreadyMigrated) {
 				result.setStatus(RecordStatus.SKIPPED);
@@ -164,7 +164,7 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 				/*
 				 * Save skipped detail
 				 */
-				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKey);
+				saveMigrationDetail(job, request, result, RecordStatus.SKIPPED.name(), recordKeys);
 
 				/*
 				 * Update realtime progress
@@ -233,7 +233,7 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 			 */
 
 			recordResults.add(result);
-			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKey);
+			saveMigrationDetail(job, request, result, result.getStatus().name(), recordKeys);
 
 			/*
 			 * ================================================= REALTIME PROGRESS
@@ -366,7 +366,7 @@ public class ContractorBillMigrationProcessor extends AbstractMigrationProcessor
 	 * DETAIL =========================================================
 	 */
 
-	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, String recordKey) {
+	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String status, List<String> recordKey) {
 
 		MigrationJobDetail detail = new MigrationJobDetail();
 

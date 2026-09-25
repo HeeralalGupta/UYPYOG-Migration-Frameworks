@@ -16,10 +16,12 @@ import lombok.extern.slf4j.Slf4j;
 public class MigrationAsyncService {
 
 	private final MigrationProcessorFactory factory;
+	private final MigrationCancellationManager cancellationManager;
 
-	public MigrationAsyncService(MigrationProcessorFactory factory) {
+	public MigrationAsyncService(MigrationProcessorFactory factory, MigrationCancellationManager cancellationManager) {
 
 		this.factory = factory;
+		this.cancellationManager = cancellationManager;
 	}
 
 	@Async("migrationExecutor")
@@ -36,6 +38,9 @@ public class MigrationAsyncService {
 		} catch (Exception e) {
 			log.error("Migration async FAILED: jobId={}", request.getJobId(), e);
 		}finally {
+			
+		    // Remove cancellation flag after job finishes
+		    cancellationManager.remove(request.getJobId());
 			
             if (request.getFilePath() != null) {
                 try {

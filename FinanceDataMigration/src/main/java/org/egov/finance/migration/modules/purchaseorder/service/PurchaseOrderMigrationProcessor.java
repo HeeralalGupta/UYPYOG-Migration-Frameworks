@@ -190,14 +190,14 @@ public class PurchaseOrderMigrationProcessor
              * ========================================================
              */
             
-            String recordKey = getRecordKey(record);
+            List<String> recordKeys = getRecordKeys(record);
 
             boolean alreadyMigrated =
                     duplicateDetectionService
                             .isAlreadyMigrated(
                                     request.getTenantId(),
                                     request.getMigrationType().name(),
-                                    recordKey);
+                                    recordKeys);
 
             if (alreadyMigrated) {
 
@@ -222,7 +222,7 @@ public class PurchaseOrderMigrationProcessor
                         request,
                         result,
                         RecordStatus.SKIPPED.name(),
-                        recordKey);
+                        recordKeys);
 
                 /*
                  * Update progress.
@@ -363,7 +363,7 @@ public class PurchaseOrderMigrationProcessor
                     request,
                     result,
                     result.getStatus().name(),
-                    recordKey);
+                    recordKeys);
 
             /*
              * ========================================================
@@ -560,7 +560,7 @@ public class PurchaseOrderMigrationProcessor
             MigrationRequest request,
             RecordResult result,
             String status,
-            String recordKey) {
+            List<String> recordKey) {
 
         MigrationJobDetail detail =
                 new MigrationJobDetail();

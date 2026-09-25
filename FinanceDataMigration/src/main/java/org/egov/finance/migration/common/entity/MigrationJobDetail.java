@@ -2,6 +2,10 @@ package org.egov.finance.migration.common.entity;
 
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -52,8 +56,9 @@ public class MigrationJobDetail {
     @Column(name = "end_row")
     private Integer endRow;
 
-    @Column(name = "record_key")
-    private String recordKey;
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "record_key", columnDefinition = "text[]")
+    private List<String> recordKey;
 
     @Column(name = "status")
     private String status;

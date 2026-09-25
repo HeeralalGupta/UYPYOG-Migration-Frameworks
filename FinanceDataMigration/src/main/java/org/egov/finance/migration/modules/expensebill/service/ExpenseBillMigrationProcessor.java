@@ -119,7 +119,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 				result.setEndRow(record.getEndRow());
 			}
 			
-			 String recordKey = getRecordKey(record);
+			 List<String> recordKeys = getRecordKeys(record);
 
 			try {
 
@@ -207,7 +207,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 			 */
 
 			recordResults.add(result);
-			saveMigrationDetail(job, request, result, recordKey);
+			saveMigrationDetail(job, request, result, recordKeys);
 
 			/*
 			 * ======================================================== UPDATE JOB PROGRESS
@@ -439,10 +439,10 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 
 	private boolean checkDuplicate(MigrationRequest request, ExpenseBillRecord record) {
 		
-		 String recordKey = getRecordKey(record);
+		 List<String> recordKeys = getRecordKeys(record);
 
 		try {
-			return duplicateDetectionService.isAlreadyMigrated(request.getTenantId(), request.getMigrationType().name(), recordKey);
+			return duplicateDetectionService.isAlreadyMigrated(request.getTenantId(), request.getMigrationType().name(), recordKeys);
 
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Duplicate check failed for Expense Bill SN " + record.getSerialNumber()
@@ -627,7 +627,7 @@ public class ExpenseBillMigrationProcessor extends AbstractMigrationProcessor {
 	 * ================================================================
 	 */
 
-	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, String recordKey) {
+	private void saveMigrationDetail(MigrationJob job, MigrationRequest request, RecordResult result, List<String> recordKey) {
 
 		if (job == null) {
 			throw new IllegalArgumentException("Migration job cannot be null " + "while saving migration detail.");

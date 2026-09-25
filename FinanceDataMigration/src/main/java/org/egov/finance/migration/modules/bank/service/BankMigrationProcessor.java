@@ -152,13 +152,13 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 			 * ========================================================
 			 */
 
-			String recordKey = getRecordKey(record);
+			List<String> recordKeys = getRecordKeys(record);
 			
 			boolean alreadyMigrated =
 					duplicateDetectionService.isAlreadyMigrated(
 							request.getTenantId(),
 							request.getMigrationType().name(),
-							recordKey);
+							recordKeys);
 
 			if (alreadyMigrated) {
 
@@ -178,7 +178,7 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 						request,
 						result,
 						RecordStatus.SKIPPED.name(),
-						recordKey);
+						recordKeys);
 
 				/*
 				 * Update progress
@@ -274,7 +274,7 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 					request,
 					result,
 					result.getStatus().name(),
-					recordKey);
+					recordKeys);
 
 			/*
 			 * ========================================================
@@ -446,7 +446,7 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 			MigrationRequest request,
 			RecordResult result,
 			String status,
-			String recordKey) {
+			List<String> recordKey) {
 
 		MigrationJobDetail detail =
 				new MigrationJobDetail();
@@ -496,7 +496,7 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 	}
 	
 	@Override
-	protected String getRecordKey(Object record) {
+	protected List<String> getRecordKeys(Object record) {
 
 	    if (!(record instanceof BankRecord bank)) {
 	        throw new IllegalArgumentException(
@@ -505,12 +505,18 @@ public class BankMigrationProcessor extends AbstractMigrationProcessor {
 
 	    String bankName = normalize(bank.getBankName());
 
+	    List<String> recordKeys = new ArrayList<>();
+	    
 	    if (!bankName.isEmpty()) {
-	        return "BANK_NAME:" + bankName;
+	    	recordKeys.add("BANK_NAME:" + bankName);
 	    }
 
-	    throw new IllegalArgumentException(
-	            "Unable to generate unique record key for bank. "
-	            + "Bank name is missing.");
+	    if (recordKeys.isEmpty()) {
+		    throw new IllegalArgumentException(
+		            "Unable to generate unique record key for bank. "
+		            + "Bank name is missing.");
+	    }
+	    
+	    return recordKeys;
 	}
 }
