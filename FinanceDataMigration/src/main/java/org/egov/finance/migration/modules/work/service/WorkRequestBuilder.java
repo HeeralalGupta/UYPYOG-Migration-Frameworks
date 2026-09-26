@@ -18,6 +18,7 @@ public class WorkRequestBuilder {
         /*
          * Work information
          */
+        request.setWorkCode(record.getWorkCode());
         request.setWorkName(record.getNameOfWork());
         request.setWorkType(record.getWorkType());
         request.setFundName(record.getFund());

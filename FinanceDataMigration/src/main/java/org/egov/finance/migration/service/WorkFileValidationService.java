@@ -67,6 +67,7 @@ public class WorkFileValidationService
                     createHeaderMap(row);
 
             if (headers.containsKey("ulbname")
+            		&& headers.containsKey("workcode")
                     && headers.containsKey("nameofwork")
                     && headers.containsKey("worktype")
                     && headers.containsKey("fund")) {
@@ -85,6 +86,7 @@ public class WorkFileValidationService
 
         String[] requiredHeaders = {
                 "ulbname",
+                "workcode",
                 "nameofwork",
                 "worktype",
                 "fund"

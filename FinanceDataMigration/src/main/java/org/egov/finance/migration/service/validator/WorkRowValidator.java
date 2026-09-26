@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
+import org.egov.finance.migration.common.constants.ApplicationConstants;
 import org.egov.finance.migration.common.dto.RowValidationError;
 import org.springframework.stereotype.Component;
 
@@ -38,10 +39,34 @@ public class WorkRowValidator implements MigrationRowValidator {
                 "ulbname",
                 "ULB Name",
                 validationError);
+        
+        /*
+         * =====================================================
+         * 2. WORK CODE
+         * =====================================================
+         */
+
+        // NEW
+        validateRequired(
+                row,
+                headerMap,
+                "workcode",
+                "Work Code",
+                validationError);
+        
+        String workCode =
+                getValue(row, headerMap, "workcode");
+
+        if (!workCode.isEmpty()
+                && !workCode.matches(ApplicationConstants.REGEXP_WORK_CODE)) {
+
+            validationError.getErrors().add(
+                    "Work Code must be in format WC/YYYY/number"); 
+        }
 
         /*
          * =====================================================
-         * 2. NAME OF WORK
+         * 3. NAME OF WORK
          * =====================================================
          */
 
@@ -54,7 +79,7 @@ public class WorkRowValidator implements MigrationRowValidator {
 
         /*
          * =====================================================
-         * 3. WORK TYPE
+         * 4. WORK TYPE
          * =====================================================
          */
 
@@ -67,7 +92,7 @@ public class WorkRowValidator implements MigrationRowValidator {
 
         /*
          * =====================================================
-         * 4. FUND
+         * 5. FUND
          * =====================================================
          */
 
@@ -80,7 +105,7 @@ public class WorkRowValidator implements MigrationRowValidator {
 
         /*
          * =====================================================
-         * 5. ESTIMATE VALUE
+         * 6. ESTIMATE VALUE
          * =====================================================
          */
 

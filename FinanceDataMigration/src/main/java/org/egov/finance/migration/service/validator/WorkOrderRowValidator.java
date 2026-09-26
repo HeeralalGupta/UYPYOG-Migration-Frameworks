@@ -253,7 +253,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
                 "advancepayable",
                 "Advance Payable",
                 validationError,
-                true);
+                false);
 
         /*
          * =================================================

@@ -210,6 +210,7 @@ public class WorkExcelReader {
     private boolean isWorkHeader(String header) {
 
         return "ulbname".equals(header)
+        		|| "workcode".equals(header)
                 || "nameofwork".equals(header)
                 || "worktype".equals(header)
                 || "fund".equals(header)
@@ -235,6 +236,12 @@ public class WorkExcelReader {
                         row,
                         headerMap,
                         "ulbname"));
+        
+        record.setWorkCode(              
+                getCellValue(
+                        row,
+                        headerMap,
+                        "workcode"));
 
         record.setNameOfWork(
                 getCellValue(
