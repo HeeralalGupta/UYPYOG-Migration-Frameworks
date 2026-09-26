@@ -622,4 +622,29 @@ public class PurchaseOrderMigrationProcessor
 
         return root.getMessage();
     }
+    
+    @Override
+    protected List<String> getRecordKeys(Object record) {
+
+        if (!(record instanceof PurchaseOrderRecord purchaseOrder)) {
+            throw new IllegalArgumentException(
+                    "Invalid record type for PurchaseOrderMigrationProcessor");
+        }
+
+        String orderNo = normalize(purchaseOrder.getOrderNo());
+
+        List<String> recordKeys = new ArrayList<>();
+
+        if (!orderNo.isEmpty()) {
+            recordKeys.add("PURCHASE_ORDER_NO:" + orderNo);
+        }
+
+        if (recordKeys.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Unable to generate unique record key for purchase order. "
+                    + "Purchase Order No. is missing.");
+        }
+
+        return recordKeys;
+    }
 }
