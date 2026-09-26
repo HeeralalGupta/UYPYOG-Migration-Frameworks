@@ -106,7 +106,27 @@ public class FileValidationService {
 				return result;
 			}
 
-			Sheet sheet = workbook.getSheetAt(0);
+			Sheet sheet = null;
+
+			for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+			    Sheet currentSheet = workbook.getSheetAt(i);
+
+			    if ("Journal Voucher".equalsIgnoreCase(currentSheet.getSheetName())) {
+			        sheet = currentSheet;
+			        break;
+			    }
+			}
+
+			if (sheet == null && workbook.getNumberOfSheets() == 1) {
+			    sheet = workbook.getSheetAt(0);
+			}
+
+			if (sheet == null) {
+			    result.setValid(false);
+			    result.getErrors().add(
+			            "Excel sheet 'Journal Voucher' not found.");
+			    return result;
+			}
 
 			/*
 			 * ================================================= 6. FIND MULTI-ROW HEADER

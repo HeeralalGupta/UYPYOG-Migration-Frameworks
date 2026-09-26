@@ -45,11 +45,39 @@ public class ContractorBillFileValidationService extends AbstractFileValidationS
 	@Override
 	protected Sheet getSheet(Workbook workbook) {
 
-		if (workbook.getNumberOfSheets() == 0) {
-			throw new IllegalArgumentException("Excel workbook does not contain any sheet.");
-		}
+	    if (workbook.getNumberOfSheets() == 0) {
+	        throw new IllegalArgumentException(
+	                "Excel workbook does not contain any sheet.");
+	    }
 
-		return workbook.getSheetAt(0);
+	    /*
+	     * First try to find Contractor Bill sheet
+	     * in a multi-sheet workbook.
+	     */
+	    for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+
+	        Sheet sheet = workbook.getSheetAt(i);
+
+	        if ("Contractor Bill"
+	                .equalsIgnoreCase(sheet.getSheetName())) {
+
+	            return sheet;
+	        }
+	    }
+
+	    /*
+	     * If there is only one sheet,
+	     * use that sheet.
+	     *
+	     * Example:
+	     * Sheet1 -> Contractor Bill Excel
+	     */
+	    if (workbook.getNumberOfSheets() == 1) {
+	        return workbook.getSheetAt(0);
+	    }
+
+	    throw new IllegalArgumentException(
+	            "Excel sheet 'Contractor Bill' not found.");
 	}
 
 	/*
