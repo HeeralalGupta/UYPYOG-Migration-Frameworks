@@ -6,6 +6,7 @@ import org.egov.finance.migration.service.BankBranchFileValidationService;
 import org.egov.finance.migration.service.BankFileValidationService;
 import org.egov.finance.migration.service.ContractorBillFileValidationService;
 import org.egov.finance.migration.service.ContractorFileValidationService;
+import org.egov.finance.migration.service.ExpenseBillFileValidationService;
 import org.egov.finance.migration.service.FileValidationService;
 import org.egov.finance.migration.service.FundFileValidationService;
 import org.egov.finance.migration.service.PurchaseOrderFileValidationService;
@@ -39,6 +40,7 @@ public class FileValidationController {
 	private final PurchaseOrderFileValidationService purchaseOrderFileValidationService;
 	private final ContractorBillFileValidationService contractorBillFileValidationService;
 	private final SupplierBillFileValidationService supplierBillFileValidationService;
+	private final ExpenseBillFileValidationService expenseBillFileValidationService;
 
 	public FileValidationController(FileValidationService validationService,
 			FundFileValidationService fundFileValidationService,
@@ -52,7 +54,8 @@ public class FileValidationController {
 			WorkOrderFileValidationService workOrderFileValidationService,
 			PurchaseOrderFileValidationService purchaseOrderFileValidationService,
 			ContractorBillFileValidationService contractorBillFileValidationService,
-			SupplierBillFileValidationService supplierBillFileValidationService) {
+			SupplierBillFileValidationService supplierBillFileValidationService,
+			ExpenseBillFileValidationService expenseBillFileValidationService) {
 
 		this.validationService = validationService;
 		this.fundFileValidationService = fundFileValidationService;
@@ -67,6 +70,7 @@ public class FileValidationController {
 		this.purchaseOrderFileValidationService = purchaseOrderFileValidationService;
 		this.contractorBillFileValidationService = contractorBillFileValidationService;
 		this.supplierBillFileValidationService = supplierBillFileValidationService;
+		this.expenseBillFileValidationService = expenseBillFileValidationService;
 		
 	}
 
@@ -135,5 +139,9 @@ public class FileValidationController {
 	public FileValidationResult validateSupplierBillFile(@RequestParam("file") MultipartFile file) {
 		return supplierBillFileValidationService.validate(file);
 	}
-	
+
+	@PostMapping(value = "/validate/EXPENSE_BILL", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public FileValidationResult validateExpenseBillFile(@RequestParam("file") MultipartFile file) {
+		return expenseBillFileValidationService.validate(file);
+	}
 }
