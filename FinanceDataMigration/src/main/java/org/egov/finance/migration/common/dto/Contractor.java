@@ -3,7 +3,7 @@ package org.egov.finance.migration.common.dto;
 import java.sql.Date;
 
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Data
 public class Contractor {
@@ -20,11 +20,13 @@ public class Contractor {
     private String narration;
 
     private String panNumber;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String tinNumber;
     private String ifscCode;
     private String bankAccount;
     private String source;
     private String mobileNumber;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String registrationNumber;
     private String epfNumber;
     private String esiNumber;
