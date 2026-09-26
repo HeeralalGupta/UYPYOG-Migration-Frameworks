@@ -3812,7 +3812,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	                    <i class="fa-solid fa-circle-exclamation"></i>
 
 	                    <span>
-	                        ${escapeHtml(getDisplayError(displayError, "Please check the Bank and try again."))}
+	                        ${escapeHtml(getDisplayError(displayError, "Please Check and Try Again."))}
 	                    </span>
 
 	                </td>
@@ -3833,13 +3833,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
 		    var error = displayError.toLowerCase();
 
-		    if (error.includes("arjuna016053")
-		            || error.includes("jta transaction unexpectedly rolled back")
-		            || error.includes("could not commit transaction")) {
-
-		        return "Bank already exists: " + bankName;
-		    }
-
+		    if (error.includes("failed to create bank: jta transaction unexpectedly rolled back")) {
+		            return "Bank already exists: " + bankName;
+		        }
+			if (error.includes("failed to create bank account: jta transaction unexpectedly rolled back")) {
+					return "Bank Account already exists: " + bankName;
+				}	
+			if (error.includes("bankbranch.name.duplicate")) {
+			        return "Bank Branch already exists";
+			    }
+			if (error.includes("failed to create bank account: null")) {
+					return "Account Type GL Code not exist: " + bankName;
+				}		
 		    return displayError;
 		}
 
