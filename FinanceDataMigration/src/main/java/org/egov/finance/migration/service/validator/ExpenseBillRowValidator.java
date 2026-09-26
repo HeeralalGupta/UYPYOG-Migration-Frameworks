@@ -18,12 +18,7 @@ public class ExpenseBillRowValidator implements MigrationRowValidator {
 
 	private static final String DATE_FORMAT = "dd/MM/yyyy";
 
-	@Override
-	public String getModuleCode() {
-
-		return "EXPENSE_BILL";
-	}
-
+	
 	@Override
 	public RowValidationError validate(Row row, int excelRowNumber, Map<String, Integer> headerMap) {
 
