@@ -9,6 +9,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class WorkRequest {
+	
+	private String workCode;
 
 	private String workName;
 

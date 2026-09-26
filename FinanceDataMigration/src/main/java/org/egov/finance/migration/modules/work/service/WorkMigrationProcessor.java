@@ -539,4 +539,33 @@ public class WorkMigrationProcessor extends AbstractMigrationProcessor {
 
         return root.getMessage();
     }
+    
+    @Override
+    protected List<String> getRecordKeys(Object record) {
+
+        if (!(record instanceof WorkRecord work)) {
+
+            throw new IllegalArgumentException(
+                    "Invalid record type for WorkMigrationProcessor");
+        }
+
+        String workCode = normalize(work.getWorkCode());
+
+        List<String> recordKeys = new ArrayList<>();
+
+        // Work Code identity
+        if (!workCode.isEmpty()) {
+
+            recordKeys.add("WORK_CODE:" + workCode);
+        }
+
+        if (recordKeys.isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "Unable to generate unique record key for work. "
+                    + "Work code is missing.");
+        }
+
+        return recordKeys;
+    }
 }

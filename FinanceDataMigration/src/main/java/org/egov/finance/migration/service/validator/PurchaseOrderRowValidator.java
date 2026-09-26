@@ -2,6 +2,8 @@ package org.egov.finance.migration.service.validator;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -9,7 +11,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.stereotype.Component;
-
+import org.egov.finance.migration.common.constants.ApplicationConstants;
 import org.egov.finance.migration.common.dto.RowValidationError;
 
 @Component
@@ -80,15 +82,24 @@ public class PurchaseOrderRowValidator implements MigrationRowValidator {
          * 2. ORDER NO.
          * =================================================
          *
-         * Order No. is NOT mandatory in Excel,
-         * so only validate if provided.
          */
-        validateOptional(
+        validateRequired(
                 row,
                 headerMap,
                 "orderno",
                 "Order No.",
                 validationError);
+        
+        String orderNumber =
+                getValue(row, headerMap, "orderno");
+
+        if (!orderNumber.isEmpty()
+                && !orderNumber.matches(
+                        ApplicationConstants.REGEXP_PURCHASE_ORDER_NUMBER)) {
+
+            validationError.getErrors().add(
+                    "Order No. must be in format PO/001/YY-YY/number");
+        }
 
         /*
          * =================================================
@@ -243,6 +254,12 @@ public class PurchaseOrderRowValidator implements MigrationRowValidator {
                             + DATE_FORMAT
                             + " format");
         }
+        
+        validatePurchaseOrderFinancialYear(
+                orderNumber,
+                orderDate,
+                sanctionDate,
+                validationError);
 
         /*
          * =================================================
@@ -591,5 +608,145 @@ public class PurchaseOrderRowValidator implements MigrationRowValidator {
 
             return false;
         }
+    }
+    
+    private void validatePurchaseOrderFinancialYear(
+            String orderNumber,
+            String orderDate,
+            String sanctionDate,
+            RowValidationError validationError) {
+
+        if (orderNumber.isEmpty()
+                || !orderNumber.matches(
+                        ApplicationConstants.REGEXP_PURCHASE_ORDER_NUMBER)) {
+            return;
+        }
+
+        String[] parts =
+                orderNumber.split("/");
+
+        String financialYear =
+                parts[2];
+
+        String[] years =
+                financialYear.split("-");
+
+        if (years.length != 2) {
+            return;
+        }
+
+        int startYear;
+        int endYear;
+
+        try {
+
+            startYear =
+                    Integer.parseInt(years[0]);
+
+            endYear =
+                    Integer.parseInt(years[1]);
+
+        } catch (NumberFormatException e) {
+            return;
+        }
+
+        /*
+         * Validate financial year sequence.
+         * Example: 23-24, 24-25, 25-26, 26-27
+         */
+        if ((startYear + 1) % 100 != endYear) {
+
+            validationError.getErrors().add(
+                    "Invalid Financial Year in Purchase Order Number: "
+                            + financialYear);
+
+            return;
+        }
+
+        /*
+         * Validate against Order Date
+         */
+        if (!orderDate.isEmpty()
+                && isValidDate(orderDate)) {
+
+            String orderDateFinancialYear =
+                    getFinancialYearFromDate(
+                            parseDate(orderDate));
+
+            if (!financialYear.equals(
+                    orderDateFinancialYear)) {
+
+                validationError.getErrors().add(
+                        "Purchase Order Number financial year "
+                                + financialYear
+                                + " does not match Order Date financial year "
+                                + orderDateFinancialYear);
+            }
+        }
+
+        /*
+         * Validate against Sanction Date
+         */
+        if (!sanctionDate.isEmpty()
+                && isValidDate(sanctionDate)) {
+
+            String sanctionDateFinancialYear =
+                    getFinancialYearFromDate(
+                            parseDate(sanctionDate));
+
+            if (!financialYear.equals(
+                    sanctionDateFinancialYear)) {
+
+                validationError.getErrors().add(
+                        "Purchase Order Number financial year "
+                                + financialYear
+                                + " does not match Sanction Date financial year "
+                                + sanctionDateFinancialYear);
+            }
+        }
+    }
+    
+    private Date parseDate(String value) {
+
+        try {
+
+            SimpleDateFormat sdf =
+                    new SimpleDateFormat(DATE_FORMAT);
+
+            sdf.setLenient(false);
+
+            return sdf.parse(value);
+
+        } catch (ParseException e) {
+
+            return null;
+        }
+    }
+    
+    private String getFinancialYearFromDate(Date date) {
+
+        Calendar calendar =
+                Calendar.getInstance();
+
+        calendar.setTime(date);
+
+        int year =
+                calendar.get(Calendar.YEAR);
+
+        int month =
+                calendar.get(Calendar.MONTH) + 1;
+
+        if (month >= 4) {
+
+            return String.format(
+                    "%02d-%02d",
+                    year % 100,
+                    (year + 1) % 100);
+        }
+
+        return String.format(
+                "%02d-%02d",
+                (year - 1) % 100,
+                year % 100);
     }
 }

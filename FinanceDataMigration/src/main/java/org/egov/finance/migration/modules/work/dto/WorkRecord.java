@@ -17,6 +17,7 @@ public class WorkRecord {
      * Work information
      */
     private String ulbName;
+    private String workCode;
     private String nameOfWork;
     private String workType;
     private String fund;

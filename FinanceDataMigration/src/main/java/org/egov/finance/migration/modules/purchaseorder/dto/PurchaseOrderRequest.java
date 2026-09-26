@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PurchaseOrderRequest {
+	
+	private String orderNumber;
 
     private String name;
 

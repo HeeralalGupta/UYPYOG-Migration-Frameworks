@@ -23,6 +23,7 @@ public class PurchaseOrderRequestBuilder {
         /*
          * Purchase Order information
          */
+        request.setOrderNumber(record.getOrderNo());
         request.setName(record.getOrderName());
         request.setOrderDate(record.getOrderDate());
         request.setDescription(record.getDescription());
