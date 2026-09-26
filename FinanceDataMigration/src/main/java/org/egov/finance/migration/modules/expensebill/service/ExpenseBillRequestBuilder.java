@@ -131,9 +131,9 @@ public class ExpenseBillRequestBuilder {
 				throw new IllegalArgumentException(
 						"Bill Amount must be greater than zero. " + "Value: " + billRegister.getBillamount());
 			}
-			if (!hasValue(billRegister.getBillnumber())) {
-				throw new IllegalArgumentException("Bill Number is missing.");
-			}
+//			if (!hasValue(billRegister.getBillnumber())) {
+//				throw new IllegalArgumentException("Bill Number is missing.");
+//			}
 			if (!hasValue(billRegister.getBilldate())) {
 				throw new IllegalArgumentException("Bill Date is missing.");
 			}
@@ -819,7 +819,6 @@ public class ExpenseBillRequestBuilder {
 		}
 
 		value = value.trim();
-
 		String[] formats = { "dd/MM/yyyy", "dd-MM-yyyy", "MMM-dd-yyyy", "MMM/dd/yyyy" };
 
 		for (String format : formats) {
