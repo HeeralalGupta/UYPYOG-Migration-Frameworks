@@ -110,30 +110,21 @@ public class SupplierBillExcelReader {
 	 * continuation rows of the previous Supplier Bill.
 	 */
 	public List<SupplierBillRecord> read(String filePath) throws Exception {
-
 		List<SupplierBillRecord> supplierRecords = new ArrayList<>();
-
 		Set<Integer> serialNumbers = new HashSet<>();
-
-		try (InputStream inputStream = Files.newInputStream(Paths.get(filePath));
-
-				Workbook workbook = WorkbookFactory.create(inputStream)) {
-
+		try (InputStream inputStream = Files.newInputStream(Paths.get(filePath));Workbook workbook = WorkbookFactory.create(inputStream)) {
+			
 			validateWorkbook(workbook);
-
-			Sheet sheet = workbook.getSheetAt(0);
-
+//			Sheet sheet = workbook.getSheetAt(0);
+			Sheet sheet = workbook.getSheet("Supplier Bill");
 			validateSheet(sheet);
-
 			SupplierBillRecord currentRecord = null;
 
 			/*
-			 * ========================================================= PROCESS DATA ROWS
-			 * =========================================================
+			 * ========================================================= PROCESS DATA ROWS =========================================================
 			 */
 
 			for (int rowIndex = DATA_START_ROW; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
-
 				Row row = sheet.getRow(rowIndex);
 
 				/*
@@ -151,8 +142,7 @@ public class SupplierBillExcelReader {
 				validateRowStructure(row, excelRowNumber);
 
 				/*
-				 * ===================================================== NEW BILL IDENTIFICATION
-				 * =====================================================
+				 * ===================================================== NEW BILL IDENTIFICATION =====================================================
 				 *
 				 * SN is the primary marker for a new Supplier Bill.
 				 */

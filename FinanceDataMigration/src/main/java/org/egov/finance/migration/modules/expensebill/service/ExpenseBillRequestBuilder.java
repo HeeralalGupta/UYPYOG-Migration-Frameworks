@@ -157,12 +157,10 @@ public class ExpenseBillRequestBuilder {
 			return request;
 
 		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException(
-					"Expense Bill build failed for SN " + record.getSerialNumber() + ": " + e.getMessage(), e);
+			throw new IllegalArgumentException(record.getSerialNumber() + ": " + e.getMessage(), e);
 
 		} catch (Exception e) {
-			throw new IllegalArgumentException("Unexpected error while building Expense Bill " + "for SN "
-					+ record.getSerialNumber() + ": " + e.getMessage(), e);
+			throw new IllegalArgumentException(record.getSerialNumber() + ": " + e.getMessage(), e);
 		}
 	}
 
@@ -238,18 +236,17 @@ public class ExpenseBillRequestBuilder {
 		}
 
 		if (billAmount.compareTo(BigDecimal.ZERO) <= 0) {
-			throw new IllegalArgumentException(
-					"Calculated Bill Amount must be greater than zero. " + "Value: " + billAmount);
+			throw new IllegalArgumentException("Calculated Bill Amount must be greater than zero. " + "Value: " + billAmount);
 		}
 
 		billRegister.setBillamount(billAmount);
-		String billNumber = generateBillNumber(record);
-
-		if (!hasValue(billNumber)) {
-			throw new IllegalArgumentException("Bill Number could not be generated.");
-		}
-
-		billRegister.setBillnumber(billNumber);
+//		String billNumber = generateBillNumber(record);
+//
+//		if (!hasValue(billNumber)) {
+//			throw new IllegalArgumentException("Bill Number could not be generated.");
+//		}
+//
+//		billRegister.setBillnumber(billNumber);
 
 		if (!hasValue(record.getBillDate())) {
 			throw new IllegalArgumentException("Bill Date is missing for SN: " + record.getSerialNumber());
@@ -260,7 +257,7 @@ public class ExpenseBillRequestBuilder {
 		billRegister.setExpendituretype("Expense");
 
 		if (!hasValue(billRegister.getExpendituretype())) {
-			throw new IllegalArgumentException("Expenditure Type is missing for bill: " + billNumber);
+			throw new IllegalArgumentException("Expenditure Type is missing for bill");
 		}
 
 		/*
@@ -269,7 +266,7 @@ public class ExpenseBillRequestBuilder {
 		EgBillregistermis misDetails = buildMisDetails(record, requestInfo, tenantId);
 
 		if (misDetails == null) {
-			throw new IllegalArgumentException("MIS details could not be created for bill: " + billNumber);
+			throw new IllegalArgumentException("MIS details could not be created for bill");
 		}
 
 		billRegister.setEgBillregistermis(misDetails);
@@ -280,7 +277,7 @@ public class ExpenseBillRequestBuilder {
 		List<EgBilldetails> billDetails = buildBillDetails(record, requestInfo, tenantId);
 
 		if (billDetails == null || billDetails.isEmpty()) {
-			throw new IllegalArgumentException("Bill Details could not be created for bill: " + billNumber);
+			throw new IllegalArgumentException("Bill Details could not be created for bill");
 		}
 
 		billRegister.setBillDetails(billDetails);
@@ -291,7 +288,7 @@ public class ExpenseBillRequestBuilder {
 		List<EgBillPayeedetails> payeeDetails = buildPayeeDetails(record, requestInfo, tenantId);
 
 		if (payeeDetails == null || payeeDetails.isEmpty()) {
-			throw new IllegalArgumentException("Payee Details could not be created for bill: " + billNumber);
+			throw new IllegalArgumentException("Payee Details could not be created for bill: ");
 		}
 
 		billRegister.setBillPayeedetails(payeeDetails);
@@ -301,9 +298,9 @@ public class ExpenseBillRequestBuilder {
 		 */
 		List<EgBillChecklist> checkLists = buildCheckLists();
 
-		if (checkLists == null || checkLists.isEmpty()) {
-			throw new IllegalArgumentException("Checklist details could not be created for bill: " + billNumber);
-		}
+//		if (checkLists == null || checkLists.isEmpty()) {
+//			throw new IllegalArgumentException("Checklist details could not be created for bill: " + billNumber);
+//		}
 
 		billRegister.setCheckLists(checkLists);
 		return billRegister;
@@ -343,8 +340,7 @@ public class ExpenseBillRequestBuilder {
 		Fund fundResponse = fundServiceClient.getFundByName(record.getFund(), requestInfo, tenantId);
 
 		if (fundResponse == null) {
-			throw new IllegalArgumentException(
-					"Fund not found: " + record.getFund() + " Please Create or Check active/Inactive.");
+			throw new IllegalArgumentException("Fund not found: " + record.getFund() + " Please Create or Check active/Inactive.");
 		}
 		if (fundResponse.getId() == null) {
 			throw new IllegalArgumentException("Fund ID is missing from API response for fund: " + record.getFund());
