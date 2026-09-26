@@ -610,5 +610,36 @@ public class WorkOrderMigrationProcessor
 
         return root.getMessage();
     }
+    
+    @Override
+    protected List<String> getRecordKeys(Object record) {
+
+        if (!(record instanceof WorkOrderRecord workOrder)) {
+
+            throw new IllegalArgumentException(
+                    "Invalid record type for WorkOrderMigrationProcessor");
+        }
+
+        String workOrderNo =
+                normalize(workOrder.getWorkOrderNo());
+
+        List<String> recordKeys = new ArrayList<>();
+
+        // Work Order Number identity
+        if (!workOrderNo.isEmpty()) {
+
+            recordKeys.add(
+                    "WORK_ORDER_NO:" + workOrderNo);
+        }
+
+        if (recordKeys.isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "Unable to generate unique record key for work order. "
+                    + "Work Order No. is missing.");
+        }
+
+        return recordKeys;
+    }
 }
 

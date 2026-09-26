@@ -2,6 +2,8 @@ package org.egov.finance.migration.service.validator;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -9,7 +11,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.stereotype.Component;
-
+import org.egov.finance.migration.common.constants.ApplicationConstants;
 import org.egov.finance.migration.common.dto.RowValidationError;
 
 @Component
@@ -102,6 +104,17 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
                 "workorderno",
                 "Work Order No.",
                 validationError);
+        
+        String workOrderNo =
+                getValue(row, headerMap, "workorderno");
+
+        if (!workOrderNo.isEmpty()
+                && !workOrderNo.matches(
+                        ApplicationConstants.REGEXP_WORK_ORDER_NUMBER)) {
+
+            validationError.getErrors().add(
+                    "Work Order No. must be in format WO/001/YY-YY/number");
+        }
 
         /*
          * =================================================
@@ -284,12 +297,12 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
          * 16. SCHEME
          * =================================================
          */
-        validateRequired(
-                row,
-                headerMap,
-                "scheme",
-                "Scheme",
-                validationError);
+//        validateRequired(
+//                row,
+//                headerMap,
+//                "scheme",
+//                "Scheme",
+//                validationError);
 
         /*
          * =================================================
@@ -310,6 +323,12 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
                             + DATE_FORMAT
                             + " format");
         }
+        
+        validateWorkOrderFinancialYear(
+                workOrderNo,
+                workOrderDate,
+                sanctionDate,
+                validationError);
 
         /*
          * =================================================
@@ -335,7 +354,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
                 "bgamount",
                 "BG Amount",
                 validationError,
-                true);
+                false);
 
         /*
          * =================================================
@@ -348,7 +367,7 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
                 "apbgamount",
                 "APBG Amount",
                 validationError,
-                true);
+                false);
 
         return validationError;
     }
@@ -643,6 +662,146 @@ public class WorkOrderRowValidator implements MigrationRowValidator {
         } catch (ParseException e) {
 
             return false;
+        }
+    }
+    
+    private void validateWorkOrderFinancialYear(
+            String workOrderNo,
+            String workOrderDate,
+            String sanctionDate,
+            RowValidationError validationError) {
+
+        if (workOrderNo.isEmpty()
+                || !workOrderNo.matches(
+                        ApplicationConstants.REGEXP_WORK_ORDER_NUMBER)) {
+            return;
+        }
+
+        String[] parts = workOrderNo.split("/");
+
+        String financialYear = parts[2];
+
+        String[] years = financialYear.split("-");
+
+        if (years.length != 2) {
+            return;
+        }
+
+        int startYear;
+        int endYear;
+
+        try {
+
+            startYear = Integer.parseInt(years[0]);
+            endYear = Integer.parseInt(years[1]);
+
+        } catch (NumberFormatException e) {
+            return;
+        }
+
+        /*
+         * Validate financial year sequence
+         * Example: 23-24, 24-25, 25-26, 26-27
+         */
+        if ((startYear + 1) % 100 != endYear) {
+
+            validationError.getErrors().add(
+                    "Invalid Financial Year in Work Order No.: "
+                            + financialYear);
+
+            return;
+        }
+
+        /*
+         * Validate Work Order No. against Work Order Date
+         */
+        if (!workOrderDate.isEmpty()
+                && isValidDate(workOrderDate)) {
+
+            String orderDateFinancialYear =
+                    getFinancialYearFromDate(
+                            parseDate(workOrderDate));
+
+            if (!financialYear.equals(
+                    orderDateFinancialYear)) {
+
+                validationError.getErrors().add(
+                        "Work Order No. financial year "
+                                + financialYear
+                                + " does not match Work Order Date financial year "
+                                + orderDateFinancialYear);
+            }
+        }
+
+        /*
+         * Validate Work Order No. against Sanction Date
+         */
+        if (!sanctionDate.isEmpty()
+                && isValidDate(sanctionDate)) {
+
+            String sanctionDateFinancialYear =
+                    getFinancialYearFromDate(
+                            parseDate(sanctionDate));
+
+            if (!financialYear.equals(
+                    sanctionDateFinancialYear)) {
+
+                validationError.getErrors().add(
+                        "Work Order No. financial year "
+                                + financialYear
+                                + " does not match Sanction Date financial year "
+                                + sanctionDateFinancialYear);
+            }
+        }
+    }
+    private Date parseDate(String value) {
+
+        try {
+
+            SimpleDateFormat sdf =
+                    new SimpleDateFormat(DATE_FORMAT);
+
+            sdf.setLenient(false);
+
+            return sdf.parse(value);
+
+        } catch (ParseException e) {
+
+            return null;
+        }
+    }
+    
+    private String getFinancialYearFromDate(Date date) {
+
+        Calendar calendar =
+                Calendar.getInstance();
+
+        calendar.setTime(date);
+
+        int year =
+                calendar.get(Calendar.YEAR);
+
+        int month =
+                calendar.get(Calendar.MONTH) + 1;
+
+        if (month >= 4) {
+
+            return String.format(
+                    "%02d", year % 100)
+                    + "-"
+                    + String.format(
+                            "%02d",
+                            (year + 1) % 100);
+
+        } else {
+
+            return String.format(
+                    "%02d",
+                    (year - 1) % 100)
+                    + "-"
+                    + String.format(
+                            "%02d",
+                            year % 100);
         }
     }
 }

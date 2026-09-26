@@ -23,6 +23,7 @@ public class WorkOrderRequestBuilder {
         /*
          * Work Order information
          */
+        request.setOrderNumber(record.getWorkOrderNo());
         request.setName(record.getWorkOrderName());
         request.setOrderDate(record.getWorkOrderDate());
         request.setDescription(record.getDescription());

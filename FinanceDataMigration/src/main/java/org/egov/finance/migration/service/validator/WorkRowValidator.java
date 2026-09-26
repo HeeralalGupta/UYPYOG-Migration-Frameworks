@@ -2,6 +2,8 @@ package org.egov.finance.migration.service.validator;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -203,6 +205,12 @@ public class WorkRowValidator implements MigrationRowValidator {
                 // Already handled by date validation above.
             }
         }
+        
+        validateWorkCodeDateRange(
+        		        workCode,
+        		        startDate,
+        		        endDate,
+        		        validationError);
 
         /*
          * =====================================================
@@ -292,5 +300,82 @@ public class WorkRowValidator implements MigrationRowValidator {
 
             return false;
         }
+    }
+    
+    private void validateWorkCodeDateRange(
+            String workCode,
+            String startDate,
+            String endDate,
+            RowValidationError validationError) {
+
+        if (workCode.isEmpty()
+                || !workCode.matches(
+                        ApplicationConstants.REGEXP_WORK_CODE)) {
+            return;
+        }
+
+        String[] workCodeParts = workCode.split("/");
+
+        int workCodeYear =
+                Integer.parseInt(workCodeParts[1]);
+
+        if (isValidDate(startDate)) {
+
+            try {
+
+                SimpleDateFormat sdf =
+                        new SimpleDateFormat(DATE_FORMAT);
+
+                sdf.setLenient(false);
+
+                int startYear =
+                        getYear(sdf.parse(startDate));
+
+                if (workCodeYear < startYear) {
+
+                    validationError.getErrors().add(
+                            "Work code year " + workCodeYear
+                                    + " cannot be before start date year "
+                                    + startYear);
+                }
+
+            } catch (ParseException e) {
+                // Already handled by date validation.
+            }
+        }
+
+        if (isValidDate(endDate)) {
+
+            try {
+
+                SimpleDateFormat sdf =
+                        new SimpleDateFormat(DATE_FORMAT);
+
+                sdf.setLenient(false);
+
+                int endYear =
+                        getYear(sdf.parse(endDate));
+
+                if (workCodeYear > endYear) {
+
+                    validationError.getErrors().add(
+                            "Work code year " + workCodeYear
+                                    + " cannot be after end date year "
+                                    + endYear);
+                }
+
+            } catch (ParseException e) {
+                // Already handled by date validation.
+            }
+        }
+    }
+    
+    private int getYear(Date date) {
+
+        Calendar calendar = Calendar.getInstance();
+
+        calendar.setTime(date);
+
+        return calendar.get(Calendar.YEAR);
     }
 }
