@@ -42,15 +42,38 @@ public class ContractorFileValidationService
          * Therefore, get the first sheet.
          */
 
-        Sheet sheet = workbook.getSheetAt(0);
+    	if (workbook == null || workbook.getNumberOfSheets() == 0) {
+            throw new IllegalArgumentException(
+                    "Contractor Excel file does not contain any sheet.");
+        }
 
-        if (sheet == null) {
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+
+            Sheet currentSheet = workbook.getSheetAt(i);
+
+            if ("Contractor".equalsIgnoreCase(currentSheet.getSheetName())) {
+                return currentSheet;
+            }
+        }
+
+        /*
+         * If only one sheet exists, use it.
+         */
+        if (workbook.getNumberOfSheets() == 1) {
+        	Sheet singleSheet = workbook.getSheetAt(0);
+        	System.out.println("Single sheet name: " + singleSheet.getSheetName());
+			if ("Contractor".equalsIgnoreCase(singleSheet.getSheetName())) {
+				return singleSheet;
+			} else {
+				throw new IllegalArgumentException(
+						"Required Excel sheet for Contractor not found. " + "Expected sheet name: Contractor");
+			}
+           // return workbook.getSheetAt(0);
+        }
 
             throw new IllegalArgumentException(
                     "Required Excel sheet for Contractor not found.");
-        }
-
-        return sheet;
+ 
     }
 
     @Override

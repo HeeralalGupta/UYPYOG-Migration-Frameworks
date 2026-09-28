@@ -41,16 +41,36 @@ public class SupplierFileValidationService
          *
          * Therefore, use the first sheet.
          */
-
-        Sheet sheet = workbook.getSheetAt(0);
-
-        if (sheet == null) {
-
+    	if (workbook == null || workbook.getNumberOfSheets() == 0) {
             throw new IllegalArgumentException(
-                    "Required Excel sheet for Supplier not found.");
+                    "Supplier Excel file does not contain any sheet.");
+        }
+    	
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+
+            Sheet currentSheet = workbook.getSheetAt(i);
+
+            if ("Supplier".equalsIgnoreCase(currentSheet.getSheetName())) {
+                return currentSheet;
+            }
         }
 
-        return sheet;
+        /*
+         * If only one sheet exists, use it.
+         */
+        if (workbook.getNumberOfSheets() == 1) {
+        	Sheet singleSheet = workbook.getSheetAt(0);
+        	System.out.println("Single sheet name: " + singleSheet.getSheetName());
+			if ("Supplier".equalsIgnoreCase(singleSheet.getSheetName())) {
+				return singleSheet;
+			} else {
+				throw new IllegalArgumentException(
+						"Required Excel sheet for Supplier not found. " + "Expected sheet name: Supplier");
+			}
+           // return workbook.getSheetAt(0);
+        }
+            throw new IllegalArgumentException(
+                    "Required Excel sheet for Supplier not found.");
     }
 
     @Override
