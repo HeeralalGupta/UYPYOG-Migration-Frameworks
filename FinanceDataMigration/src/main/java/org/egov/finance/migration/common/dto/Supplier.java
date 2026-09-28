@@ -2,7 +2,10 @@ package org.egov.finance.migration.common.dto;
 
 import java.sql.Date;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.Data;
+import lombok.ToString;
 
 @Data
 public class Supplier {
@@ -24,7 +27,7 @@ public class Supplier {
     private String narration;
 
     private String panNumber;
-
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String tinNumber;
 
     private String ifscCode;
@@ -34,7 +37,7 @@ public class Supplier {
     private String source;
 
     private String mobileNumber;
-
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String registrationNumber;
 
     private String epfNumber;
