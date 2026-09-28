@@ -38,16 +38,36 @@ public class BankAccountFileValidationService
          * Bank Account Excel contains the required data
          * in the first sheet.
          */
-
-        Sheet sheet = workbook.getSheetAt(0);
-
-        if (sheet == null) {
-
+    	if (workbook == null || workbook.getNumberOfSheets() == 0) {
             throw new IllegalArgumentException(
-                    "Required Excel sheet for Bank Account not found.");
+                    "Bank Account Excel file does not contain any sheet.");
         }
 
-        return sheet;
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+
+            Sheet currentSheet = workbook.getSheetAt(i);
+
+            if ("Bank Account".equalsIgnoreCase(currentSheet.getSheetName())) {
+                return currentSheet;
+            }
+        }
+
+        /*
+         * If only one sheet exists, use it.
+         */
+        if (workbook.getNumberOfSheets() == 1) {
+        	Sheet singleSheet = workbook.getSheetAt(0);
+        	System.out.println("Single sheet name: " + singleSheet.getSheetName());
+			if ("Bank Account".equalsIgnoreCase(singleSheet.getSheetName())) {
+				return singleSheet;
+			} else {
+				throw new IllegalArgumentException(
+						"Required Excel sheet for Bank Account not found. " + "Expected sheet name: Bank Account");
+			}
+           // return workbook.getSheetAt(0);
+        }
+            throw new IllegalArgumentException(
+                    "Required Excel sheet for Bank Account not found.");
     }
 
     @Override
