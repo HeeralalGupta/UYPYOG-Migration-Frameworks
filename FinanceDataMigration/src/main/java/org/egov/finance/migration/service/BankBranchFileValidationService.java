@@ -39,15 +39,37 @@ public class BankBranchFileValidationService
          * in the first sheet.
          */
 
-        Sheet sheet = workbook.getSheetAt(0);
-
-        if (sheet == null) {
-
+    	if (workbook == null || workbook.getNumberOfSheets() == 0) {
             throw new IllegalArgumentException(
-                    "Required Excel sheet for Bank Branch not found.");
+                    "Fund Excel file does not contain any sheet.");
         }
 
-        return sheet;
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+
+            Sheet currentSheet = workbook.getSheetAt(i);
+
+            if ("Bank Branch".equalsIgnoreCase(currentSheet.getSheetName())) {
+                return currentSheet;
+            }
+        }
+
+        /*
+         * If only one sheet exists, use it.
+         */
+        if (workbook.getNumberOfSheets() == 1) {
+        	Sheet singleSheet = workbook.getSheetAt(0);
+        	System.out.println("Single sheet name: " + singleSheet.getSheetName());
+			if ("Bank Branch".equalsIgnoreCase(singleSheet.getSheetName())) {
+				return singleSheet;
+			} else {
+				throw new IllegalArgumentException(
+						"Required Excel sheet for Bank Branch not found. " + "Expected sheet name: Bank Branch");
+			}
+           // return workbook.getSheetAt(0);
+        }
+
+        throw new IllegalArgumentException(
+                    "Required Excel sheet for Bank Branch not found.");
     }
 
     @Override
