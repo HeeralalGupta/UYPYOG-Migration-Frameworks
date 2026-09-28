@@ -39,16 +39,37 @@ public class SchemeFileValidationService
          *
          * Therefore, get the first sheet.
          */
+    	 if (workbook == null || workbook.getNumberOfSheets() == 0) {
+             throw new IllegalArgumentException(
+                     "Scheme Excel file does not contain any sheet.");
+         }
 
-        Sheet sheet = workbook.getSheetAt(0);
+         for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
 
-        if (sheet == null) {
+             Sheet currentSheet = workbook.getSheetAt(i);
 
+             if ("Scheme".equalsIgnoreCase(currentSheet.getSheetName())) {
+                 return currentSheet;
+             }
+         }
+
+         /*
+          * If only one sheet exists, use it.
+          */
+         if (workbook.getNumberOfSheets() == 1) {
+         	Sheet singleSheet = workbook.getSheetAt(0);
+         	System.out.println("Single sheet name: " + singleSheet.getSheetName());
+ 			if ("Scheme".equalsIgnoreCase(singleSheet.getSheetName())) {
+ 				return singleSheet;
+ 			} else {
+ 				throw new IllegalArgumentException(
+ 						"Required Excel sheet for Scheme not found. " + "Expected sheet name: Scheme");
+ 			}
+            // return workbook.getSheetAt(0);
+         }
+        
             throw new IllegalArgumentException(
                     "Required Excel sheet for Scheme not found.");
-        }
-
-        return sheet;
     }
 
     @Override

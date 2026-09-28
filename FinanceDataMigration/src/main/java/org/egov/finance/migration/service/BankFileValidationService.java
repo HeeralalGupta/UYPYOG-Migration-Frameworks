@@ -31,24 +31,37 @@ public class BankFileValidationService
     protected Sheet getSheet(
             Workbook workbook) {
 
+    	if (workbook == null || workbook.getNumberOfSheets() == 0) {
+            throw new IllegalArgumentException(
+                    "Bank Excel file does not contain any sheet.");
+        }
+
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+
+            Sheet currentSheet = workbook.getSheetAt(i);
+
+            if ("Bank".equalsIgnoreCase(currentSheet.getSheetName())) {
+                return currentSheet;
+            }
+        }
+
         /*
-         * =====================================================
-         * GET BANK SHEET
-         * =====================================================
-         *
-         * If Bank Excel contains only one sheet,
-         * use the first sheet.
+         * If only one sheet exists, use it.
          */
-
-        Sheet sheet = workbook.getSheetAt(0);
-
-        if (sheet == null) {
+        if (workbook.getNumberOfSheets() == 1) {
+        	Sheet singleSheet = workbook.getSheetAt(0);
+        	System.out.println("Single sheet name: " + singleSheet.getSheetName());
+			if ("Bank".equalsIgnoreCase(singleSheet.getSheetName())) {
+				return singleSheet;
+			} else {
+				throw new IllegalArgumentException(
+						"Required Excel sheet for Bank not found. " + "Expected sheet name: Bank");
+			}
+           // return workbook.getSheetAt(0);
+        }  
 
             throw new IllegalArgumentException(
                     "Required Excel sheet for Bank not found.");
-        }
-
-        return sheet;
     }
 
     @Override

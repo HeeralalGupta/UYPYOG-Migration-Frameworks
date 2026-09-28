@@ -77,7 +77,26 @@ public class SchemeExcelReader {
 		try (InputStream inputStream = Files.newInputStream(Paths.get(filePath));
 				Workbook workbook = WorkbookFactory.create(inputStream)) {
 
-			Sheet sheet = workbook.getSheetAt(0);
+			//Sheet sheet = workbook.getSheetAt(0);
+			Sheet sheet = null;
+
+			for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+			    Sheet currentSheet = workbook.getSheetAt(i);
+
+			    if ("Scheme".equalsIgnoreCase(currentSheet.getSheetName())) {
+			        sheet = currentSheet;
+			        break;
+			    }
+			}
+
+			if (sheet == null && workbook.getNumberOfSheets() == 1) {
+			    sheet = workbook.getSheetAt(0);
+			}
+
+			if (sheet == null) {
+			    throw new IllegalArgumentException(
+			            "Excel sheet 'Scheme' not found.");
+			}
 
 			for (int rowIndex = DATA_START_ROW - 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
 
