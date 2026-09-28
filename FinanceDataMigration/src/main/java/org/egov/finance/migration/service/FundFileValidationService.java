@@ -2,56 +2,72 @@ package org.egov.finance.migration.service;
 
 import java.util.Map;
 
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.egov.finance.migration.common.constants.ExcelConstants;
 import org.egov.finance.migration.common.dto.FileValidationResult;
 import org.egov.finance.migration.common.enums.MigrationType;
 import org.egov.finance.migration.service.validator.FundRowValidator;
 import org.springframework.stereotype.Service;
 
 @Service
-public class FundFileValidationService
-        extends AbstractFileValidationService {
+public class FundFileValidationService extends AbstractFileValidationService {
 
-    public FundFileValidationService(
-            FundRowValidator fundRowValidator) {
-
+    public FundFileValidationService(FundRowValidator fundRowValidator) {
         super(fundRowValidator);
     }
 
     @Override
     protected MigrationType getModuleCode() {
-
         return MigrationType.FUND;
     }
 
     @Override
-    protected Sheet getSheet(
-            Workbook workbook) {
+    protected Sheet getSheet(Workbook workbook) {
 
-        /*
-         * Your uploaded FUND.xlsx contains
-         * only one sheet named "Sheet1".
-         *
-         * Therefore, if your application expects the first
-         * sheet, use getSheetAt(0).
-         */
-        Sheet sheet = workbook.getSheetAt(0);
-
-        if (sheet == null) {
-
+        if (workbook == null || workbook.getNumberOfSheets() == 0) {
             throw new IllegalArgumentException(
-                    "Required Excel sheet for Fund not found.");
+                    "Fund Excel file does not contain any sheet.");
         }
 
-        return sheet;
+        /*
+         * FUND Excel:
+         *
+         * If the workbook contains a sheet named "Fund",
+         * use that sheet.
+         *
+         * If there is only one sheet, use the first sheet.
+         */
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+
+            Sheet currentSheet = workbook.getSheetAt(i);
+
+            if ("Fund".equalsIgnoreCase(currentSheet.getSheetName())) {
+                return currentSheet;
+            }
+        }
+
+        /*
+         * If only one sheet exists, use it.
+         */
+        if (workbook.getNumberOfSheets() == 1) {
+        	Sheet singleSheet = workbook.getSheetAt(0);
+        	System.out.println("Single sheet name: " + singleSheet.getSheetName());
+			if ("Fund".equalsIgnoreCase(singleSheet.getSheetName())) {
+				return singleSheet;
+			} else {
+				throw new IllegalArgumentException(
+						"Required Excel sheet for Fund not found. " + "Expected sheet name: Fund");
+			}
+           // return workbook.getSheetAt(0);
+        }
+
+        throw new IllegalArgumentException(
+                "Required Excel sheet for Fund not found. "
+                + "Expected sheet name: Fund");
     }
 
     @Override
-    protected int findHeaderRow(
-            Sheet sheet) {
+    protected int findHeaderRow(Sheet sheet) {
 
         return checkHeaderRow(
                 sheet,
@@ -70,7 +86,6 @@ public class FundFileValidationService
          * REQUIRED FUND HEADERS
          * =====================================================
          */
-
         String[] requiredHeaders = {
                 "ulbname",
                 "fundname",
@@ -84,8 +99,7 @@ public class FundFileValidationService
             if (!headerMap.containsKey(header)) {
 
                 result.getErrors().add(
-                        "Required column missing: "
-                                + header);
+                        "Required column missing: " + header);
 
                 valid = false;
             }
@@ -94,3 +108,4 @@ public class FundFileValidationService
         return valid;
     }
 }
+

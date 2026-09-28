@@ -3842,6 +3842,9 @@ document.addEventListener("DOMContentLoaded", function() {
 			if (error.includes("bankbranch.name.duplicate")) {
 			        return "Bank Branch already exists";
 			    }
+			if (error.includes("bankbranch.code.duplicate")) {
+						        return "Bank Branch Code already exists";
+						    }	
 			if (error.includes("failed to create bank account: null")) {
 					return "Account Type GL Code not exist: " + bankName;
 				}		
