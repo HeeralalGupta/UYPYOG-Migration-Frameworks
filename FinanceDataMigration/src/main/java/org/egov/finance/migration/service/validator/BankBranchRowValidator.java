@@ -74,6 +74,25 @@ public class BankBranchRowValidator implements MigrationRowValidator {
                 "IFSC Code",
                 validationError);
 
+        String ifscCode = getValue(
+                row,
+                headerMap,
+                "ifsccode");
+
+        if (!ifscCode.isEmpty()) {
+
+            if (isDuplicateIfscCode(
+                    row,
+                    headerMap,
+                    ifscCode)) {
+
+                validationError.getErrors().add(
+                        "Duplicate IFSC Code found: '"
+                                + ifscCode
+                                + "'");
+            }
+        }
+        
         /*
          * =====================================================
          * 5. BRANCH CODE
@@ -189,7 +208,63 @@ public class BankBranchRowValidator implements MigrationRowValidator {
      * REQUIRED FIELD VALIDATION
      * =========================================================
      */
+    private boolean isDuplicateIfscCode(
+            Row currentRow,
+            Map<String, Integer> headerMap,
+            String currentIfscCode) {
 
+        int currentRowNumber =
+                currentRow.getRowNum();
+
+        /*
+         * Check all previous Excel rows.
+         */
+        for (int i = 0;
+                i < currentRowNumber;
+                i++) {
+
+            Row previousRow =
+                    currentRow
+                            .getSheet()
+                            .getRow(i);
+
+            if (previousRow == null) {
+                continue;
+            }
+
+            /*
+             * Get previous IFSC Code.
+             */
+            String previousIfscCode =
+                    getValue(
+                            previousRow,
+                            headerMap,
+                            "ifsccode");
+
+            /*
+             * Skip blank IFSC values.
+             */
+            if (previousIfscCode.isEmpty()) {
+                continue;
+            }
+
+            /*
+             * IFSC comparison:
+             *
+             * - Ignore leading/trailing spaces
+             * - Ignore upper/lower case
+             */
+            if (previousIfscCode
+                    .trim()
+                    .equalsIgnoreCase(
+                            currentIfscCode.trim())) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
     private void validateRequired(
             Row row,
             Map<String, Integer> headerMap,
