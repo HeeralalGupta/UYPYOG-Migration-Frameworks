@@ -284,7 +284,42 @@ public class SupplierRowValidator implements MigrationRowValidator {
                                 + "'");
             }
         }
+        String panNumber =
+                getValue(
+                        row,
+                        headerMap,
+                        "pannumber");
 
+        if (!panNumber.isEmpty()
+                && isDuplicateValue(
+                        row,
+                        headerMap,
+                        "pannumber",
+                        panNumber)) {
+
+            validationError.getErrors().add(
+                    "Duplicate PAN Number found: '"
+                            + panNumber
+                            + "'");
+        }
+        String mobileNumber =
+                getValue(
+                        row,
+                        headerMap,
+                        "mobilenumber");
+
+        if (!mobileNumber.isEmpty()
+                && isDuplicateValue(
+                        row,
+                        headerMap,
+                        "mobilenumber",
+                        mobileNumber)) {
+
+            validationError.getErrors().add(
+                    "Duplicate Mobile Number found: '"
+                            + mobileNumber
+                            + "'");
+        }
         /*
          * =====================================================
          * RETURN
@@ -299,7 +334,63 @@ public class SupplierRowValidator implements MigrationRowValidator {
      * REQUIRED FIELD VALIDATION
      * =========================================================
      */
+    private boolean isDuplicateValue(
+            Row currentRow,
+            Map<String, Integer> headerMap,
+            String header,
+            String currentValue) {
 
+        int currentRowNumber =
+                currentRow.getRowNum();
+
+        /*
+         * Check previous Excel rows only.
+         */
+        for (int i = 0;
+                i < currentRowNumber;
+                i++) {
+
+            Row previousRow =
+                    currentRow
+                            .getSheet()
+                            .getRow(i);
+
+            if (previousRow == null) {
+                continue;
+            }
+
+            /*
+             * Get previous value.
+             */
+            String previousValue =
+                    getValue(
+                            previousRow,
+                            headerMap,
+                            header);
+
+            /*
+             * Ignore blank values.
+             */
+            if (previousValue.isEmpty()) {
+                continue;
+            }
+
+            /*
+             * Compare values:
+             * - Ignore leading/trailing spaces
+             * - Ignore upper/lower case
+             */
+            if (previousValue
+                    .trim()
+                    .equalsIgnoreCase(
+                            currentValue.trim())) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
     private void validateRequired(
             Row row,
             Map<String, Integer> headerMap,
@@ -500,6 +591,19 @@ public class SupplierRowValidator implements MigrationRowValidator {
 
         if (cell == null) {
             return "";
+        }
+
+        /*
+         * Bank account number should not be
+         * returned in scientific notation.
+         */
+        if ("bankaccountnumber".equalsIgnoreCase(header)
+                && cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
+
+            return new java.math.BigDecimal(
+                    cell.getNumericCellValue())
+                    .toPlainString()
+                    .trim();
         }
 
         return formatter
