@@ -1636,6 +1636,8 @@ document.addEventListener("DOMContentLoaded", function() {
 	            jobId,
 	            data
 	        );
+			
+			return data;
 
 	    } catch (error) {
 
@@ -1922,7 +1924,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	        jobId
 	    );
 		
-		setTimeout(function() {
+		setTimeout(async function() {
 
 		    const card = document.querySelector(
 		        '.migration-progress-card[data-job-id="' + jobId + '"]'
@@ -1932,18 +1934,20 @@ document.addEventListener("DOMContentLoaded", function() {
 		        return;
 		    }
 
-		    const progressPercent = card.querySelector(
-		        ".processProgressPercent"
-		    );
+		    const data = await loadMigrationStatus(jobId);
+
+		    const status =
+		        String(data?.status ?? "")
+		            .trim()
+		            .toUpperCase();
 
 		    const progressMessage = card.querySelector(
 		        ".processProgressMessage"
 		    );
 
 		    if (
-		        progressPercent &&
-		        progressMessage &&
-		        progressPercent.innerText.trim() === "0%"
+		        status === "PROCESSING" &&
+		        progressMessage
 		    ) {
 
 		        progressMessage.innerText =
