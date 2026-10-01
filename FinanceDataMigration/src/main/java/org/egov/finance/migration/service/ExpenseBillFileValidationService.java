@@ -347,9 +347,6 @@ public class ExpenseBillFileValidationService extends AbstractFileValidationServ
 			if (column == 13 && value.equals("subledgermaster")) {
 				hasSubledgerMaster = true;
 			}
-			if (column == 21 && value.equals("gicodeaccountcode")) {
-				hasNetPayableGlCode = true;
-			}
 			if (value.equals("accounthead")) {
 				if(column == 15 ) {
 					hasDebitAccountHead = true;
@@ -386,8 +383,12 @@ public class ExpenseBillFileValidationService extends AbstractFileValidationServ
 				 */
 				if (column == 14) {
 					hasDebitGlCode = true;
-				} else if (column == 17) {
+				}
+				if (column == 17) {
 					hasDeductionGlCode = true;
+				}
+				if (column == 21) {
+					hasNetPayableGlCode = true;
 				}
 			}
 		}
