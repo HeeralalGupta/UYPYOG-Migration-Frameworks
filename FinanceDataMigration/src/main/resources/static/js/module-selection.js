@@ -171,6 +171,30 @@ const moduleData = [
                 status: "ACTIVE",
                 route: "/migration/upload/SUPPLIER_BILL",
                 template: "Supplier_Bill_Template.xlsx"
+            },
+            {
+                code: "BILL_PAYMENT",
+                name: "Bill Payment",
+                icon: "fa-file-invoice",
+                description: "Make Payment for Bill",
+                version: "1.0",
+                color: "warning",
+                moduleType: "BILL_PAYMENT",
+                status: "ACTIVE",
+                route: "/migration/upload/BILL_PAYMENT",
+                template: "Bill_Payments.xlsx"
+            },
+            {
+                code: "BANK_TO_BANK_TRANSFER",
+                name: "Bank To Bank Transfer",
+                icon: "fa-file-invoice",
+                description: "Transfer one bank abount into another bank",
+                version: "1.0",
+                color: "warning",
+                moduleType: "BANK_TO_BANK_TRANSFER",
+                status: "ACTIVE",
+                route: "/migration/upload/BANK_TO_BANK_TRANSFER",
+                template: "Bank_To_Bank_Transfer.xlsx"
             }
         ]
     },
