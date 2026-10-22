@@ -320,6 +320,33 @@ public class SupplierRowValidator implements MigrationRowValidator {
                             + mobileNumber
                             + "'");
         }
+        String panRegex = "^[A-Z]{5}[0-9]{4}[A-Z]$";
+
+        if (panNumber == null || !panNumber.matches(panRegex)) {
+           // throw new IllegalArgumentException("Invalid PAN format");
+            validationError.getErrors().add(
+                    "Invalid PAN format: '"
+                            + panNumber
+                            + "'");
+        }
+        String gstnumber =
+                getValue(
+                        row,
+                        headerMap,
+                        "gstnumber");
+        String gstinRegex =
+        "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$";
+        //System.out.println("Header Map: " + headerMap);
+        System.out.println("TIN value: " + gstnumber);
+        if(!gstnumber.isEmpty()) {
+		    if (!gstnumber.matches(gstinRegex)) {
+		        //throw new IllegalArgumentException("Invalid GSTIN format");
+		    	validationError.getErrors().add(
+	                    "Invalid GSTIN format: '"
+	                            + gstnumber
+	                            + "'");
+		    }
+	    }
         /*
          * =====================================================
          * RETURN
@@ -597,13 +624,12 @@ public class SupplierRowValidator implements MigrationRowValidator {
          * Bank account number should not be
          * returned in scientific notation.
          */
-        if ("bankaccountnumber".equalsIgnoreCase(header)
-                && cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
+        if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
 
             return new java.math.BigDecimal(
                     cell.getNumericCellValue())
-                    .toPlainString()
-                    .trim();
+                    .toBigInteger()
+                    .toString();
         }
 
         return formatter
