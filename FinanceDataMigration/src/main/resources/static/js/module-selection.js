@@ -173,16 +173,16 @@ const moduleData = [
                 template: "Supplier_Bill_Template.xlsx"
             },
             {
-                code: "BILL_PAYMENT",
+                code: "BILL_PAYMENT_VOUCHER",
                 name: "Bill Payment",
                 icon: "fa-file-invoice",
-                description: "Make Payment for Bill",
+                description: "Make Payment for Blls",
                 version: "1.0",
                 color: "warning",
-                moduleType: "BILL_PAYMENT",
+                moduleType: "BILL_PAYMENT_VOUCHER",
                 status: "ACTIVE",
-                route: "/migration/upload/BILL_PAYMENT",
-                template: "Bill_Payments.xlsx"
+                route: "/migration/upload/BILL_PAYMENT_VOUCHER",
+                template: "Bill_Payment_Voucher.xlsx"
             },
             {
                 code: "BANK_TO_BANK_TRANSFER",
