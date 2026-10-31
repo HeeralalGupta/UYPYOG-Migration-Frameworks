@@ -172,18 +172,7 @@ const moduleData = [
                 route: "/migration/upload/SUPPLIER_BILL",
                 template: "Supplier_Bill_Template.xlsx"
             },
-            {
-                code: "BILL_PAYMENT_VOUCHER",
-                name: "Bill Payment",
-                icon: "fa-file-invoice",
-                description: "Make Payment for Blls",
-                version: "1.0",
-                color: "warning",
-                moduleType: "BILL_PAYMENT_VOUCHER",
-                status: "ACTIVE",
-                route: "/migration/upload/BILL_PAYMENT_VOUCHER",
-                template: "Bill_Payment_Voucher.xlsx"
-            },
+
             {
                 code: "BANK_TO_BANK_TRANSFER",
                 name: "Bank To Bank Transfer",
@@ -195,6 +184,35 @@ const moduleData = [
                 status: "ACTIVE",
                 route: "/migration/upload/BANK_TO_BANK_TRANSFER",
                 template: "Bank_To_Bank_Transfer.xlsx"
+            }
+        ]
+    },
+    {
+        category: "Payments",
+        modules: [
+            {
+                code: "BILL_PAYMENT_VOUCHER",
+                name: "Bill Payment",
+                icon: "fa-money-bill-wave",
+                description: "Make Payment for Blls",
+                version: "1.0",
+                color: "warning",
+                moduleType: "BILL_PAYMENT_VOUCHER",
+                status: "ACTIVE",
+                route: "/migration/upload/BILL_PAYMENT_VOUCHER",
+                template: "Bill_Payment_Voucher.xlsx"
+            },
+            {
+                code: "DEDUCTION_PAYMENT",
+                name: "Deduction Payment",
+                icon: "fa-money-bill-wave",
+                description: "Make Payment for Deduction",
+                version: "1.0",
+                color: "warning",
+                moduleType: "DEDUCTION_PAYMENT",
+                status: "ACTIVE",
+                route: "/migration/upload/DEDUCTION_PAYMENT",
+                template: "Deduction_Payment.xlsx"
             }
         ]
     },
