@@ -15,6 +15,8 @@ public class ExcelConstants {
     
     public static final String WORK_SHEET =
             "Work";
+    
+    public static final String BANK_TO_BANK_TRANSFER_SHEET  = "Bank to Bank Transfer";
 
     private ExcelConstants() {
         // Prevent instantiation
